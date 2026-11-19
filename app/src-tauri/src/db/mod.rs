@@ -1,0 +1,51 @@
+//! Verschlüsselte Datenbank (SQLCipher). Schlüssel im Tresor; Schema und Versionierung gehören dem Aufgaben-Kern.
+mod key;
+#[cfg(test)]
+mod tests;
+
+use crate::secrets::{SecretError, SecretStore};
+use rusqlite::{Connection, ErrorCode};
+use std::path::Path;
+
+/// Dateiname der Datenbank im Datenordner der App (`%APPDATA%\de.daedyx.tasks`).
+pub const DB_FILE: &str = "daedyx-tasks.db";
+
+#[derive(Debug, thiserror::Error)]
+pub enum DbError {
+    /// Datei ist mit diesem Schlüssel nicht lesbar. NIE als Anlass benutzen, die Datenbank zu löschen.
+    #[error("Datenbankschlüssel passt nicht zur Datenbank")]
+    WrongKey,
+    #[error("Der Datenbankschlüssel im Tresor ist ungültig")]
+    BadKey,
+    #[error("Tresor: {0}")]
+    Secret(#[from] SecretError),
+    #[error("Datenbank: {0}")]
+    Sqlite(#[from] rusqlite::Error),
+    #[error("Aufgaben: {0}")]
+    Tasks(#[from] daedyx_tasks_core::MigrateError),
+    #[error("Zufallszahlen nicht verfügbar: {0}")]
+    Random(String),
+}
+
+/// Öffnet (oder erstellt) die verschlüsselte Datenbank. Der Schlüssel kommt aus dem Tresor.
+/// `WrongKey` nie zum Löschen der DB verwenden; andere Fehler kommen als `Sqlite` durch.
+pub fn open(path: &Path, secrets: &dyn SecretStore) -> Result<Connection, DbError> {
+    let hex = key::get_or_create(secrets)?;
+    let conn = Connection::open(path)?;
+    conn.pragma_update(None, "key", format!("x'{hex}'"))?;
+    // Erst die Prüfabfrage zeigt, ob der Schlüssel zur Datei passt.
+    conn.query_row("SELECT count(*) FROM sqlite_master", [], |r| r.get::<_, i64>(0)).map_err(|e| match e {
+        rusqlite::Error::SqliteFailure(f, _) if f.code == ErrorCode::NotADatabase => DbError::WrongKey,
+        other => DbError::Sqlite(other),
+    })?;
+    conn.pragma_update(None, "foreign_keys", "ON")?;
+    conn.pragma_update(None, "journal_mode", "WAL")?;
+    Ok(conn)
+}
+
+/// Öffnet die Datenbank und bringt das Aufgaben-Schema auf den Stand des Kerns (legt es beim ersten Start an).
+pub fn open_and_migrate(path: &Path, secrets: &dyn SecretStore) -> Result<Connection, DbError> {
+    let conn = open(path, secrets)?;
+    daedyx_tasks_core::migrate(&conn)?;
+    Ok(conn)
+}
