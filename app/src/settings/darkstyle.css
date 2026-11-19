@@ -1,0 +1,78 @@
+.settings__range {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.settings__range input {
+  width: 200px;
+  accent-color: var(--accent);
+}
+
+.settings__hue {
+  height: 10px;
+  appearance: none;
+  background: linear-gradient(
+    to right,
+    hsl(0 60% 45%),
+    hsl(60 60% 45%),
+    hsl(120 60% 45%),
+    hsl(180 60% 45%),
+    hsl(240 60% 45%),
+    hsl(300 60% 45%),
+    hsl(359 60% 45%)
+  );
+  border-radius: var(--radius);
+}
+
+.settings__rangevalue {
+  min-width: 3.5em;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  color: var(--text-muted);
+}
+
+.darkpresets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: var(--space-2) 0;
+}
+
+.darkpresets__btn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 4px var(--space-3) 4px 4px;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.darkpresets__btn:hover {
+  background: var(--bg-hover);
+}
+
+.darkpresets__btn[aria-pressed="true"] {
+  background: var(--bg-selected);
+  border-color: var(--accent);
+}
+
+.darkpresets__swatch {
+  width: 22px;
+  height: 22px;
+  background: var(--swatch);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+}
+
+.settings__hue::-webkit-slider-thumb {
+  width: 16px;
+  height: 16px;
+  appearance: none;
+  background: var(--bg-surface);
+  border: 2px solid var(--text);
+  border-radius: 50%;
+  cursor: pointer;
+}

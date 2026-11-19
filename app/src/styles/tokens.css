@@ -1,0 +1,191 @@
+:root {
+  color-scheme: light;
+  --font-ui: "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
+
+  --bg-app: #f3f4f6;
+  --bg-surface: #ffffff;
+  --bg-subtle: #f9fafb;
+  --bg-hover: #eceef2;
+  --bg-selected: #dbe7fb;
+  --border: #d9dce3;
+  --text: #1b1f27;
+  --text-muted: #505968;
+  --accent: #2563eb;
+  --accent-contrast: #ffffff;
+  --focus: #2563eb;
+  --overlay: rgb(15 23 42 / 0.4);
+  --shadow: 0 8px 24px rgb(15 23 42 / 0.18);
+
+  /* Flächen-Hierarchie (Mail, Kalender, Einstellungen): Bereichsleiste und Ordnerbaum getönt, Liste und Lesefläche hell, Kopfleisten abgesetzt */
+  --surface-rail: #dfe4ed;
+  --surface-nav: #ebeef4;
+  --surface-list: #ffffff;
+  --surface-reading: #fbfcfd;
+  --surface-toolbar: #f1f3f8;
+  --border-strong: #b4bbc9;
+  --tint-chrome: 10%;
+  --selected-mix: 24%;
+  --scrim: rgb(15 23 42 / 0.32);
+  --shadow-float: 0 20px 56px rgb(15 23 42 / 0.32), 0 3px 10px rgb(15 23 42 / 0.2);
+  --mail-paper: #fbfaf7;
+  --btn-off-bg: var(--bg-hover);
+  --btn-off-text: var(--text-muted);
+
+  --cal-1: #2563eb;
+  --cal-2: #16a34a;
+  --cal-3: #d97706;
+  --task-prio-1: #2563eb;
+  --task-prio-2: #b45309;
+  --task-prio-3: #dc2626;
+  --avatar-bg: #cfd8ea;
+  --avatar-text: #1b1f27;
+
+  --radius: 6px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+}
+
+/* Dunkelmodus-Stil: --dark-hue/-tint/-black/-white werden auf <html> gesetzt (useDarkStyle); beide dunklen Blöcke gleich halten. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg-app: color-mix(in srgb, color-mix(in srgb, hsl(var(--dark-hue, 220) calc(13% * var(--dark-tint, 1)) 9%), black var(--dark-black, 0%)), white var(--dark-white, 0%));
+    --bg-surface: color-mix(in srgb, color-mix(in srgb, hsl(var(--dark-hue, 220) calc(15% * var(--dark-tint, 1)) 13%), black var(--dark-black, 0%)), white var(--dark-white, 0%));
+    --bg-subtle: color-mix(in srgb, color-mix(in srgb, hsl(var(--dark-hue, 220) calc(16% * var(--dark-tint, 1)) 11%), black var(--dark-black, 0%)), white var(--dark-white, 0%));
+    --bg-hover: color-mix(in srgb, color-mix(in srgb, hsl(var(--dark-hue, 220) calc(14% * var(--dark-tint, 1)) 18%), black var(--dark-black, 0%)), white var(--dark-white, 0%));
+    --bg-selected: #1e3a68;
+    --border: color-mix(in srgb, color-mix(in srgb, hsl(var(--dark-hue, 220) calc(14% * var(--dark-tint, 1)) 21%), black var(--dark-black, 0%)), white var(--dark-white, 0%));
+    --text: color-mix(in srgb, #e6e8ec, white calc(var(--dark-white, 0%) * 2));
+    --text-muted: color-mix(in srgb, #9aa3b2, white calc(var(--dark-white, 0%) * 2));
+    --accent: #6ea0ff;
+    --accent-contrast: #0b1220;
+    --focus: #6ea0ff;
+    --overlay: rgb(0 0 0 / 0.6);
+    --shadow: 0 8px 24px rgb(0 0 0 / 0.5);
+
+    /* Flächen-Hierarchie: aus den --bg-* abgeleitet, damit der Dunkelmodus-Stil (Helligkeit, Farbton, Tönung) mitwirkt */
+    --surface-rail: color-mix(in srgb, var(--bg-app), black 38%);
+    --surface-nav: var(--bg-app);
+    --surface-list: var(--bg-surface);
+    --surface-reading: color-mix(in srgb, var(--bg-surface), white 5%);
+    --surface-toolbar: color-mix(in srgb, var(--bg-surface), white 7%);
+    --border-strong: color-mix(in srgb, var(--border), white 16%);
+    --tint-chrome: 8%;
+    --selected-mix: 34%;
+    --scrim: rgb(0 0 0 / 0.55);
+    --shadow-float: 0 20px 56px rgb(0 0 0 / 0.7), 0 0 0 1px rgb(255 255 255 / 0.07);
+    --mail-paper: #e6e4de;
+
+    --cal-1: #6ea0ff;
+    --cal-2: #4ade80;
+    --cal-3: #fbbf24;
+    --task-prio-1: #6ea0ff;
+    --task-prio-2: #fbbf24;
+    --task-prio-3: #f87171;
+    --avatar-bg: #2c3a55;
+    --avatar-text: #e6e8ec;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg-app: color-mix(in srgb, color-mix(in srgb, hsl(var(--dark-hue, 220) calc(13% * var(--dark-tint, 1)) 9%), black var(--dark-black, 0%)), white var(--dark-white, 0%));
+  --bg-surface: color-mix(in srgb, color-mix(in srgb, hsl(var(--dark-hue, 220) calc(15% * var(--dark-tint, 1)) 13%), black var(--dark-black, 0%)), white var(--dark-white, 0%));
+  --bg-subtle: color-mix(in srgb, color-mix(in srgb, hsl(var(--dark-hue, 220) calc(16% * var(--dark-tint, 1)) 11%), black var(--dark-black, 0%)), white var(--dark-white, 0%));
+  --bg-hover: color-mix(in srgb, color-mix(in srgb, hsl(var(--dark-hue, 220) calc(14% * var(--dark-tint, 1)) 18%), black var(--dark-black, 0%)), white var(--dark-white, 0%));
+  --bg-selected: #1e3a68;
+  --border: color-mix(in srgb, color-mix(in srgb, hsl(var(--dark-hue, 220) calc(14% * var(--dark-tint, 1)) 21%), black var(--dark-black, 0%)), white var(--dark-white, 0%));
+  --text: color-mix(in srgb, #e6e8ec, white calc(var(--dark-white, 0%) * 2));
+  --text-muted: color-mix(in srgb, #9aa3b2, white calc(var(--dark-white, 0%) * 2));
+  --accent: #6ea0ff;
+  --accent-contrast: #0b1220;
+  --focus: #6ea0ff;
+  --overlay: rgb(0 0 0 / 0.6);
+  --shadow: 0 8px 24px rgb(0 0 0 / 0.5);
+
+  /* Flächen-Hierarchie: aus den --bg-* abgeleitet, damit der Dunkelmodus-Stil (Helligkeit, Farbton, Tönung) mitwirkt */
+  --surface-rail: color-mix(in srgb, var(--bg-app), black 38%);
+  --surface-nav: var(--bg-app);
+  --surface-list: var(--bg-surface);
+  --surface-reading: color-mix(in srgb, var(--bg-surface), white 5%);
+  --surface-toolbar: color-mix(in srgb, var(--bg-surface), white 7%);
+  --border-strong: color-mix(in srgb, var(--border), white 16%);
+  --tint-chrome: 8%;
+  --selected-mix: 34%;
+  --scrim: rgb(0 0 0 / 0.55);
+  --shadow-float: 0 20px 56px rgb(0 0 0 / 0.7), 0 0 0 1px rgb(255 255 255 / 0.07);
+  --mail-paper: #e6e4de;
+
+  --cal-1: #6ea0ff;
+  --cal-2: #4ade80;
+  --cal-3: #fbbf24;
+  --task-prio-1: #6ea0ff;
+  --task-prio-2: #fbbf24;
+  --task-prio-3: #f87171;
+  --avatar-bg: #2c3a55;
+  --avatar-text: #e6e8ec;
+}
+
+/* Farbpalette für Grundfarbe und Bereichsfarben: --c-<name>, -soft (Auswahlgrund), -on (Text auf Farbe) */
+:root {
+  --c-blue: #2563eb;   --c-blue-soft: #dbe7fb;   --c-blue-on: #ffffff;
+  --c-teal: #0f766e;   --c-teal-soft: #d5f0ec;   --c-teal-on: #ffffff;
+  --c-green: #15803d;  --c-green-soft: #dcf2e3;  --c-green-on: #ffffff;
+  --c-amber: #b45309;  --c-amber-soft: #fbe9d0;  --c-amber-on: #ffffff;
+  --c-red: #c62828;    --c-red-soft: #fbdcdc;    --c-red-on: #ffffff;
+  --c-pink: #be185d;   --c-pink-soft: #fadcea;   --c-pink-on: #ffffff;
+  --c-purple: #7c3aed; --c-purple-soft: #e7dffb; --c-purple-on: #ffffff;
+  --c-slate: #475569;  --c-slate-soft: #e2e8f0;  --c-slate-on: #ffffff;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --c-blue: #6ea0ff;   --c-blue-soft: #1e3a68;   --c-blue-on: #0b1220;
+    --c-teal: #2dd4bf;   --c-teal-soft: #134e4a;   --c-teal-on: #0b1220;
+    --c-green: #4ade80;  --c-green-soft: #14532d;  --c-green-on: #0b1220;
+    --c-amber: #fbbf24;  --c-amber-soft: #5c3d0e;  --c-amber-on: #0b1220;
+    --c-red: #f87171;    --c-red-soft: #5c1f1f;    --c-red-on: #0b1220;
+    --c-pink: #f472b6;   --c-pink-soft: #5a1f3c;   --c-pink-on: #0b1220;
+    --c-purple: #a78bfa; --c-purple-soft: #3b2a6b; --c-purple-on: #0b1220;
+    --c-slate: #94a3b8;  --c-slate-soft: #2f3a4a;  --c-slate-on: #0b1220;
+  }
+}
+
+:root[data-theme="dark"] {
+  --c-blue: #6ea0ff;   --c-blue-soft: #1e3a68;   --c-blue-on: #0b1220;
+  --c-teal: #2dd4bf;   --c-teal-soft: #134e4a;   --c-teal-on: #0b1220;
+  --c-green: #4ade80;  --c-green-soft: #14532d;  --c-green-on: #0b1220;
+  --c-amber: #fbbf24;  --c-amber-soft: #5c3d0e;  --c-amber-on: #0b1220;
+  --c-red: #f87171;    --c-red-soft: #5c1f1f;    --c-red-on: #0b1220;
+  --c-pink: #f472b6;   --c-pink-soft: #5a1f3c;   --c-pink-on: #0b1220;
+  --c-purple: #a78bfa; --c-purple-soft: #3b2a6b; --c-purple-on: #0b1220;
+  --c-slate: #94a3b8;  --c-slate-soft: #2f3a4a;  --c-slate-on: #0b1220;
+}
+
+/* Schrift auf Kalenderfarben (--cal-N) und auf frei gewählten Farben */
+:root {
+  --ink-light: #ffffff;
+  --ink-dark: #0b1220;
+  /* Mails mit eigenen Farben und der Editor stehen immer auf hellem Papier (warmes Hell, im Dunkelmodus gedämpft: --mail-paper je Thema oben) */
+  --mail-ink: var(--ink-dark);
+  --mail-link: #1d4ed8;
+  --cal-1-on: #ffffff;
+  --cal-2-on: #0b1220;
+  --cal-3-on: #0b1220;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --cal-1-on: #0b1220;
+    --cal-2-on: #0b1220;
+    --cal-3-on: #0b1220;
+  }
+}
+
+:root[data-theme="dark"] {
+  --cal-1-on: #0b1220;
+  --cal-2-on: #0b1220;
+  --cal-3-on: #0b1220;
+}

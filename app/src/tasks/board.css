@@ -1,0 +1,219 @@
+/* Board (Abschnitte als Spalten) und Umschalter Liste/Board. Farben nur über Tokens. */
+.viewswitch {
+  display: inline-flex;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.viewswitch__btn {
+  padding: 4px var(--space-3);
+  font: inherit;
+  color: var(--text);
+  background: var(--bg-surface);
+  border: 0;
+  cursor: pointer;
+}
+
+.viewswitch__btn + .viewswitch__btn {
+  border-left: 1px solid var(--border-strong);
+}
+
+.viewswitch__btn[aria-pressed="true"] {
+  color: var(--accent-contrast);
+  background: var(--accent);
+}
+
+.board {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  padding: var(--space-3) var(--space-4);
+}
+
+.board__cols {
+  display: flex;
+  flex: 1;
+  gap: var(--space-3);
+  align-items: flex-start;
+  min-height: 0;
+  margin-top: var(--space-3);
+  padding-bottom: var(--space-2);
+  overflow: auto;
+}
+
+.boardcol,
+.boardtail {
+  flex: 0 0 250px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-height: 100%;
+  padding: var(--space-2);
+  background: var(--surface-nav);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.boardcol[data-over],
+.boardtail[data-over] {
+  border-color: var(--accent);
+}
+
+.boardcol[data-dragging] {
+  opacity: 0.5;
+}
+
+.boardcol__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.boardcol__head[draggable="true"] {
+  cursor: grab;
+}
+
+.boardcol__name {
+  flex: 1;
+  margin: 0;
+  font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.boardcol__edit {
+  flex: 1;
+  min-width: 0;
+  padding: 2px var(--space-2);
+  font: inherit;
+  color: var(--text);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+}
+
+.boardcol__count {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.boardcol__menu {
+  padding: 0 var(--space-2);
+  font: inherit;
+  color: var(--text-muted);
+  background: none;
+  border: 0;
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.boardcol__menu:hover {
+  background: var(--bg-hover);
+}
+
+.boardcol__cards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-height: 24px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow-y: auto;
+}
+
+.boardcol__empty {
+  font-size: 12px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.boardcard {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: grab;
+}
+
+.boardcard:hover {
+  background: var(--bg-hover);
+}
+
+.boardcard[data-selected] {
+  border-color: var(--accent);
+}
+
+.boardcard[data-dragging] {
+  opacity: 0.5;
+}
+
+.boardcard[data-over] {
+  box-shadow: 0 -3px 0 var(--accent);
+}
+
+.boardcard[data-done] .boardcard__title {
+  color: var(--text-muted);
+  text-decoration: line-through;
+}
+
+.boardcard__main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding: 0;
+  font: inherit;
+  color: var(--text);
+  text-align: left;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.boardcard__title {
+  overflow-wrap: anywhere;
+}
+
+.boardadd__open {
+  padding: 4px var(--space-2);
+  font: inherit;
+  color: var(--text-muted);
+  text-align: left;
+  background: none;
+  border: 0;
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.boardadd__open:hover {
+  color: var(--text);
+  background: var(--bg-hover);
+}
+
+.boardadd {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.boardadd input {
+  padding: 4px var(--space-2);
+  font: inherit;
+  color: var(--text);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+}
+
+.boardadd__buttons {
+  display: flex;
+  gap: var(--space-2);
+}

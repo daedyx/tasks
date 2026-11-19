@@ -1,0 +1,61 @@
+.menubtn {
+  position: relative;
+}
+
+/* Geteilter Knopf: Hauptteil und Pfeil sitzen dicht beieinander und färben sich gemeinsam beim Überfahren */
+.menubtn__split {
+  display: flex;
+}
+
+.menubtn__main {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.toolbar .toolbar__btn.menubtn__arrow {
+  padding-inline: 5px;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.menubtn__split:hover .toolbar__btn:not(:disabled) {
+  background: var(--bg-hover);
+}
+
+.menubtn__arrow[aria-expanded="true"] {
+  background: var(--bg-selected);
+}
+
+.menubtn__menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  min-width: 180px;
+  max-height: 60vh;
+  margin-top: 2px;
+  padding: var(--space-1) 0;
+  overflow-y: auto;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.menubtn__item {
+  padding: 6px var(--space-3);
+  text-align: left;
+  color: var(--text);
+  background: none;
+  border: 0;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.menubtn__item:hover,
+.menubtn__item:focus-visible {
+  background: var(--bg-hover);
+  outline: none;
+}
