@@ -1,0 +1,19 @@
+node_modules/
+dist/
+app/src-tauri/target/
+app/src-tauri/gen/
+*.log
+*.db
+*.sqlite
+*.sqlite3
+.env
+.env.*
+
+# Release-Ausgaben und Schlüssel nie einchecken
+dist-release/
+*.key
+*.minisig
+
+# Arbeitsanweisungen für Claude bleiben lokal, nie ins Git
+CLAUDE.md
+.claude/
