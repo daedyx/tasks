@@ -1,0 +1,166 @@
+# Release von Daedyx Tasks: bauen, signieren, in das öffentliche Repository daedyx/releases veröffentlichen.
+# Starten: Actions -> Release -> "Run workflow" (Version und Änderungsnotiz eintragen) oder einen Tag v<x.y.z> pushen.
+# Geheimnisse (Repository-Secrets, trägt Björn selbst ein, Anleitung: docs/RELEASE-CI.md):
+#   TAURI_SIGNING_PRIVATE_KEY, TAURI_SIGNING_PRIVATE_KEY_PASSWORD  Update-Schlüssel der App
+#   DAEDYX_CATALOG_KEY, DAEDYX_KEY_PASSWORD                        Katalog-Schlüssel (Inhalt der Datei) und Passwort
+#   RELEASES_TOKEN                                                 Zugriffstoken mit Schreibrecht nur auf daedyx/releases
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version, zum Beispiel 0.1.0 (muss höher sein als die letzte veröffentlichte)"
+        required: true
+        type: string
+      notes:
+        description: "Änderungsnotiz: was ist neu?"
+        required: true
+        type: string
+      skip_tests:
+        description: "Tests überspringen (nur im Notfall)"
+        required: false
+        type: boolean
+        default: false
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"
+
+# Das Token des Workflows darf nur den Quellcode-Stand zurückschreiben (Versionsdateien); veröffentlicht wird mit RELEASES_TOKEN.
+permissions:
+  contents: write
+
+# Nie zwei Veröffentlichungen gleichzeitig: beide würden denselben Katalog ändern.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+env:
+  RELEASES_REPO: daedyx/releases
+
+jobs:
+  release:
+    runs-on: windows-latest
+    timeout-minutes: 90
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - name: Quellcode holen
+        uses: actions/checkout@v4
+
+      - name: Eingaben prüfen
+        id: input
+        env:
+          EVENT: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+          INPUT_VERSION: ${{ github.event.inputs.version }}
+          INPUT_NOTES: ${{ github.event.inputs.notes }}
+          INPUT_SKIP_TESTS: ${{ github.event.inputs.skip_tests }}
+        run: |
+          # Eingaben nur über Umgebungsvariablen lesen (nie in den Skripttext einsetzen)
+          if ($env:EVENT -eq 'push') {
+            $version = $env:REF_NAME.TrimStart('v')
+            $notes = "Daedyx Tasks $version"
+          } else {
+            $version = $env:INPUT_VERSION.Trim()
+            $notes = $env:INPUT_NOTES.Trim()
+          }
+          if ($version -notmatch '^\d+\.\d+\.\d+$') { throw "Ungültige Version: '$version' (erwartet x.y.z)" }
+          if (-not $notes) { throw "Die Änderungsnotiz fehlt." }
+          $file = Join-Path $env:RUNNER_TEMP 'release-notes.txt'
+          [System.IO.File]::WriteAllText($file, $notes, (New-Object System.Text.UTF8Encoding $false))
+          "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "notes_file=$file" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "skip_tests=$($env:INPUT_SKIP_TESTS -eq 'true')" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          if (-not (Test-Path 'release/catalog.pub')) { throw "release/catalog.pub fehlt (öffentlicher Katalog-Schlüssel, siehe docs/RELEASE-CI.md)." }
+
+      - name: Secrets prüfen
+        env:
+          S1: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          S2: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          S3: ${{ secrets.DAEDYX_CATALOG_KEY }}
+          S4: ${{ secrets.DAEDYX_KEY_PASSWORD }}
+          S5: ${{ secrets.RELEASES_TOKEN }}
+        run: |
+          $missing = @()
+          if (-not $env:S1) { $missing += 'TAURI_SIGNING_PRIVATE_KEY' }
+          if (-not $env:S2) { $missing += 'TAURI_SIGNING_PRIVATE_KEY_PASSWORD' }
+          if (-not $env:S3) { $missing += 'DAEDYX_CATALOG_KEY' }
+          if (-not $env:S4) { $missing += 'DAEDYX_KEY_PASSWORD' }
+          if (-not $env:S5) { $missing += 'RELEASES_TOKEN' }
+          if ($missing) { throw "Diese Secrets fehlen im Repository: $($missing -join ', ') (Anleitung: docs/RELEASE-CI.md)" }
+
+      - name: Zugriff auf den privaten Kern einrichten
+        env:
+          CORE_READ_TOKEN: ${{ secrets.CORE_READ_TOKEN }}
+        run: |
+          if (-not $env:CORE_READ_TOKEN) { throw "Secret CORE_READ_TOKEN fehlt (Lesezugriff auf daedyx/core)" }
+          git config --global url."https://x-access-token:$($env:CORE_READ_TOKEN)@github.com/daedyx/core".insteadOf "https://github.com/daedyx/core"
+          "CARGO_NET_GIT_FETCH_WITH_CLI=true" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+      - name: Node einrichten
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+
+      - name: Rust einrichten
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust-Zwischenspeicher
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: app/src-tauri
+
+      - name: Abhängigkeiten installieren
+        working-directory: app
+        run: npm ci
+
+      - name: Katalog-Werkzeug laden
+        run: scripts/ci/fetch-catalog-tool.ps1 -Destination "$env:RUNNER_TEMP/daedyx-catalog.exe"
+
+      - name: Bauen, prüfen, Setup und Update-Signatur erzeugen
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          VERSION: ${{ steps.input.outputs.version }}
+          NOTES_FILE: ${{ steps.input.outputs.notes_file }}
+          SKIP_TESTS: ${{ steps.input.outputs.skip_tests }}
+        run: |
+          $notes = Get-Content $env:NOTES_FILE -Raw
+          $base = "https://github.com/$env:RELEASES_REPO/releases/download/tasks-v$env:VERSION/"
+          $out = Join-Path $env:RUNNER_TEMP 'tasks-out'
+          $params = @{ Version = $env:VERSION; Notes = $notes; BaseUrl = $base; OutDir = $out; NoCatalog = $true }
+          if ($env:SKIP_TESTS -eq 'True' -or $env:SKIP_TESTS -eq 'true') { $params.SkipTests = $true }
+          ./scripts/release.ps1 @params
+
+      - name: In daedyx/releases veröffentlichen
+        env:
+          RELEASES_TOKEN: ${{ secrets.RELEASES_TOKEN }}
+          DAEDYX_CATALOG_KEY: ${{ secrets.DAEDYX_CATALOG_KEY }}
+          DAEDYX_KEY_PASSWORD: ${{ secrets.DAEDYX_KEY_PASSWORD }}
+          VERSION: ${{ steps.input.outputs.version }}
+          NOTES_FILE: ${{ steps.input.outputs.notes_file }}
+        run: |
+          ./scripts/ci/publish.ps1 -Version $env:VERSION `
+            -OutDir (Join-Path $env:RUNNER_TEMP 'tasks-out') `
+            -NotesFile $env:NOTES_FILE `
+            -PublicKey release/catalog.pub `
+            -CatalogTool (Join-Path $env:RUNNER_TEMP 'daedyx-catalog.exe') `
+            -ReleasesRepo $env:RELEASES_REPO
+
+      - name: Versionsdateien zurück in den Quellcode schreiben
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          VERSION: ${{ steps.input.outputs.version }}
+        run: |
+          git config user.name "daedyx release bot"
+          git config user.email "release-bot@users.noreply.github.com"
+          git add app/package.json app/src-tauri/Cargo.toml app/src-tauri/Cargo.lock app/src-tauri/tauri.conf.json
+          git diff --cached --quiet
+          if ($LASTEXITCODE -ne 0) {
+            git commit -m "chore: Version $env:VERSION"
+            git push origin HEAD
+          }
