@@ -1,7 +1,7 @@
 ﻿# Installationsprobe: Setup still in einen Temp-Ordner installieren, app.json und Startprogramm prüfen,
 # wieder deinstallieren. Rührt weder den Datenordner noch den Tresor an.
 # Eine echte Installation (gleicher Produktname) wird vorher gesichert und danach wiederhergestellt: Registry-Einträge
-# (Uninstall und Installationsort) und die Verknüpfungen in Startmenü und auf dem Taskstop. Eine laufende App wird nie
+# (Uninstall und Installationsort) und die Verknüpfungen in Startmenü und auf dem Desktop. Eine laufende App wird nie
 # beendet: das Skript bricht ab, wenn sie läuft.
 param(
   [Parameter(Mandatory)][string]$Setup,
@@ -18,7 +18,7 @@ $regKeys = @(
 )
 $lnks = @(
   (Join-Path $env:APPDATA "Microsoft\Windows\Start Menu\Programs\$ProductName.lnk"),
-  (Join-Path ([Environment]::GetFolderPath("Taskstop")) "$ProductName.lnk")
+  (Join-Path ([Environment]::GetFolderPath("Desktop")) "$ProductName.lnk")
 )
 
 # reg.exe über cmd aufrufen: Windows PowerShell 5.1 macht aus einer Fehlerausgabe sonst einen Abbruch
