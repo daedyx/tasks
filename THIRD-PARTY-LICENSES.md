@@ -716,4 +716,4 @@ Erzeugt aus den Sperrdateien (`Cargo.lock`, `node_modules`); bei Änderungen der
 
 ## Symbole und Bilder
 
-- `app/src-tauri/icons/`: **Platzhalter-Symbole.** Der Dateisatz entspricht dem Standard-Ausgabesatz von `tauri icon`; die Herkunft der Bilddateien ist nicht belegt (sie stehen seit dem ersten Commit im Repository). Sie sind **kein** eigenes Markenzeichen von Daedyx und werden vor einer Veröffentlichung durch eigene Symbole ersetzt.
+- `app/src-tauri/icons/`: **Eigenes Werk (Daedyx contributors), Lizenz wie das Projekt (MIT).** Die Symbole sind aus Code gezeichnet: `docs/brand/motifs.mjs` enthält die Zeichnung, `node docs/brand/erzeuge-symbole.mjs` schreibt die Quellvektoren, `tauri icon` erzeugt daraus PNG, ICO und ICNS (siehe `docs/brand/README.md`). Keine fremden Vorlagen, Bildgeneratoren oder Piktogramm-Sammlungen. Die früheren Tauri-Platzhalter sind ersetzt.
