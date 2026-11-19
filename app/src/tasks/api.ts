@@ -54,6 +54,10 @@ export const toggleTask = (id: string): Promise<Task> => run(() => call("task_to
 /** `sectionId`: gewünschter Abschnitt (null = „Ohne Abschnitt“); bei Listenwechsel muss er zur Zielliste gehören. */
 export const moveTask = (id: string, listId: string, parentId: string | null, sectionId: string | null, position: number): Promise<Task> =>
   run(() => call("task_move", { id, listId, parentId, sectionId, position }), (f) => f.move(id, listId, parentId, sectionId, position));
+/** Erinnerungen der Aufgabe: Minuten vor der Fälligkeit, aufsteigend. */
+export const getTaskAlarms = (id: string): Promise<number[]> => run(() => call("task_alarms_get", { id }), (f) => f.alarms(id));
+export const setTaskAlarms = (id: string, minutes: number[]): Promise<number[]> =>
+  run(() => call("task_alarms_set", { id, minutes }), (f) => f.setAlarms(id, minutes));
 export const deleteTask = (id: string): Promise<void> => run(() => call("task_delete", { id }), (f) => f.remove(id));
 
 export const listSections = (listId: string): Promise<Section[]> =>

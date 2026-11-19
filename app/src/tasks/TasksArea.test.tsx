@@ -31,7 +31,7 @@ describe("Aufgabenbereich", () => {
     await openList("Haushalt");
     expect(await screen.findByRole("button", { name: "Einkaufen öffnen" })).toBeInTheDocument();
     expect(screen.getByText("0 von 2 Unteraufgaben")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Milch öffnen" }).closest("li")).toHaveAttribute("data-nested");
+    expect(screen.getByRole("button", { name: "Milch öffnen" }).closest("li")).toHaveAttribute("data-depth", "1");
   });
 
   it("legt per Schnelleingabe eine Aufgabe mit Priorität an", async () => {

@@ -1,20 +1,12 @@
 // Fake-Kern für Aufgaben: nur im Entwicklungs- und Testbetrieb ohne Tauri (siehe `api.ts`), erfundene Daten.
 import { dayText, dueDay } from "./dueDay";
-import type { Priority, RepeatRule, Section, Task, TaskList, TaskPatch, View, ViewCount } from "./types";
+import { TASKS_MAX_DEPTH } from "./limits";
+import { nextDue } from "./repeatNext";
+import type { Priority, Section, Task, TaskList, TaskPatch, View, ViewCount } from "./types";
 
 export type FakeTasks = ReturnType<typeof createFakeTasks>;
 
 const addDays = (d: Date, n: number): Date => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
-
-function nextDue(rule: RepeatRule, day: string): string {
-  const [y, m, d] = day.split("-").map(Number);
-  const base = new Date(y, m - 1, d);
-  const n = Math.max(1, rule.interval);
-  if (rule.kind === "daily") return dayText(addDays(base, n));
-  if (rule.kind === "weekly") return dayText(addDays(base, 7 * n));
-  if (rule.kind === "monthly") return dayText(new Date(y, m - 1 + n, Math.min(d, 28)));
-  return dayText(new Date(y + n, m - 1, Math.min(d, 28)));
-}
 
 export function createFakeTasks(now: () => Date = () => new Date()) {
   let seq = 0;
@@ -24,6 +16,7 @@ export function createFakeTasks(now: () => Date = () => new Date()) {
   let lists: TaskList[] = [];
   let tasks: Task[] = [];
   let sections: Section[] = [];
+  let alarmMap = new Map<string, number[]>();
 
   const mkTask = (listId: string, title: string, extra: Partial<Task> = {}): Task => ({
     id: id("t"), listId, parentId: null, sectionId: null, title, notes: "", due: null, dueHasTime: false, priority: 0, doneAt: null,
@@ -39,6 +32,7 @@ export function createFakeTasks(now: () => Date = () => new Date()) {
     ];
     tasks = [];
     sections = [];
+    alarmMap = new Map();
     tasks.push(mkTask("haushalt", "Altglas wegbringen", { due: dayText(today), priority: 2 }));
     tasks.push(mkTask("haushalt", "Pflanzen gießen", { due: dayText(addDays(today, -1)), repeat: { kind: "weekly", interval: 1, weekdays: [], fromDone: false } }));
     const shop = mkTask("haushalt", "Einkaufen", { due: dayText(addDays(today, 2)) });
@@ -58,8 +52,12 @@ export function createFakeTasks(now: () => Date = () => new Date()) {
 
   function inList(listId: string): Task[] {
     const all = tasks.filter((t) => t.listId === listId).sort(byPos);
-    return all.filter((t) => !t.parentId).flatMap((t) => [t, ...all.filter((k) => k.parentId === t.id)]);
+    const walk = (t: Task): Task[] => [t, ...all.filter((k) => k.parentId === t.id).flatMap(walk)];
+    return all.filter((t) => !t.parentId).flatMap(walk);
   }
+  const descendants = (taskId: string): Task[] => tasks.filter((k) => k.parentId === taskId).flatMap((k) => [k, ...descendants(k.id)]);
+  const depthOf = (t: Task): number => (t.parentId ? 1 + depthOf(find(t.parentId)) : 0);
+  const heightOf = (taskId: string): number => Math.max(0, ...tasks.filter((k) => k.parentId === taskId).map((k) => 1 + heightOf(k.id)));
 
   function query(view: View, listId?: string | null): Task[] {
     const today = dayText(now());
@@ -84,7 +82,7 @@ export function createFakeTasks(now: () => Date = () => new Date()) {
     if ("due_has_time" in p) t.dueHasTime = !!p.due_has_time;
     if ("priority" in p) t.priority = (p.priority ?? 0) as Priority;
     if ("repeat_rule" in p) t.repeat = p.repeat_rule ?? null;
-    if ("remind_minutes" in p) t.remindMinutes = p.remind_minutes ?? null;
+    if ("remind_minutes" in p) { t.remindMinutes = p.remind_minutes ?? null; alarmMap.set(t.id, t.remindMinutes === null ? [] : [t.remindMinutes]); }
     if ("section_id" in p) t.sectionId = p.section_id ?? null;
   }
 
@@ -116,7 +114,7 @@ export function createFakeTasks(now: () => Date = () => new Date()) {
     },
     create(listId: string, parentId: string | null, fields: TaskPatch): Task {
       if (!lists.some((l) => l.id === listId)) throw { code: "list_not_found", message: "" };
-      if (parentId && find(parentId).parentId) throw { code: "too_deep", message: "" };
+      if (parentId && depthOf(find(parentId)) + 1 > TASKS_MAX_DEPTH) throw { code: "too_deep", message: "" };
       const t = mkTask(listId, "x", { parentId });
       patchTask(t, fields);
       t.position = Math.max(0, ...tasks.filter((x) => x.listId === listId && x.parentId === parentId).map((x) => x.position)) + 1;
@@ -155,12 +153,20 @@ export function createFakeTasks(now: () => Date = () => new Date()) {
     move(taskId: string, listId: string, parentId: string | null, sectionId: string | null, position: number): Task {
       const t = find(taskId);
       if (sectionId && (parentId || sections.find((s) => s.id === sectionId)?.listId !== listId)) throw { code: "invalid", message: "" };
-      if (parentId && (find(parentId).parentId || tasks.some((k) => k.parentId === t.id))) throw { code: "too_deep", message: "" };
+      if (parentId && (parentId === t.id || descendants(t.id).some((k) => k.id === parentId))) throw { code: "invalid", message: "" };
+      if (parentId && depthOf(find(parentId)) + 1 + heightOf(t.id) > TASKS_MAX_DEPTH) throw { code: "too_deep", message: "" };
       t.listId = listId; t.parentId = parentId; t.sectionId = sectionId; t.position = position;
-      tasks.filter((k) => k.parentId === t.id).forEach((k) => (k.listId = listId));
+      descendants(t.id).forEach((k) => (k.listId = listId));
       notify(); return t;
     },
-    remove(taskId: string): void { tasks = tasks.filter((t) => t.id !== taskId && t.parentId !== taskId); notify(); },
+    remove(taskId: string): void { const gone = new Set([taskId, ...descendants(taskId).map((k) => k.id)]); tasks = tasks.filter((t) => !gone.has(t.id)); notify(); },
+    alarms: async (taskId: string): Promise<number[]> => [...(alarmMap.get(find(taskId).id) ?? [])],
+    setAlarms(taskId: string, minutes: number[]): number[] {
+      const t = find(taskId);
+      const list = [...new Set(minutes)].sort((a, b) => a - b);
+      if (list.length > 10 || list.some((m) => m < 0 || m > 525600)) throw { code: "invalid", message: "" };
+      alarmMap.set(t.id, list); t.remindMinutes = list[0] ?? null; notify(); return list;
+    },
   };
 }
 

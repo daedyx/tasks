@@ -55,3 +55,22 @@ describe("Aufgaben sortieren", () => {
     expect(positionBefore([a], "unbekannt")).toBe(2);
   });
 });
+
+describe("Unteraufgaben über mehrere Ebenen", () => {
+  it("ordnet jede Ebene in Handreihenfolge direkt unter ihre Oberaufgabe", () => {
+    const a = task("A");
+    const a1 = task("A1", { parentId: a.id });
+    const b = task("B");
+    const a11 = task("A11", { parentId: a1.id });
+    const a2 = task("A2", { parentId: a.id });
+    expect(titles(sortTasks([a, b, a2, a11, a1], "hand"))).toEqual(["A", "A1", "A11", "A2", "B"]);
+  });
+
+  it("sortiert nur die obersten Aufgaben nach Titel, der Unterbaum folgt unverändert", () => {
+    const z = task("Z");
+    const z1 = task("Zz", { parentId: z.id });
+    const z11 = task("Aa", { parentId: z1.id });
+    const a = task("A");
+    expect(titles(sortTasks([z, z1, z11, a], "title"))).toEqual(["A", "Z", "Zz", "Aa"]);
+  });
+});

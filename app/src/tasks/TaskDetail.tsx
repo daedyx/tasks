@@ -1,21 +1,23 @@
 import { useState, type FormEvent } from "react";
 import { t } from "../i18n";
 import { dueDay, dueTime, makeDue } from "./dueDay";
+import { AlarmFields } from "./AlarmFields";
 import { RepeatFields } from "./RepeatFields";
 import { useDebouncedField } from "./useDebouncedField";
 import type { Priority, Section, Task, TaskPatch } from "./types";
 
-const REMINDERS: [number, string][] = [
-  [0, "tasks.reminder.at_due"],
-  [5, "tasks.reminder.min_5"],
-  [30, "tasks.reminder.min_30"],
-  [60, "tasks.reminder.hour_1"],
-  [1440, "tasks.reminder.day_1"],
-];
-
 type Props = {
   task: Task;
+  /** Direkte Unteraufgaben */
   subtasks: Task[];
+  /** Oberaufgabe (bei Unteraufgaben), sonst null */
+  parent: Task | null;
+  /** Erinnerungen in Minuten vor der Fälligkeit */
+  alarms: number[];
+  /** false auf der tiefsten erlaubten Ebene */
+  canAddSubtask: boolean;
+  onAlarms: (minutes: number[]) => void;
+  onSelectTask: (id: string) => void;
   /** Abschnitte der Liste der Aufgabe (leer = keine Auswahl) */
   sections: Section[];
   onPatch: (patch: TaskPatch) => void;
@@ -27,7 +29,7 @@ type Props = {
 };
 
 /** Einzelheiten einer Aufgabe. Texte werden beim Verlassen des Feldes gespeichert, alles andere sofort. */
-export function TaskDetail({ task, subtasks, sections, onPatch, onMoveSection, onToggle, onAddSubtask, onDelete, onClose }: Props) {
+export function TaskDetail({ task, subtasks, parent, alarms, canAddSubtask, onAlarms, onSelectTask, sections, onPatch, onMoveSection, onToggle, onAddSubtask, onDelete, onClose }: Props) {
   const [title, setTitle] = useState(task.title);
   const [notes, setNotes] = useState(task.notes);
   const [sub, setSub] = useState("");
@@ -47,6 +49,11 @@ export function TaskDetail({ task, subtasks, sections, onPatch, onMoveSection, o
   return (
     <aside className="taskdetail" aria-label={t("tasks.detail.label")}>
       <div className="taskdetail__bar">
+        {parent && (
+          <button type="button" className="tasks__btn" aria-label={t("tasks.detail.to_parent", { title: parent.title })} onClick={() => onSelectTask(parent.id)}>
+            {t("tasks.detail.to_parent_short")}
+          </button>
+        )}
         <button type="button" className="tasks__btn" onClick={onClose}>
           {t("tasks.detail.close")}
         </button>
@@ -97,22 +104,7 @@ export function TaskDetail({ task, subtasks, sections, onPatch, onMoveSection, o
           ))}
         </select>
       </label>
-      <label className="taskdetail__field">
-        <span>{t("tasks.detail.reminder")}</span>
-        <select
-          value={task.remindMinutes ?? ""}
-          disabled={!day}
-          onChange={(e) => onPatch({ remind_minutes: e.target.value === "" ? null : Number(e.target.value) })}
-        >
-          <option value="">{t("tasks.detail.reminder_none")}</option>
-          {REMINDERS.map(([m, key]) => (
-            <option key={m} value={m}>
-              {t(key)}
-            </option>
-          ))}
-        </select>
-        {!day && <small>{t("tasks.detail.reminder_needs_due")}</small>}
-      </label>
+      <AlarmFields minutes={alarms} disabled={!day} onChange={onAlarms} />
       <RepeatFields value={task.repeat} onChange={(rule) => onPatch({ repeat_rule: rule })} />
       {/* Vorbereitet für die Zusammenarbeit, ohne Funktion */}
       <label className="taskdetail__field">
@@ -122,8 +114,7 @@ export function TaskDetail({ task, subtasks, sections, onPatch, onMoveSection, o
         </select>
         <small id="assignee-soon">{t("tasks.assignee.soon")}</small>
       </label>
-      {!task.parentId && (
-        <section className="taskdetail__group" aria-label={t("tasks.detail.subtasks")}>
+      <section className="taskdetail__group" aria-label={t("tasks.detail.subtasks")}>
           <h3>{t("tasks.detail.subtasks")}</h3>
           <ul className="taskdetail__subs">
             {subtasks.map((k) => (
@@ -132,17 +123,23 @@ export function TaskDetail({ task, subtasks, sections, onPatch, onMoveSection, o
                   <input type="checkbox" checked={k.doneAt !== null} onChange={() => onToggle(k.id)} />
                   <span data-done={k.doneAt !== null || undefined}>{k.title}</span>
                 </label>
+                <button type="button" className="tasks__btn" aria-label={t("tasks.detail.open_subtask", { title: k.title })} onClick={() => onSelectTask(k.id)}>
+                  {t("tasks.detail.open_subtask_short")}
+                </button>
               </li>
             ))}
           </ul>
-          <form className="taskdetail__addsub" onSubmit={addSub}>
-            <input type="text" aria-label={t("tasks.detail.add_subtask")} placeholder={t("tasks.detail.subtask_placeholder")} value={sub} onChange={(e) => setSub(e.target.value)} />
-            <button type="submit" className="tasks__btn" disabled={!sub.trim()}>
-              {t("tasks.add.button")}
-            </button>
-          </form>
+          {canAddSubtask ? (
+            <form className="taskdetail__addsub" onSubmit={addSub}>
+              <input type="text" aria-label={t("tasks.detail.add_subtask")} placeholder={t("tasks.detail.subtask_placeholder")} value={sub} onChange={(e) => setSub(e.target.value)} />
+              <button type="submit" className="tasks__btn" disabled={!sub.trim()}>
+                {t("tasks.add.button")}
+              </button>
+            </form>
+          ) : (
+            <small>{t("tasks.detail.no_subtasks_here")}</small>
+          )}
         </section>
-      )}
       <button type="button" className="tasks__btn tasks__btn--danger" onClick={onDelete}>
         {t("tasks.detail.delete")}
       </button>

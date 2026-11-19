@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { boardColumns, reorderedSectionIds, subtaskProgress } from "./boardModel";
+import { boardColumns, reorderedSectionIds, subtaskProgress, taskDepths } from "./boardModel";
 import type { Section, Task } from "./types";
 
 let n = 0;
@@ -61,5 +61,25 @@ describe("Reihenfolge der Abschnitte", () => {
   it("ans Ende bei fehlendem Ziel und unverändert bei sich selbst", () => {
     expect(reorderedSectionIds(s, "a", null)).toEqual(["b", "c", "a"]);
     expect(reorderedSectionIds(s, "b", "b")).toEqual(["a", "b", "c"]);
+  });
+});
+
+describe("Unterbaum über mehrere Ebenen", () => {
+  const p = task("P");
+  const k = task("K", { parentId: p.id, doneAt: 1 });
+  const g = task("G", { parentId: k.id });
+  const g2 = task("G2", { parentId: k.id, doneAt: 2 });
+
+  it("zählt an jeder Oberaufgabe alle Nachfahren", () => {
+    const m = subtaskProgress([p, k, g, g2]);
+    expect(m.get(p.id)).toEqual([2, 3]);
+    expect(m.get(k.id)).toEqual([1, 2]);
+    expect(m.has(g.id)).toBe(false);
+  });
+
+  it("gibt die Ebene je Aufgabe an (0 = oberste); fehlende Oberaufgabe zählt als oberste", () => {
+    const d = taskDepths([p, k, g]);
+    expect([d.get(p.id), d.get(k.id), d.get(g.id)]).toEqual([0, 1, 2]);
+    expect(taskDepths([g]).get(g.id)).toBe(0);
   });
 });

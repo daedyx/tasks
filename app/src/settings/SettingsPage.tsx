@@ -1,3 +1,4 @@
+import { BackgroundSettings } from "../background/BackgroundSettings";
 import { t } from "../i18n";
 import type { DarkStyle } from "../theme/darkStyle";
 import { DarkStyleSection } from "./DarkStyleSection";
@@ -16,6 +17,7 @@ export function SettingsPage({ darkStyle, onDarkStyle, onReset }: Props) {
         <button type="button" className="cbtn" onClick={onReset}>
           {t("settings.reset")}
         </button>
+        <BackgroundSettings />
         <UpdatesSettings />
       </div>
     </div>

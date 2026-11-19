@@ -1,4 +1,4 @@
-import type { HTMLAttributes } from "react";
+import type { CSSProperties, HTMLAttributes } from "react";
 import { t } from "../i18n";
 import { dueLabel } from "./dueLabel";
 import type { Task } from "./types";
@@ -6,8 +6,8 @@ import type { Task } from "./types";
 type Props = {
   task: Task;
   selected: boolean;
-  /** Unteraufgaben: eingerückt */
-  nested: boolean;
+  /** Ebene der Aufgabe in der Ansicht (0 = oberste); tiefere Ebenen sind weiter eingerückt */
+  depth: number;
   /** (erledigt, gesamt) der Unteraufgaben; null ohne Unteraufgaben */
   progress: [number, number] | null;
   onSelect: () => void;
@@ -17,11 +17,11 @@ type Props = {
 };
 
 /** Eine Aufgabenzeile: Abhaken, Titel, Fälligkeit, Priorität, Platz für den späteren Zuständigen. */
-export function TaskRow({ task, selected, nested, progress, onSelect, onToggle, dnd }: Props) {
+export function TaskRow({ task, selected, depth, progress, onSelect, onToggle, dnd }: Props) {
   const done = task.doneAt !== null;
   const due = dueLabel(task, new Date());
   return (
-    <li {...dnd} className="taskrow" data-selected={selected || undefined} data-done={done || undefined} data-nested={nested || undefined}>
+    <li {...dnd} className="taskrow" data-selected={selected || undefined} data-done={done || undefined} data-depth={depth > 0 ? depth : undefined} style={depth > 0 ? ({ "--depth": depth } as CSSProperties) : undefined}>
       <button
         type="button"
         role="checkbox"

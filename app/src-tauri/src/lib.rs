@@ -1,3 +1,4 @@
+mod background;
 mod commands;
 mod commands_tasks;
 #[cfg(test)]
@@ -16,6 +17,15 @@ pub struct AppState {
     pub db: Mutex<Connection>,
 }
 
+#[cfg(desktop)]
+fn show_main(app: &tauri::AppHandle) {
+    if let Some(w) = app.get_webview_window("main") {
+        let _ = w.show();
+        let _ = w.unminimize();
+        let _ = w.set_focus();
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     #[allow(unused_mut)]
@@ -23,7 +33,14 @@ pub fn run() {
         .plugin(tauri_plugin_notification::init());
     #[cfg(desktop)]
     {
-        builder = builder.plugin(tauri_plugin_process::init());
+        builder = builder
+            // Muss zuerst stehen: ein zweiter Start öffnet sonst dieselbe Datenbank ein zweites Mal
+            .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| show_main(app)))
+            .plugin(tauri_plugin_process::init())
+            .plugin(tauri_plugin_autostart::init(
+                tauri_plugin_autostart::MacosLauncher::LaunchAgent,
+                Some(vec![background::HIDDEN_ARG]),
+            ));
     }
 
     // Konnektor für Claude: nur in Entwicklungs-Builds und nur auf diesem Rechner
@@ -41,6 +58,12 @@ pub fn run() {
             let conn = db::open_and_migrate(&dir.join(db::DB_FILE), &secrets)?;
             app.manage(AppState { db: Mutex::new(conn) });
             tasks::background::start(app.handle().clone());
+            #[cfg(desktop)]
+            if background::launched_hidden(&std::env::args().collect::<Vec<_>>()) {
+                if let Some(w) = app.get_webview_window("main") {
+                    let _ = w.hide();
+                }
+            }
 
             // Updater erst einhängen, wenn ein Update-Schlüssel eingetragen ist (sonst wäre die Konfiguration ungültig).
             #[cfg(desktop)]
@@ -73,6 +96,8 @@ pub fn run() {
             commands_tasks::task_toggle_done,
             commands_tasks::task_move,
             commands_tasks::task_delete,
+            commands_tasks::task_alarms_get,
+            commands_tasks::task_alarms_set,
             commands_tasks::task_section_list,
             commands_tasks::task_section_create,
             commands_tasks::task_section_rename,

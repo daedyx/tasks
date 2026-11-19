@@ -36,11 +36,11 @@ fn the_dev_connector_is_optional_and_off_by_default() {
 }
 
 #[test]
-fn the_core_comes_from_git_with_a_fixed_tag() {
+fn the_core_comes_from_git_with_a_fixed_tag_or_commit() {
     let m = manifest();
     let line = m.lines().find(|l| l.starts_with("daedyx-tasks-core")).expect("Kern fehlt");
     assert!(line.contains("git = \"https://github.com/daedyx/core\""), "{line}");
-    assert!(line.contains("tag = \""), "Kern muss auf einen Tag zeigen: {line}");
+    assert!(line.contains("tag = \"") || line.contains("rev = \""), "Kern muss auf einen Tag oder Commit zeigen: {line}");
     assert!(!line.contains("path ="), "Pfad-Einbindung baut in der Pipeline nicht: {line}");
 }
 
@@ -91,4 +91,39 @@ fn dev_builds_use_their_own_data_folder_and_vault_service() {
     assert_eq!(id, "de.daedyx.tasks.dev");
     assert_ne!(id, conf()["identifier"].as_str().unwrap());
     assert_eq!(crate::secrets::SERVICE == "daedyx-tasks-dev", cfg!(feature = "dev-bridge"));
+}
+
+#[test]
+fn background_run_has_tray_autostart_single_instance_and_permissions() {
+    let m = manifest();
+    let tauri_line = m.lines().find(|l| l.starts_with("tauri = ")).unwrap();
+    assert!(tauri_line.contains("tray-icon"), "Infobereich braucht das Merkmal tray-icon: {tauri_line}");
+    assert!(m.contains("tauri-plugin-autostart"), "Autostart-Plugin fehlt");
+    assert!(m.contains("tauri-plugin-single-instance"), "Einzelinstanz fehlt (zweiter Start würde dieselbe Datenbank öffnen)");
+
+    let text = std::fs::read_to_string(root().join("capabilities/default.json")).unwrap();
+    let caps: serde_json::Value = serde_json::from_str(&text).unwrap();
+    let perms: Vec<&str> = caps["permissions"].as_array().unwrap().iter().filter_map(|p| p.as_str()).collect();
+    for need in [
+        "core:tray:default",
+        "core:menu:default",
+        "core:window:allow-hide",
+        "core:window:allow-show",
+        "core:window:allow-unminimize",
+        "core:window:allow-set-focus",
+        "process:allow-exit",
+        "autostart:allow-enable",
+        "autostart:allow-disable",
+        "autostart:allow-is-enabled",
+    ] {
+        assert!(perms.contains(&need), "Berechtigung fehlt: {need}");
+    }
+}
+
+#[test]
+fn a_hidden_start_is_recognised_from_the_arguments() {
+    let args = |v: &[&str]| v.iter().map(|s| s.to_string()).collect::<Vec<_>>();
+    assert!(crate::background::launched_hidden(&args(&["daedyx-tasks.exe", "--hidden"])));
+    assert!(!crate::background::launched_hidden(&args(&["daedyx-tasks.exe"])));
+    assert!(!crate::background::launched_hidden(&args(&["daedyx-tasks.exe", "--hiddenx"])));
 }
