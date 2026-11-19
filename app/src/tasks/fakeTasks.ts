@@ -1,20 +1,11 @@
 // Fake-Kern für Aufgaben: nur im Entwicklungs- und Testbetrieb ohne Tauri (siehe `api.ts`), erfundene Daten.
 import { dayText, dueDay } from "./dueDay";
-import type { Priority, RepeatRule, Section, Task, TaskList, TaskPatch, View, ViewCount } from "./types";
+import { nextDue } from "./repeatNext";
+import type { Priority, Section, Task, TaskList, TaskPatch, View, ViewCount } from "./types";
 
 export type FakeTasks = ReturnType<typeof createFakeTasks>;
 
 const addDays = (d: Date, n: number): Date => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
-
-function nextDue(rule: RepeatRule, day: string): string {
-  const [y, m, d] = day.split("-").map(Number);
-  const base = new Date(y, m - 1, d);
-  const n = Math.max(1, rule.interval);
-  if (rule.kind === "daily") return dayText(addDays(base, n));
-  if (rule.kind === "weekly") return dayText(addDays(base, 7 * n));
-  if (rule.kind === "monthly") return dayText(new Date(y, m - 1 + n, Math.min(d, 28)));
-  return dayText(new Date(y + n, m - 1, Math.min(d, 28)));
-}
 
 export function createFakeTasks(now: () => Date = () => new Date()) {
   let seq = 0;

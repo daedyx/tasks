@@ -138,6 +138,7 @@
   "tasks.repeat.unit_monthly": "Monate",
   "tasks.repeat.unit_yearly": "Jahre",
   "tasks.repeat.weekdays": "An diesen Wochentagen",
+  "tasks.repeat.month_day": "Fester Tag im Monat (1–31)",
   "tasks.repeat.from_done": "Ab dem Abhaken zählen statt ab der Fälligkeit",
   "tasks.weekday.1": "Mo",
   "tasks.weekday.2": "Di",

@@ -3,7 +3,8 @@ export type View = "list" | "today" | "planned" | "overdue" | "all" | "done";
 export type RepeatKind = "daily" | "weekly" | "monthly" | "yearly";
 export type Priority = 0 | 1 | 2 | 3;
 
-export type RepeatRule = { kind: RepeatKind; interval: number; weekdays: number[]; fromDone: boolean };
+/** `monthDay` (1–31): fester Tag im Monat für monatlich/jährlich; kurze Monate nehmen den letzten Tag, der Anker bleibt. */
+export type RepeatRule = { kind: RepeatKind; interval: number; weekdays: number[]; fromDone: boolean; monthDay?: number | null };
 
 export type TaskList = { id: string; name: string; color: string; position: number; ownerId: string | null };
 

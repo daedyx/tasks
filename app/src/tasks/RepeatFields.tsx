@@ -22,7 +22,17 @@ export function RepeatFields({ value, onChange }: Props) {
         value={value?.kind ?? ""}
         onChange={(e) => {
           const kind = e.target.value as RepeatKind | "";
-          onChange(kind ? { kind, interval: value?.interval ?? 1, weekdays: kind === "weekly" ? (value?.weekdays ?? []) : [], fromDone: value?.fromDone ?? false } : null);
+          onChange(
+            kind
+              ? {
+                  kind,
+                  interval: value?.interval ?? 1,
+                  weekdays: kind === "weekly" ? (value?.weekdays ?? []) : [],
+                  fromDone: value?.fromDone ?? false,
+                  ...(kind === "monthly" || kind === "yearly" ? { monthDay: value?.monthDay ?? null } : {}),
+                }
+              : null,
+          );
         }}
       >
         <option value="">{t("tasks.repeat.none")}</option>
@@ -53,6 +63,19 @@ export function RepeatFields({ value, onChange }: Props) {
                 </button>
               ))}
             </div>
+          )}
+          {(value.kind === "monthly" || value.kind === "yearly") && (
+            <label className="taskdetail__inline">
+              <span>{t("tasks.repeat.month_day")}</span>
+              <input
+                type="number"
+                min={1}
+                max={31}
+                aria-label={t("tasks.repeat.month_day")}
+                value={value.monthDay ?? ""}
+                onChange={(e) => set({ monthDay: e.target.value === "" ? null : Math.max(1, Math.min(31, Math.round(Number(e.target.value)) || 1)) })}
+              />
+            </label>
           )}
           <label className="taskdetail__inline">
             <input type="checkbox" checked={value.fromDone} onChange={(e) => set({ fromDone: e.target.checked })} />
