@@ -17,3 +17,6 @@ dist-release/
 # Arbeitsanweisungen für Claude bleiben lokal, nie ins Git
 CLAUDE.md
 .claude/
+
+# Lokale Werkzeug-Konfiguration, nicht veröffentlichen
+.mcp.json
