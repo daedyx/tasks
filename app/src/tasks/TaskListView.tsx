@@ -1,6 +1,6 @@
 import { useMemo, useState, type FormEvent, type ReactNode } from "react";
 import { t } from "../i18n";
-import { subtaskProgress } from "./boardModel";
+import { subtaskProgress, taskDepths } from "./boardModel";
 import { sortTasks, SORT_MODES, type SortMode } from "./sorting";
 import { TaskRow } from "./TaskRow";
 import type { Task } from "./types";
@@ -31,7 +31,7 @@ export function TaskListView({ title, tasks, sort, onSort, selectedId, emptyText
   const [dragId, setDragId] = useState<string | null>(null);
   const sorted = useMemo(() => sortTasks(tasks, sort), [tasks, sort]);
   const progress = useMemo(() => subtaskProgress(tasks), [tasks]);
-  const ids = useMemo(() => new Set(tasks.map((x) => x.id)), [tasks]);
+  const depths = useMemo(() => taskDepths(tasks), [tasks]);
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
@@ -86,7 +86,7 @@ export function TaskListView({ title, tasks, sort, onSort, selectedId, emptyText
             <TaskRow
               key={task.id}
               task={task}
-              nested={!!task.parentId && ids.has(task.parentId)}
+              depth={depths.get(task.id) ?? 0}
               progress={progress.get(task.id) ?? null}
               selected={task.id === selectedId}
               onSelect={() => onSelect(task.id)}

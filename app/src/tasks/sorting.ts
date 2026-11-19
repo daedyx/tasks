@@ -20,14 +20,22 @@ function compare(mode: SortMode): (a: Task, b: Task) => number {
   }
 }
 
-/** Sortiert die obersten Aufgaben nach `mode`; Unteraufgaben bleiben in Handreihenfolge direkt nach ihrer Oberaufgabe. */
+/** Sortiert die obersten Aufgaben nach `mode`; jeder Unterbaum folgt in Handreihenfolge direkt nach seiner Oberaufgabe. */
 export function sortTasks(tasks: readonly Task[], mode: SortMode): Task[] {
   const kids = new Map<string, Task[]>();
   for (const t of tasks) if (t.parentId) kids.set(t.parentId, [...(kids.get(t.parentId) ?? []), t]);
   const ids = new Set(tasks.map((t) => t.id));
+  const out: Task[] = [];
+  const seen = new Set<string>();
+  const walk = (t: Task) => {
+    if (seen.has(t.id)) return;
+    seen.add(t.id);
+    out.push(t);
+    for (const k of [...(kids.get(t.id) ?? [])].sort((x, y) => x.position - y.position)) walk(k);
+  };
   // Unteraufgaben, deren Oberaufgabe nicht in der Ansicht ist (z. B. „Heute“), zählen als oberste
-  const top = tasks.filter((t) => !t.parentId || !ids.has(t.parentId)).sort(compare(mode));
-  return top.flatMap((t) => [t, ...(kids.get(t.id) ?? []).sort((a, b) => a.position - b.position)]);
+  tasks.filter((t) => !t.parentId || !ids.has(t.parentId)).sort(compare(mode)).forEach(walk);
+  return out;
 }
 
 /** Position zwischen zwei Nachbarn (Bruchzahl); `before`/`after` fehlen am Rand. */

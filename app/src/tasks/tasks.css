@@ -240,8 +240,8 @@
   background: var(--bg-selected);
 }
 
-.taskrow[data-nested] {
-  margin-left: var(--space-4);
+.taskrow[data-depth] {
+  margin-left: calc(var(--space-4) * var(--depth));
 }
 
 .taskrow__check {

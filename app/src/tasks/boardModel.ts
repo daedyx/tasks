@@ -20,15 +20,30 @@ export function boardColumns(tasks: readonly Task[], sections: readonly Section[
   return loose.length > 0 || sorted.length === 0 ? [{ id: null, section: null, cards: loose }, ...columns] : columns;
 }
 
-/** Je Oberaufgabe (erledigt, gesamt) der Unteraufgaben. */
+/** Je Oberaufgabe (erledigt, gesamt) aller Unteraufgaben, auch der tieferen Ebenen. */
 export function subtaskProgress(tasks: readonly Task[]): Map<string, [number, number]> {
+  const byId = new Map(tasks.map((t) => [t.id, t]));
   const m = new Map<string, [number, number]>();
   for (const k of tasks) {
-    if (!k.parentId) continue;
-    const [d, n] = m.get(k.parentId) ?? [0, 0];
-    m.set(k.parentId, [d + (k.doneAt !== null ? 1 : 0), n + 1]);
+    const seen = new Set<string>();
+    for (let p = k.parentId ? byId.get(k.parentId) : undefined; p && !seen.has(p.id); p = p.parentId ? byId.get(p.parentId) : undefined) {
+      seen.add(p.id);
+      const [d, n] = m.get(p.id) ?? [0, 0];
+      m.set(p.id, [d + (k.doneAt !== null ? 1 : 0), n + 1]);
+    }
   }
   return m;
+}
+
+/** Ebene jeder Aufgabe in der Ansicht (0 = oberste). Fehlt die Oberaufgabe in der Ansicht, zählt die Aufgabe als oberste. */
+export function taskDepths(tasks: readonly Task[]): Map<string, number> {
+  const byId = new Map(tasks.map((t) => [t.id, t]));
+  const depth = (t: Task, seen: Set<string>): number => {
+    const parent = t.parentId ? byId.get(t.parentId) : undefined;
+    if (!parent || seen.has(parent.id)) return 0;
+    return 1 + depth(parent, seen.add(t.id));
+  };
+  return new Map(tasks.map((t) => [t.id, depth(t, new Set())]));
 }
 
 /** IDs der Abschnitte nach dem Verschieben von `movedId` vor `beforeId` (null = ans Ende). */

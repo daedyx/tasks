@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { listSections, listTaskLists, onTasksChanged, queryTasks, searchTasks, taskCounts } from "./api";
+import { getTaskAlarms, listSections, listTaskLists, onTasksChanged, queryTasks, searchTasks, taskCounts } from "./api";
 import { toTaskError, type TaskError } from "./errors";
 import type { Section, Task, TaskList, View, ViewCount } from "./types";
 
@@ -43,6 +43,7 @@ const NO_LISTS: TaskList[] = [];
 const NO_COUNTS: ViewCount[] = [];
 const NO_TASKS: Task[] = [];
 const NO_SECTIONS: Section[] = [];
+const NO_ALARMS: number[] = [];
 
 export const useTaskLists = () => useLive(listTaskLists, NO_LISTS, "lists");
 export const useViewCounts = () => useLive(taskCounts, NO_COUNTS, "counts");
@@ -54,3 +55,6 @@ export const useTaskSearch = (query: string | null) =>
 /** Abschnitte einer Liste (leer ohne Liste); kann kurz noch die der vorigen Liste zeigen, daher nach `listId` filtern. */
 export const useSections = (listId: string | null) =>
   useLive(() => (listId ? listSections(listId) : Promise.resolve(NO_SECTIONS)), NO_SECTIONS, `sections/${listId ?? ""}`);
+/** Erinnerungen einer Aufgabe (leer ohne Aufgabe). */
+export const useTaskAlarms = (taskId: string | null) =>
+  useLive(() => (taskId ? getTaskAlarms(taskId) : Promise.resolve(NO_ALARMS)), NO_ALARMS, `alarms/${taskId ?? ""}`);

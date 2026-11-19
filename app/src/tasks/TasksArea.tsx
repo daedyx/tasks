@@ -8,6 +8,8 @@ import { taskErrorText, toTaskError } from "./errors";
 import * as api from "./api";
 import { parseQuickTask } from "./quickEntry";
 import { useTaskSearchRequest } from "./searchRequest";
+import { taskDepths } from "./boardModel";
+import { TASKS_MAX_DEPTH } from "./limits";
 import { positionBefore, type SortMode } from "./sorting";
 import { TaskBoard } from "./TaskBoard";
 import { TaskConfirm } from "./TaskConfirm";
@@ -16,7 +18,7 @@ import { TaskListView } from "./TaskListView";
 import { TaskSidebar, type Selection } from "./TaskSidebar";
 import type { TaskList, TaskPatch } from "./types";
 import { useBoardMode } from "./useBoardMode";
-import { useSections, useTaskLists, useTaskSearch, useTaskView, useViewCounts } from "./useTasksData";
+import { useSections, useTaskAlarms, useTaskLists, useTaskSearch, useTaskView, useViewCounts } from "./useTasksData";
 import { ViewSwitch } from "./ViewSwitch";
 import "../ui/toolbar.css";
 import "./tasks.css";
@@ -45,6 +47,9 @@ export function TasksArea() {
 
   const shown = query !== null ? found.data : view.data;
   const task = selected ? (fullList.data.find((x) => x.id === selected.id) ?? shown.find((x) => x.id === selected.id) ?? null) : null;
+  const alarms = useTaskAlarms(task?.id ?? null);
+  const depth = task ? (taskDepths(fullList.data).get(task.id) ?? 0) : 0;
+  const parent = task?.parentId ? (fullList.data.find((x) => x.id === task.parentId) ?? null) : null;
   const subtasks = useMemo(() => fullList.data.filter((x) => x.parentId === selected?.id), [fullList.data, selected]);
 
   const fail = (e: unknown) => setError(taskErrorText(toTaskError(e).code));
@@ -159,6 +164,11 @@ export function TasksArea() {
           key={task.id}
           task={task}
           subtasks={subtasks}
+          parent={parent}
+          alarms={alarms.data}
+          canAddSubtask={depth < TASKS_MAX_DEPTH}
+          onAlarms={(minutes) => void run(api.setTaskAlarms(task.id, minutes))}
+          onSelectTask={(id) => setSelected({ id, listId: task.listId })}
           sections={detailSections.data.filter((s) => s.listId === task.listId)}
           onMoveSection={(sectionId) => void run(api.moveTask(task.id, task.listId, task.parentId, sectionId, task.position))}
           onPatch={(p) => void run(api.updateTask(task.id, p))}
