@@ -4,7 +4,7 @@ Dieses Projekt steht unter der MIT-Lizenz (siehe `LICENSE`). Es verwendet die fo
 
 Erzeugt aus den Sperrdateien (`Cargo.lock`, `node_modules`); bei Änderungen der Abhängigkeiten neu erzeugen.
 
-## Rust-Bibliotheken (588)
+## Rust-Bibliotheken (597)
 
 | Paket | Version | Lizenz | Quelle |
 |---|---|---|---|
@@ -27,6 +27,7 @@ Erzeugt aus den Sperrdateien (`Cargo.lock`, `node_modules`); bei Änderungen der
 | atk | 0.18.2 | MIT | https://github.com/gtk-rs/gtk3-rs |
 | atk-sys | 0.18.2 | MIT | https://github.com/gtk-rs/gtk3-rs |
 | atomic-waker | 1.1.2 | Apache-2.0 OR MIT | https://github.com/smol-rs/atomic-waker |
+| auto-launch | 0.6.0 | MIT | https://github.com/zzzgydi/auto-launch.git |
 | autocfg | 1.5.1 | Apache-2.0 OR MIT | https://github.com/cuviper/autocfg |
 | base64 | 0.21.7 | MIT OR Apache-2.0 | https://github.com/marshallpierce/rust-base64 |
 | base64 | 0.22.1 | MIT OR Apache-2.0 | https://github.com/marshallpierce/rust-base64 |
@@ -96,6 +97,7 @@ Erzeugt aus den Sperrdateien (`Cargo.lock`, `node_modules`); bei Änderungen der
 | derive_more-impl | 2.1.1 | MIT | https://github.com/JelteF/derive_more |
 | digest | 0.10.7 | MIT OR Apache-2.0 | https://github.com/RustCrypto/traits |
 | digest | 0.11.3 | MIT OR Apache-2.0 | https://github.com/RustCrypto/traits |
+| dirs | 6.0.0 | MIT OR Apache-2.0 | https://github.com/soc/dirs-rs |
 | dirs | 7.0.0 | MIT OR Apache-2.0 | https://codeberg.org/dirs/dirs-rs |
 | dirs-sys | 0.5.0 | MIT OR Apache-2.0 | https://github.com/dirs-dev/dirs-sys-rs |
 | dispatch2 | 0.3.1 | Zlib OR Apache-2.0 OR MIT | https://github.com/madsmtm/objc2 |
@@ -247,6 +249,7 @@ Erzeugt aus den Sperrdateien (`Cargo.lock`, `node_modules`); bei Änderungen der
 | ndk-context | 0.1.1 | MIT OR Apache-2.0 | https://github.com/rust-windowing/android-ndk-rs |
 | ndk-sys | 0.6.0+11769913 | MIT OR Apache-2.0 | https://github.com/rust-mobile/ndk |
 | new_debug_unreachable | 1.0.6 | MIT | https://github.com/mbrubeck/rust-debug-unreachable |
+| nix | 0.31.4 | MIT | https://github.com/nix-rust/nix |
 | nix | 0.32.0 | MIT | https://github.com/nix-rust/nix |
 | notify-rust | 4.19.0 | MIT OR Apache-2.0 | https://github.com/hoodie/notify-rust |
 | num-conv | 0.2.2 | MIT OR Apache-2.0 | https://github.com/jhpratt/num-conv |
@@ -280,6 +283,8 @@ Erzeugt aus den Sperrdateien (`Cargo.lock`, `node_modules`); bei Änderungen der
 | objc2-osa-kit | 0.3.2 | Zlib OR Apache-2.0 OR MIT | https://github.com/madsmtm/objc2 |
 | objc2-quartz-core | 0.2.2 | MIT | https://github.com/madsmtm/objc2 |
 | objc2-quartz-core | 0.3.2 | Zlib OR Apache-2.0 OR MIT | https://github.com/madsmtm/objc2 |
+| objc2-security | 0.3.2 | Zlib OR Apache-2.0 OR MIT | https://github.com/madsmtm/objc2 |
+| objc2-service-management | 0.3.2 | Zlib OR Apache-2.0 OR MIT | https://github.com/madsmtm/objc2 |
 | objc2-symbols | 0.2.2 | MIT | https://github.com/madsmtm/objc2 |
 | objc2-ui-kit | 0.2.2 | MIT | https://github.com/madsmtm/objc2 |
 | objc2-ui-kit | 0.3.2 | Zlib OR Apache-2.0 OR MIT | https://github.com/madsmtm/objc2 |
@@ -294,6 +299,7 @@ Erzeugt aus den Sperrdateien (`Cargo.lock`, `node_modules`); bei Änderungen der
 | openssl-sys | 0.9.118 | MIT | https://github.com/rust-openssl/rust-openssl |
 | option-ext | 0.2.0 | MPL-2.0 | https://github.com/soc/option-ext.git |
 | ordered-stream | 0.2.0 | MIT OR Apache-2.0 | https://github.com/danieldg/ordered-stream |
+| os_info | 3.15.0 | MIT | https://github.com/stanislav-tkach/os_info |
 | osakit | 0.3.1 | MIT OR Apache-2.0 | https://github.com/mdevils/rust-osakit |
 | pango | 0.18.3 | MIT | https://github.com/gtk-rs/gtk-rs-core |
 | pango-sys | 0.18.0 | MIT | https://github.com/gtk-rs/gtk-rs-core |
@@ -400,6 +406,7 @@ Erzeugt aus den Sperrdateien (`Cargo.lock`, `node_modules`); bei Änderungen der
 | siphasher | 1.0.4 | MIT OR Apache-2.0 | https://github.com/jedisct1/rust-siphash |
 | slab | 0.4.12 | MIT | https://github.com/tokio-rs/slab |
 | smallvec | 1.16.6 | MIT OR Apache-2.0 | https://github.com/smallvec/smallvec |
+| smappservice-rs | 0.1.3 | MIT | https://github.com/gethopp/smappservice-rs |
 | socket2 | 0.6.5 | MIT OR Apache-2.0 | https://github.com/rust-lang/socket2 |
 | softbuffer | 0.4.8 | MIT OR Apache-2.0 | https://github.com/rust-windowing/softbuffer |
 | soup3 | 0.5.0 | MIT | https://gitlab.gnome.org/World/Rust/soup3-rs |
@@ -430,9 +437,11 @@ Erzeugt aus den Sperrdateien (`Cargo.lock`, `node_modules`); bei Änderungen der
 | tauri-codegen | 2.7.6 | Apache-2.0 OR MIT | https://github.com/tauri-apps/tauri |
 | tauri-macros | 2.7.6 | Apache-2.0 OR MIT | https://github.com/tauri-apps/tauri |
 | tauri-plugin | 2.7.4 | Apache-2.0 OR MIT | https://github.com/tauri-apps/tauri |
+| tauri-plugin-autostart | 2.7.0 | Apache-2.0 OR MIT | https://github.com/tauri-apps/plugins-workspace |
 | tauri-plugin-mcp-bridge | 0.13.2 | MIT | https://github.com/hypothesi/mcp-server-tauri |
 | tauri-plugin-notification | 2.8.1 | Apache-2.0 OR MIT | https://github.com/tauri-apps/plugins-workspace |
 | tauri-plugin-process | 2.4.0 | Apache-2.0 OR MIT | https://github.com/tauri-apps/plugins-workspace |
+| tauri-plugin-single-instance | 2.5.5 | Apache-2.0 OR MIT | https://github.com/tauri-apps/plugins-workspace |
 | tauri-plugin-updater | 2.14.1 | Apache-2.0 OR MIT | https://github.com/tauri-apps/plugins-workspace |
 | tauri-runtime | 2.12.4 | Apache-2.0 OR MIT | https://github.com/tauri-apps/tauri |
 | tauri-runtime-wry | 2.12.5 | Apache-2.0 OR MIT | https://github.com/tauri-apps/tauri |
@@ -597,7 +606,7 @@ Erzeugt aus den Sperrdateien (`Cargo.lock`, `node_modules`); bei Änderungen der
 | zvariant_derive | 5.15.1 | MIT | https://github.com/z-galaxy/zbus/ |
 | zvariant_utils | 4.2.0 | MIT | https://github.com/z-galaxy/zbus/ |
 
-## npm-Pakete (112)
+## npm-Pakete (113)
 
 | Paket | Version | Lizenz |
 |---|---|---|
@@ -626,6 +635,7 @@ Erzeugt aus den Sperrdateien (`Cargo.lock`, `node_modules`); bei Änderungen der
 | @tauri-apps/api | 2.12.5 | Apache-2.0 OR MIT |
 | @tauri-apps/cli | 2.12.6 | Apache-2.0 OR MIT |
 | @tauri-apps/cli-win32-x64-msvc | 2.12.6 | Apache-2.0 OR MIT |
+| @tauri-apps/plugin-autostart | 2.7.0 | MIT OR Apache-2.0 |
 | @tauri-apps/plugin-notification | 2.8.1 | MIT OR Apache-2.0 |
 | @tauri-apps/plugin-process | 2.4.0 | MIT OR Apache-2.0 |
 | @tauri-apps/plugin-updater | 2.14.1 | MIT OR Apache-2.0 |
@@ -716,4 +726,4 @@ Erzeugt aus den Sperrdateien (`Cargo.lock`, `node_modules`); bei Änderungen der
 
 ## Symbole und Bilder
 
-- `app/src-tauri/icons/`: **Platzhalter-Symbole.** Der Dateisatz entspricht dem Standard-Ausgabesatz von `tauri icon`; die Herkunft der Bilddateien ist nicht belegt (sie stehen seit dem ersten Commit im Repository). Sie sind **kein** eigenes Markenzeichen von Daedyx und werden vor einer Veröffentlichung durch eigene Symbole ersetzt.
+- `app/src-tauri/icons/` und `docs/brand/`: eigene Zeichnung, aus Code erzeugt (Quellvektoren und Erzeugungsprogramm liegen im Repository, siehe `docs/brand/README.md`). Keine fremden Vorlagen, keine Bildgeneratoren, keine Piktogramm-Sammlung. Sie stehen wie der übrige Code unter der MIT-Lizenz.
