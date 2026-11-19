@@ -1,6 +1,6 @@
 # Release von Daedyx Tasks: bauen, signieren, in das öffentliche Repository daedyx/releases veröffentlichen.
 # Starten: Actions -> Release -> "Run workflow" (Version und Änderungsnotiz eintragen) oder einen Tag v<x.y.z> pushen.
-# Geheimnisse (Repository-Secrets, trägt Björn selbst ein, Anleitung: docs/RELEASE-CI.md):
+# Geheimnisse (Repository-Secrets, trägt Björn selbst ein, Anleitung: docs/RELEASE.md):
 #   TAURI_SIGNING_PRIVATE_KEY, TAURI_SIGNING_PRIVATE_KEY_PASSWORD  Update-Schlüssel der App
 #   DAEDYX_CATALOG_KEY, DAEDYX_KEY_PASSWORD                        Katalog-Schlüssel (Inhalt der Datei) und Passwort
 #   RELEASES_TOKEN                                                 Zugriffstoken mit Schreibrecht nur auf daedyx/releases
@@ -73,7 +73,7 @@ jobs:
           "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
           "notes_file=$file" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
           "skip_tests=$($env:INPUT_SKIP_TESTS -eq 'true')" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
-          if (-not (Test-Path 'release/catalog.pub')) { throw "release/catalog.pub fehlt (öffentlicher Katalog-Schlüssel, siehe docs/RELEASE-CI.md)." }
+          if (-not (Test-Path 'release/catalog.pub')) { throw "release/catalog.pub fehlt (öffentlicher Katalog-Schlüssel, siehe docs/RELEASE.md)." }
 
       - name: Secrets prüfen
         env:
@@ -89,7 +89,7 @@ jobs:
           if (-not $env:S3) { $missing += 'DAEDYX_CATALOG_KEY' }
           if (-not $env:S4) { $missing += 'DAEDYX_KEY_PASSWORD' }
           if (-not $env:S5) { $missing += 'RELEASES_TOKEN' }
-          if ($missing) { throw "Diese Secrets fehlen im Repository: $($missing -join ', ') (Anleitung: docs/RELEASE-CI.md)" }
+          if ($missing) { throw "Diese Secrets fehlen im Repository: $($missing -join ', ') (Anleitung: docs/RELEASE.md)" }
 
       - name: Zugriff auf den privaten Kern einrichten
         env:
