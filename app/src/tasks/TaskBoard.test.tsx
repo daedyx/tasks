@@ -125,4 +125,15 @@ describe("Board einer Liste", () => {
     fireEvent.change(await screen.findByRole("combobox", { name: "Abschnitt" }), { target: { value: "" } });
     await waitFor(() => expect(titlesIn(todo)).toEqual([]));
   });
+
+  it("trägt beliebig viele Abschnitte, behält ihre Reihenfolge und nimmt Karten im letzten auf", async () => {
+    await openBoard();
+    const names = Array.from({ length: 14 }, (_, i) => `Stufe ${i + 1}`);
+    for (const n of names) await addSection(n);
+    const heads = () => within(screen.getByRole("region", { name: "Board Haushalt" })).getAllByRole("heading", { level: 3 }).map((h) => h.textContent);
+    expect(heads()).toEqual(["Ohne Abschnitt", ...names]);
+    fireEvent.dragStart(cardOf("Einkaufen"), { dataTransfer });
+    fireEvent.drop(await column("Stufe 14"), { dataTransfer });
+    await waitFor(() => expect(titlesIn(screen.getByRole("region", { name: "Stufe 14" }))).toEqual(["Einkaufen"]));
+  });
 });
