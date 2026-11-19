@@ -27,7 +27,7 @@ chrono-tz = "0.10"
 iana-time-zone = "0.1"
 tokio = { version = "1", features = ["time"] }
 # Aufgaben-Kern (eigenes privates Repository). Die Release-Pipeline braucht dafür das Secret CORE_READ_TOKEN.
-daedyx-tasks-core = { git = "https://github.com/daedyx/core", tag = "tasks-core-v0.1.0" }
+daedyx-tasks-core = { git = "https://github.com/daedyx/core", rev = "86ea2fc" }
 
 [profile.release]
 codegen-units = 1

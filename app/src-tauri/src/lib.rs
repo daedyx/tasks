@@ -96,6 +96,8 @@ pub fn run() {
             commands_tasks::task_toggle_done,
             commands_tasks::task_move,
             commands_tasks::task_delete,
+            commands_tasks::task_alarms_get,
+            commands_tasks::task_alarms_set,
             commands_tasks::task_section_list,
             commands_tasks::task_section_create,
             commands_tasks::task_section_rename,

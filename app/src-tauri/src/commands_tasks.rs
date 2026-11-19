@@ -2,7 +2,9 @@
 //! Nach jeder Änderung meldet der Kern `tasks://changed` {listId}.
 use crate::commands::CommandError;
 use crate::tasks::zone::zone;
+use crate::tasks::edit_alarms;
 use crate::tasks::edit_done::toggle_done;
+use crate::tasks::limits::TASKS_MAX_DEPTH;
 use crate::tasks::edit_lists as lists;
 use crate::tasks::edit_sections as sections;
 use crate::tasks::edit_tasks as edit;
@@ -113,7 +115,7 @@ pub fn task_search(state: State<crate::AppState>, query: String) -> Result<Vec<T
 
 #[tauri::command]
 pub fn task_create(app: AppHandle, state: State<crate::AppState>, list_id: String, parent_id: Option<String>, fields: Map<String, Value>) -> Result<Task, CommandError> {
-    let t = with_conn(&state, |c| edit::create_task(c, &list_id, parent_id.as_deref(), &fields, now_ms()))?;
+    let t = with_conn(&state, |c| edit::create_task_depth(c, &list_id, parent_id.as_deref(), &fields, now_ms(), TASKS_MAX_DEPTH))?;
     changed(&app, Some(&list_id));
     Ok(t)
 }
@@ -135,7 +137,7 @@ pub fn task_toggle_done(app: AppHandle, state: State<crate::AppState>, id: Strin
 #[tauri::command]
 pub fn task_move(app: AppHandle, state: State<crate::AppState>, id: String, list_id: String, parent_id: Option<String>, section_id: Option<String>, position: f64) -> Result<Task, CommandError> {
     let old = with_conn(&state, |c| store::task(c, &id))?.list_id;
-    let t = with_conn(&state, |c| edit::move_task(c, &id, &list_id, parent_id.as_deref(), section_id.as_deref(), position, now_ms()))?;
+    let t = with_conn(&state, |c| edit::move_task_depth(c, &id, &list_id, parent_id.as_deref(), section_id.as_deref(), position, now_ms(), TASKS_MAX_DEPTH))?;
     changed(&app, Some(&old));
     changed(&app, Some(&t.list_id));
     Ok(t)
@@ -182,4 +184,22 @@ pub fn task_section_delete(app: AppHandle, state: State<crate::AppState>, id: St
     with_conn(&state, |c| sections::delete_section(c, &id, now_ms()))?;
     changed(&app, Some(&list_id));
     Ok(())
+}
+
+/// Erinnerungen der Aufgabe (Minuten vor der Fälligkeit, aufsteigend).
+#[tauri::command]
+pub fn task_alarms_get(state: State<crate::AppState>, id: String) -> Result<Vec<i64>, CommandError> {
+    with_conn(&state, |c| edit_alarms::alarms(c, &id))
+}
+
+/// Ersetzt die Erinnerungen der Aufgabe (höchstens zehn, doppelte fallen weg).
+#[tauri::command]
+pub fn task_alarms_set(app: AppHandle, state: State<crate::AppState>, id: String, minutes: Vec<i64>) -> Result<Vec<i64>, CommandError> {
+    let list_id = with_conn(&state, |c| store::task(c, &id))?.list_id;
+    let out = with_conn(&state, |c| {
+        edit_alarms::set_alarms(c, &id, &minutes, now_ms())?;
+        edit_alarms::alarms(c, &id)
+    })?;
+    changed(&app, Some(&list_id));
+    Ok(out)
 }

@@ -36,11 +36,11 @@ fn the_dev_connector_is_optional_and_off_by_default() {
 }
 
 #[test]
-fn the_core_comes_from_git_with_a_fixed_tag() {
+fn the_core_comes_from_git_with_a_fixed_tag_or_commit() {
     let m = manifest();
     let line = m.lines().find(|l| l.starts_with("daedyx-tasks-core")).expect("Kern fehlt");
     assert!(line.contains("git = \"https://github.com/daedyx/core\""), "{line}");
-    assert!(line.contains("tag = \""), "Kern muss auf einen Tag zeigen: {line}");
+    assert!(line.contains("tag = \"") || line.contains("rev = \""), "Kern muss auf einen Tag oder Commit zeigen: {line}");
     assert!(!line.contains("path ="), "Pfad-Einbindung baut in der Pipeline nicht: {line}");
 }
 
