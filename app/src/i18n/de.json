@@ -185,5 +185,14 @@
   "pane.resize_tasks": "Breite der Listenleiste ändern",
   "tasks.dialog.cancel": "Abbrechen",
   "app.name": "Daedyx Tasks",
+  "background.title": "Hintergrund und Erinnerungen",
+  "background.keep": "Im Infobereich weiterlaufen, wenn das Fenster geschlossen wird",
+  "background.keep_hint": "So kommen Erinnerungen auch bei geschlossenem Fenster. Beenden geht über das Symbol im Infobereich (rechts unten, „Beenden“).",
+  "background.autostart": "Mit Windows starten",
+  "background.autostart_hint": "Startet Daedyx Tasks beim Anmelden im Hintergrund, damit Erinnerungen nicht ausfallen.",
+  "background.autostart.error": "Der Autostart ließ sich nicht ändern: {message}",
+  "background.tray.tooltip": "Daedyx Tasks",
+  "background.tray.open": "Daedyx Tasks öffnen",
+  "background.tray.quit": "Beenden",
   "settings.reset": "Darstellung zurücksetzen"
 }

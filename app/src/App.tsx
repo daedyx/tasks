@@ -1,4 +1,5 @@
 import { useCallback, useState, type CSSProperties } from "react";
+import { useBackgroundRun } from "./background/useBackgroundRun";
 import { SettingsPage } from "./settings/SettingsPage";
 import { Shell } from "./shell/Shell";
 import { TasksArea } from "./tasks/TasksArea";
@@ -15,6 +16,7 @@ const ACCENT = {
 
 export default function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
+  useBackgroundRun();
   const theme = useTheme();
   const dark = useDarkStyle();
   const toggleSettings = useCallback(() => setSettingsOpen((open) => !open), []);
