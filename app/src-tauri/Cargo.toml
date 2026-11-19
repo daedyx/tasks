@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "Daedyx Tasks"
 authors = ["Daedyx"]
 edition = "2024"
+license = "MIT"
 
 [lib]
 name = "daedyx_tasks_lib"
