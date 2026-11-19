@@ -1,6 +1,6 @@
 # Stand — Daedyx Tasks
 
-Letzte Änderung: 2026-11-19, Paket K3 „Tasks-Gerüst“ (Bau-Chat). Version 0.1.0, nichts veröffentlicht.
+Letzte Änderung: 2026-11-19, Paket K4 Teil 1 „Tasks-Funktionen“ im Zweig `k4-funktionen` (nicht in `main`, Merge entscheidet Björn nach der Abnahme `docs/abnahme-k4.md`). Version 0.1.0, nichts veröffentlicht.
 
 ## Was gebaut ist
 - Tauri-2-Projekt (React/TS + Rust), aus Daedyx Desk `main` (0.6.0, Stand nach Merge von K1) abgeleitet. Nur der Aufgabenbereich (Listen, Abschnitte, Board, Unteraufgaben eine Ebene, Wiederholung, Erinnerung, Smart-Listen) als Hauptfenster, dazu Einstellungen (Dunkelmodus, Über und Updates). Kein Mail, kein Kalender, keine Konten, keine Schnellsuche-Palette.
@@ -8,7 +8,11 @@ Letzte Änderung: 2026-11-19, Paket K3 „Tasks-Gerüst“ (Bau-Chat). Version 0
 - Kern `daedyx-tasks-core` aus `daedyx/core` per Git-Abhängigkeit, Tag `tasks-core-v0.1.0` (= `9d677ee`, Schema-Stand 2).
 - NSIS-Installer pro Benutzer mit `app.json`-Hook; Katalog-Eintrag (`tasks`) und Release-Workflow als Dateien vorbereitet (`scripts/`, `.github/workflows/release.yml`, `release/catalog.pub`).
 
-## Belegt (2026-11-19)
+## K4 (Zweig k4-funktionen), Stand 2026-11-19
+**Gebaut ohne Kernänderung:** Board mit beliebig vielen Abschnitten (Test mit 14); Hintergrundlauf: Symbol im Infobereich (Öffnen, Beenden), „Fenster schließen“ versteckt nur (Schalter, Standard an), Autostart (Argument `--hidden`, Schalter in den Einstellungen), Einzelinstanz (zweiter Start holt das Fenster nach vorn). Code: `app/src/background/`, `app/src-tauri/src/background.rs`, `lib.rs`. Belegt: `npm test` 168 grün, `tsc` sauber, `cargo test` 17 grün (1 ignoriert), Wächtertest für Berechtigungen und Plugins. **Nicht von Hand im echten Fenster geprüft** (Symbol, Benachrichtigung bei geschlossenem Fenster, Autostart): das ist `docs/abnahme-k4.md`.
+**Nicht gebaut, braucht den Kern** (Beschreibung der Änderungen: Notizordner des Masters, `k4-kernaenderungen.md`): Unteraufgaben über mehrere Ebenen (Kernlogik, keine Schema-Erhöhung), Monatstag-Anker (neues JSON-Feld in der Wiederholungsregel), mehrere Erinnerungen (neue Tabelle, Schema-Erhöhung → Desk-Migration plus Wächtertest; Vorschlag: zusammen mit K2 als ein Stand 3). Erst nach K1-Abnahme in Desk und neuem Kern-Tag.
+
+## Belegt (2026-11-19, K3)
 - Rust `cargo test`: 15 grün, 1 ignoriert (echter Tresor, nur von Hand). Darunter: Datenbank verschlüsselt, falscher oder ungültiger Schlüssel, erster Start legt Schema an, zweiter Start behält Daten, neuerer Kern-Stand wird abgelehnt; Wächtertests für Kennung, Dev-Trennung, Installer, Updater, Git-Einbindung.
 - Oberfläche `npm test`: 156 grün (27 Dateien), `tsc` und `npm run build` sauber. App-Test: startet im Aufgabenbereich, Liste anlegen, Aufgabe schreiben und abhaken, Einstellungen, Designwechsel (alles gegen das Fake-Backend der Oberfläche).
 - Skripte `npm run test:scripts`: 32 grün. Trockenprobe der Veröffentlichung `scripts/ci/test-publish.ps1` ohne Netz (Wegwerf-Schlüssel, Launcher-CLI liest `tasks` im Katalog): bestanden.
