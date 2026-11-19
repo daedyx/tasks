@@ -1,5 +1,7 @@
 # Release von Daedyx Tasks: bauen, signieren, in das öffentliche Repository daedyx/releases veröffentlichen.
 # Starten: Actions -> Release -> "Run workflow" (Version und Änderungsnotiz eintragen) oder einen Tag v<x.y.z> pushen.
+# Trockenlauf: Haken "Trockenlauf" setzen: es wird gebaut, getestet und signiert, aber nichts in daedyx/releases geschrieben
+#   und keine Version zurückgeschrieben; das Setup hängt 3 Tage als Download am Lauf. Nötig sind dann nur die Update-Schlüssel und CORE_READ_TOKEN.
 # Geheimnisse (Repository-Secrets, trägt Björn selbst ein, Anleitung: docs/RELEASE.md):
 #   TAURI_SIGNING_PRIVATE_KEY, TAURI_SIGNING_PRIVATE_KEY_PASSWORD  Update-Schlüssel der App
 #   DAEDYX_CATALOG_KEY, DAEDYX_KEY_PASSWORD                        Katalog-Schlüssel (Inhalt der Datei) und Passwort
@@ -19,6 +21,11 @@ on:
         type: string
       skip_tests:
         description: "Tests überspringen (nur im Notfall)"
+        required: false
+        type: boolean
+        default: false
+      dry_run:
+        description: "Trockenlauf: bauen, testen, signieren, aber NICHT veröffentlichen (das Setup hängt als Download am Lauf)"
         required: false
         type: boolean
         default: false
@@ -57,6 +64,7 @@ jobs:
           INPUT_VERSION: ${{ github.event.inputs.version }}
           INPUT_NOTES: ${{ github.event.inputs.notes }}
           INPUT_SKIP_TESTS: ${{ github.event.inputs.skip_tests }}
+          INPUT_DRY_RUN: ${{ github.event.inputs.dry_run }}
         run: |
           # Eingaben nur über Umgebungsvariablen lesen (nie in den Skripttext einsetzen)
           if ($env:EVENT -eq 'push') {
@@ -73,6 +81,7 @@ jobs:
           "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
           "notes_file=$file" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
           "skip_tests=$($env:INPUT_SKIP_TESTS -eq 'true')" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "dry_run=$($env:INPUT_DRY_RUN -eq 'true')" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
           if (-not (Test-Path 'release/catalog.pub')) { throw "release/catalog.pub fehlt (öffentlicher Katalog-Schlüssel, siehe docs/RELEASE.md)." }
 
       - name: Secrets prüfen
@@ -82,13 +91,17 @@ jobs:
           S3: ${{ secrets.DAEDYX_CATALOG_KEY }}
           S4: ${{ secrets.DAEDYX_KEY_PASSWORD }}
           S5: ${{ secrets.RELEASES_TOKEN }}
+          DRY: ${{ steps.input.outputs.dry_run }}
         run: |
           $missing = @()
           if (-not $env:S1) { $missing += 'TAURI_SIGNING_PRIVATE_KEY' }
           if (-not $env:S2) { $missing += 'TAURI_SIGNING_PRIVATE_KEY_PASSWORD' }
-          if (-not $env:S3) { $missing += 'DAEDYX_CATALOG_KEY' }
-          if (-not $env:S4) { $missing += 'DAEDYX_KEY_PASSWORD' }
-          if (-not $env:S5) { $missing += 'RELEASES_TOKEN' }
+          # Katalog-Schlüssel und Release-Token braucht nur die echte Veröffentlichung, nicht der Trockenlauf
+          if ($env:DRY -ne 'True' -and $env:DRY -ne 'true') {
+            if (-not $env:S3) { $missing += 'DAEDYX_CATALOG_KEY' }
+            if (-not $env:S4) { $missing += 'DAEDYX_KEY_PASSWORD' }
+            if (-not $env:S5) { $missing += 'RELEASES_TOKEN' }
+          }
           if ($missing) { throw "Diese Secrets fehlen im Repository: $($missing -join ', ') (Anleitung: docs/RELEASE.md)" }
 
       - name: Zugriff auf den privaten Kern einrichten
@@ -136,7 +149,16 @@ jobs:
           if ($env:SKIP_TESTS -eq 'True' -or $env:SKIP_TESTS -eq 'true') { $params.SkipTests = $true }
           ./scripts/release.ps1 @params
 
+      - name: Trockenlauf – Setup als Download am Lauf bereitstellen
+        if: steps.input.outputs.dry_run == 'True' || steps.input.outputs.dry_run == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: tasks-trockenlauf-${{ steps.input.outputs.version }}
+          path: ${{ runner.temp }}/tasks-out
+          retention-days: 3
+
       - name: In daedyx/releases veröffentlichen
+        if: steps.input.outputs.dry_run != 'True' && steps.input.outputs.dry_run != 'true'
         env:
           RELEASES_TOKEN: ${{ secrets.RELEASES_TOKEN }}
           DAEDYX_CATALOG_KEY: ${{ secrets.DAEDYX_CATALOG_KEY }}
@@ -152,7 +174,7 @@ jobs:
             -ReleasesRepo $env:RELEASES_REPO
 
       - name: Versionsdateien zurück in den Quellcode schreiben
-        if: github.event_name == 'workflow_dispatch'
+        if: github.event_name == 'workflow_dispatch' && steps.input.outputs.dry_run != 'True' && steps.input.outputs.dry_run != 'true'
         env:
           VERSION: ${{ steps.input.outputs.version }}
         run: |
