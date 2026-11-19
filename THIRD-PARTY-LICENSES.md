@@ -713,3 +713,7 @@ Erzeugt aus den Sperrdateien (`Cargo.lock`, `node_modules`); bei Änderungen der
 | why-is-node-running | 3.2.1 | MIT |
 | xml-name-validator | 5.0.0 | Apache-2.0 |
 | xmlchars | 2.2.0 | MIT |
+
+## Symbole und Bilder
+
+- `app/src-tauri/icons/`: **Platzhalter-Symbole.** Der Dateisatz entspricht dem Standard-Ausgabesatz von `tauri icon`; die Herkunft der Bilddateien ist nicht belegt (sie stehen seit dem ersten Commit im Repository). Sie sind **kein** eigenes Markenzeichen von Daedyx und werden vor einer Veröffentlichung durch eigene Symbole ersetzt.
