@@ -1,6 +1,6 @@
 # Stand — Daedyx Tasks
 
-Letzte Änderung: 2026-11-19, Paket K4 Teil 1 „Tasks-Funktionen“ im Zweig `k4-funktionen` (nicht in `main`, Merge entscheidet Björn nach der Abnahme `docs/abnahme-k4.md`). Version 0.1.0, nichts veröffentlicht.
+Letzte Änderung: 2026-11-19, Paket K4 Teil 1 und 2 „Tasks-Funktionen“ im Zweig `k4-funktionen` (nicht in `main`, Merge entscheidet Björn nach der Abnahme `docs/abnahme-k4.md`). Version 0.1.0, nichts veröffentlicht.
 
 ## Was gebaut ist
 - Tauri-2-Projekt (React/TS + Rust), aus Daedyx Desk `main` (0.6.0, Stand nach Merge von K1) abgeleitet. Nur der Aufgabenbereich (Listen, Abschnitte, Board, Unteraufgaben eine Ebene, Wiederholung, Erinnerung, Smart-Listen) als Hauptfenster, dazu Einstellungen (Dunkelmodus, Über und Updates). Kein Mail, kein Kalender, keine Konten, keine Schnellsuche-Palette.
@@ -10,7 +10,12 @@ Letzte Änderung: 2026-11-19, Paket K4 Teil 1 „Tasks-Funktionen“ im Zweig `k
 
 ## K4 (Zweig k4-funktionen), Stand 2026-11-19
 **Gebaut ohne Kernänderung:** Board mit beliebig vielen Abschnitten (Test mit 14); Hintergrundlauf: Symbol im Infobereich (Öffnen, Beenden), „Fenster schließen“ versteckt nur (Schalter, Standard an), Autostart (Argument `--hidden`, Schalter in den Einstellungen), Einzelinstanz (zweiter Start holt das Fenster nach vorn). Code: `app/src/background/`, `app/src-tauri/src/background.rs`, `lib.rs`. Belegt: `npm test` 168 grün, `tsc` sauber, `cargo test` 17 grün (1 ignoriert), Wächtertest für Berechtigungen und Plugins. **Nicht von Hand im echten Fenster geprüft** (Symbol, Benachrichtigung bei geschlossenem Fenster, Autostart): das ist `docs/abnahme-k4.md`.
-**Nicht gebaut, braucht den Kern** (Beschreibung der Änderungen: Notizordner des Masters, `k4-kernaenderungen.md`): Unteraufgaben über mehrere Ebenen (Kernlogik, keine Schema-Erhöhung), Monatstag-Anker (neues JSON-Feld in der Wiederholungsregel), mehrere Erinnerungen (neue Tabelle, Schema-Erhöhung → Desk-Migration plus Wächtertest; Vorschlag: zusammen mit K2 als ein Stand 3). Erst nach K1-Abnahme in Desk und neuem Kern-Tag.
+**Teil 2 (Kern Stand 3 per `rev = "86ea2fc"`, Zweig `k2-schema-3` in daedyx/core, noch ohne Tag, danach auf den Tag umstellen):**
+- Mehrere Erinnerungen je Aufgabe (bis zehn): Befehle `task_alarms_get/set`, Oberfläche `AlarmFields`, Hook `useTaskAlarms`. Fälligkeit entfernen löscht sie.
+- Fester Monatstag (`monthDay`) für monatlich und jährlich im Detailbereich; Fake-Kern (`repeatNext.ts`) ohne Klemmen auf 28.
+- Unteraufgaben bis Ebene 6 (`TASKS_MAX_DEPTH` in `limits.ts` und `limits.rs`, der Kern bekommt `max_depth`): Einrückung nach Ebene, Zähler über alle Nachfahren, Sprung zur Oberaufgabe, „Öffnen“ in der Unteraufgabenliste.
+- Belegt: `npm test` 193 grün, `tsc` und `npm run build` sauber, `cargo test` 19 grün (1 ignoriert; u. a. Ebene 6 geht, Ebene 7 ergibt `TooDeep`; Erinnerungen sortiert und ohne Doppelte). **Nicht von Hand im echten Fenster geprüft:** `docs/abnahme-k4.md` F–H.
+- **Offen/Risiko:** (1) Der Kern hat noch keinen Tag; `Cargo.toml` zeigt auf den Commit. (2) Eine bestehende Datenbank wird beim ersten Start von Stand 2 auf 3 gehoben; Tasks legt davor noch keine Sicherung an (Handkopie in der Abnahmeliste). (3) Eine alte App (Stand 2) verwirft `monthDay`, wenn sie die Regel neu schreibt. (4) Test `api.contract.test.ts` liest Fehlercodes aus der erstbesten Kern-Kopie im Cargo-Cache.
 
 ## Belegt (2026-11-19, K3)
 - Rust `cargo test`: 15 grün, 1 ignoriert (echter Tresor, nur von Hand). Darunter: Datenbank verschlüsselt, falscher oder ungültiger Schlüssel, erster Start legt Schema an, zweiter Start behält Daten, neuerer Kern-Stand wird abgelehnt; Wächtertests für Kennung, Dev-Trennung, Installer, Updater, Git-Einbindung.

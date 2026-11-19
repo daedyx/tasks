@@ -1,9 +1,9 @@
-# Abnahme K4 „Tasks-Funktionen“ (Teil 1: ohne Kernänderung)
+# Abnahme K4 „Tasks-Funktionen“
 
-Stand: 2026-11-19, Zweig `k4-funktionen`. Gebaut ist, was ohne Änderung am Kern geht: Board mit beliebig vielen Abschnitten (belegt), Hintergrundlauf mit Symbol im Infobereich, Autostart und Einzelinstanz. **Nicht gebaut** (braucht den Kern, siehe `docs/STAND.md`): Unteraufgaben über mehrere Ebenen, Monatstag-Anker, mehrere Erinnerungen.
+Stand: 2026-11-19, Zweig `k4-funktionen`. Teil 1 (A–E): Board mit vielen Abschnitten, Hintergrundlauf. Teil 2 (F–H): mehrere Erinnerungen, fester Monatstag, Unteraufgaben über mehrere Ebenen. Teil 2 braucht den Kern Stand 3 (`rev 86ea2fc`, Zweig `k2-schema-3`, noch ohne Tag).
 
 ## Vorab (bitte zuerst)
-1. **Handkopie des Datenordners:** Ordner `%APPDATA%\de.daedyx.tasks.dev` (Entwicklungs-Build) bzw. `%APPDATA%\de.daedyx.tasks` (installiert) im Explorer kopieren, z. B. auf den Desktop. Nur falls dort schon eigene Testlisten liegen. Es dürfen nur erfundene Testdaten drin sein.
+1. **Handkopie des Datenordners:** Ordner `%APPDATA%\de.daedyx.tasks.dev` (Entwicklungs-Build) bzw. `%APPDATA%\de.daedyx.tasks` (installiert) im Explorer kopieren, z. B. auf den Desktop. Nur falls dort schon eigene Testlisten liegen. Es dürfen nur erfundene Testdaten drin sein. **Wichtig für Teil 2:** Beim ersten Start hebt der Kern die Datenbank von Stand 2 auf Stand 3 (neue Tabelle für Erinnerungen). Das ändert die Datei dauerhaft; ein Zurück gibt es nur über die Handkopie. Eine automatische Sicherung vor dem Umbau gibt es in Tasks noch nicht.
 2. App starten: `cd D:\Programmierung\daedyx-tasks-k4\app` und `npm run tauri:dev` (oder gebauten Installer nehmen).
 
 ## A. Board mit vielen Abschnitten
@@ -30,6 +30,26 @@ Stand: 2026-11-19, Zweig `k4-funktionen`. Gebaut ist, was ohne Änderung am Kern
 - [ ] Schalter „Mit Windows starten“ einschalten. Erwartung: kein Fehlertext. Windows-Einstellungen → Apps → Autostart zeigt „daedyx-tasks“.
 - [ ] Windows abmelden und wieder anmelden. Erwartung: Daedyx Tasks läuft im Infobereich, **ohne** dass sich ein Fenster öffnet; Klick auf das Symbol zeigt es.
 - [ ] Schalter wieder ausschalten (Eintrag im Autostart verschwindet).
+
+## F. Mehrere Erinnerungen
+- [ ] Aufgabe „Test Mehrfach“ mit Fälligkeit **heute in 10 Minuten** (Datum und Uhrzeit) anlegen, Detailbereich öffnen. Erwartung: Abschnitt „Erinnerungen“, Auswahl „Erinnerung hinzufügen …“.
+- [ ] „5 Minuten vorher“ und „Zur Fälligkeit“ hinzufügen. Erwartung: beide stehen als Liste, jeweils mit „Entfernen“.
+- [ ] Fenster schließen (Hintergrundlauf an). Erwartung: **zweimal** eine Benachrichtigung, nach 5 Minuten „Fällig in 5 Minuten“ und zur Fälligkeit „Jetzt fällig“.
+- [ ] Eine Erinnerung entfernen, App beenden und neu starten. Erwartung: die andere ist noch da.
+- [ ] Fälligkeit der Aufgabe löschen. Erwartung: die Erinnerungen verschwinden, die Auswahl ist gesperrt mit Hinweis.
+
+## G. Fester Monatstag
+- [ ] Aufgabe „Test 15.“ mit Fälligkeit am 1. des nächsten Monats, Wiederholen „Monatlich“. Erwartung: Feld „Fester Tag im Monat (1–31)“.
+- [ ] 15 eintragen, Aufgabe abhaken. Erwartung: neue Fälligkeit ist der **15.** des Folgemonats (nicht der 1.).
+- [ ] Aufgabe „Test 31.“ mit Fälligkeit 31. Januar (oder dem nächsten 31.), „Monatlich“, fester Tag 31. Erwartung: nach dem Abhaken der letzte Tag des kurzen Monats (28./29./30.), danach wieder der 31.
+- [ ] Feld leeren: Verhalten wie bisher (Tag der Fälligkeit).
+
+## H. Unteraufgaben über mehrere Ebenen
+- [ ] Aufgabe öffnen, Unteraufgabe „Ebene 1“ anlegen, dann auf „Öffnen“ bei der Unteraufgabe, dort „Ebene 2“ anlegen und so weiter. Erwartung: jede Ebene ist in der Liste weiter eingerückt.
+- [ ] In einer Unteraufgabe „↑ Oberaufgabe“ anklicken. Erwartung: Sprung zur Oberaufgabe.
+- [ ] Auf Ebene 6 weitermachen. Erwartung: kein Eingabefeld mehr, Hinweis „Auf dieser Ebene sind keine weiteren Unteraufgaben möglich.“
+- [ ] Die oberste Aufgabe zeigt „x von y Unteraufgaben“ mit **allen** Ebenen; im Board erscheinen nur oberste Aufgaben als Karten.
+- [ ] Oberste Aufgabe löschen. Erwartung: alle Unteraufgaben sind mit weg.
 
 ## Nach der Abnahme
 Testdaten bzw. kopierten Datenordner bei Bedarf wieder zurückspielen oder löschen.
