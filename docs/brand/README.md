@@ -1,16 +1,16 @@
 # Symbole der Daedyx-Apps
 
-Eigene Zeichnung, entstanden aus Code (keine Bildgeneratoren, keine fremden Vorlagen, keine Piktogramm-Sammlung). Richtung „Fläche“ (Björn, 2026-11-19): weiße Flächen auf Indigo, Bernstein als Akzent, Kachel mit Rundung 14 von 72 wie die Launcher-Marke („Labyrinth-D“, `daedyx-launcher`). Urheberschaft: Daedyx contributors, Lizenz wie das Projekt (MIT).
+Eigene Zeichnung, entstanden aus Code (keine Bildgeneratoren, keine fremden Vorlagen, keine Piktogramm-Sammlung). Richtung „Farbe und Motiv“ (Björn, 2026-11-21): gleiche Kachelform wie der Launcher, jede App mit eigener Farbe und eigenem Motiv, gemeinsam Indigo, Bernstein und das Raster („Labyrinth-D“, `daedyx-launcher`). Urheberschaft: Daedyx contributors, Lizenz wie das Projekt (MIT).
 
 | App | Motiv |
 |---|---|
-| Desk | Postfach mit Kalenderringen |
-| Tasks | abgehakte Liste |
-| Board | Zeichenfläche mit zwei verbundenen Karten (Name „Board“ ist ein Arbeitsname; das Repository fehlt noch) |
+| Desk | Indigo, Postfach mit Kalenderringen |
+| Tasks | Bernstein, ein großer Haken |
+| Board | Petrol, zwei schräge Karten mit Markerstrich (Name „Board“ ist ein Arbeitsname; das Repository fehlt noch) |
 
 ## Dateien
 - `motifs.mjs`: die Zeichnung (Formen und Farben im 72er-Raster).
-- `erzeuge-symbole.mjs`: schreibt `desk.svg`, `tasks.svg`, `board.svg` (Hauptquelle der Familie liegt im Desk-Repository unter `docs/brand`, hier eine Kopie) (Quellvektoren).
+- `erzeuge-symbole.mjs`: schreibt `desk.svg`, `tasks.svg`, `board.svg` (Quellvektoren).
 - Aufruf: `node docs/brand/erzeuge-symbole.mjs`
 
 ## PNG, ICO und ICNS erzeugen

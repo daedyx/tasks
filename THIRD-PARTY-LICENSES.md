@@ -726,4 +726,4 @@ Erzeugt aus den Sperrdateien (`Cargo.lock`, `node_modules`); bei Änderungen der
 
 ## Symbole und Bilder
 
-- `app/src-tauri/icons/` und `docs/brand/`: eigene Zeichnung, aus Code erzeugt (Quellvektoren und Erzeugungsprogramm liegen im Repository, siehe `docs/brand/README.md`). Keine fremden Vorlagen, keine Bildgeneratoren, keine Piktogramm-Sammlung. Sie stehen wie der übrige Code unter der MIT-Lizenz.
+- `app/src-tauri/icons/`: **Eigenes Werk (Daedyx contributors), Lizenz wie das Projekt (MIT).** Die Symbole sind aus Code gezeichnet: `docs/brand/motifs.mjs` enthält die Zeichnung, `node docs/brand/erzeuge-symbole.mjs` schreibt die Quellvektoren, `tauri icon` erzeugt daraus PNG, ICO und ICNS (siehe `docs/brand/README.md`). Keine fremden Vorlagen, Bildgeneratoren oder Piktogramm-Sammlungen. Die früheren Tauri-Platzhalter sind ersetzt.
