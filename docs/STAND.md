@@ -43,3 +43,7 @@ Letzte Änderung: 2026-11-19, Paket K4 Teil 1 und 2 „Tasks-Funktionen“ im Zw
 ## Befehle
 - Rust: in PowerShell `$env:Path = "C:\Strawberry\perl\bin;C:\Strawberry\c\bin;" + $env:Path + ";$env:USERPROFILE\.cargo\bin"`, dann `cd app\src-tauri; cargo test` (erster Bau ca. 6 Minuten).
 - Oberfläche: `cd app; npm test`; Dev-App mit Konnektor: `npm run tauri:dev`; Installer: `npm run tauri build`.
+
+## Offene Punkte aus dem Review der Härtung (2026-11-21)
+- **M3 – Tasks hat weder Pflicht-Sicherung noch Startfehler-Dialog (vor 0.1.1, vor der ersten Migration):** `db::open_and_migrate` migriert ohne Kopie davor, und ein Startfehler beendet die App ohne Meldung. Für 0.1.0 folgenlos (neue Datei, nichts zu sichern). Vor der ersten Folgeversion mit Kern-Migration den Sicherungs- und Startfehler-Code aus Desk (`db/backup.rs`, `startup.rs`) übernehmen.
+- **N5 – Tag-Weg der Veröffentlichung:** Ein Tag auf einem alten main-Commit veröffentlicht diesen alten Stand ohne Bestätigung und ohne Trockenlauf. Entscheidung für Björn: Zweitweg behalten oder streichen.

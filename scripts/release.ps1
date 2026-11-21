@@ -61,7 +61,10 @@ if (-not $SkipTests) {
   Push-Location $app
   # --retry 2: einzelne zeitabhängige Tests (bekannt, einzeln grün) dürfen unter Last zweimal wiederholt werden
   npm test -- --retry 2; if ($LASTEXITCODE -ne 0) { Pop-Location; Fail "npm test ist rot." }
+  # Proben der Freigabe-Regeln und des Installer-Symbols (sonst fiele ein Umbau erst auf, wenn jemand sie von Hand startet)
+  npm run test:scripts; if ($LASTEXITCODE -ne 0) { Pop-Location; Fail "npm run test:scripts ist rot." }
   Pop-Location
+  powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $root "scripts\ci	est-check-release-inputs.ps1"); if ($LASTEXITCODE -ne 0) { Fail "Probe der Freigabe-Regeln ist rot." }
   Push-Location (Join-Path $app "src-tauri")
   cargo test; if ($LASTEXITCODE -ne 0) { Pop-Location; Fail "cargo test ist rot." }
   Pop-Location

@@ -63,6 +63,8 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          # Das Token bleibt nicht in .git/config liegen: npm ci und Build-Skripte können es so nicht lesen.
+          persist-credentials: false
 
       - name: Eingaben prüfen
         id: input
@@ -195,6 +197,8 @@ jobs:
         if: github.event_name == 'workflow_dispatch' && steps.input.outputs.dry_run != 'True' && steps.input.outputs.dry_run != 'true'
         env:
           VERSION: ${{ steps.input.outputs.version }}
+          # Das Token gilt nur in diesem Schritt (nur Umgebungsvariablen, nichts wird gespeichert).
+          PUSH_TOKEN: ${{ github.token }}
         run: |
           git config user.name "daedyx release bot"
           git config user.email "release-bot@users.noreply.github.com"
@@ -202,5 +206,9 @@ jobs:
           git diff --cached --quiet
           if ($LASTEXITCODE -ne 0) {
             git commit -m "chore: Version $env:VERSION"
+            $basic = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes("x-access-token:$env:PUSH_TOKEN"))
+            $env:GIT_CONFIG_COUNT = '1'
+            $env:GIT_CONFIG_KEY_0 = 'http.https://github.com/.extraheader'
+            $env:GIT_CONFIG_VALUE_0 = "AUTHORIZATION: basic $basic"
             git push origin HEAD
           }
