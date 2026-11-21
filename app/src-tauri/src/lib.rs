@@ -5,6 +5,11 @@ mod commands_tasks;
 mod config_tests;
 pub mod db;
 pub mod secrets;
+mod startup;
+mod startup_dialog;
+#[cfg(test)]
+mod startup_tests;
+mod startup_text;
 pub mod tasks;
 
 use rusqlite::Connection;
@@ -55,7 +60,19 @@ pub fn run() {
             let dir = app.path().app_data_dir()?;
             std::fs::create_dir_all(&dir)?;
             let secrets = KeyringStore::new();
-            let conn = db::open_and_migrate(&dir.join(db::DB_FILE), &secrets)?;
+            // Ohne gelungene Sicherung wird nicht migriert; bei jedem Fehler erklärt ein Fenster, was zu tun ist.
+            let conn = match startup::open_and_migrate(&dir.join(db::DB_FILE), &secrets) {
+                Ok(conn) => conn,
+                Err(e) => {
+                    for (_, window) in app.webview_windows() {
+                        let _ = window.hide();
+                    }
+                    startup_dialog::show_error(&startup_text::text("start.title", &[]), &e.message());
+                    // Kein Fehler zurückgeben (das wäre ein Absturz mit Panik), sondern sauber beenden; die Datei bleibt unverändert.
+                    app.handle().exit(1);
+                    return Ok(());
+                }
+            };
             app.manage(AppState { db: Mutex::new(conn) });
             tasks::background::start(app.handle().clone());
             #[cfg(desktop)]

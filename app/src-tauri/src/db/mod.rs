@@ -1,7 +1,13 @@
 //! Verschlüsselte Datenbank (SQLCipher). Schlüssel im Tresor; Schema und Versionierung gehören dem Aufgaben-Kern.
+mod backup;
+#[cfg(test)]
+pub(crate) mod backup_tests;
+mod free_space;
 mod key;
 #[cfg(test)]
 mod tests;
+
+pub use backup::{NotEnoughSpace, backup_before_migrate, backup_with_free_space};
 
 use crate::secrets::{SecretError, SecretStore};
 use rusqlite::{Connection, ErrorCode};
@@ -40,12 +46,5 @@ pub fn open(path: &Path, secrets: &dyn SecretStore) -> Result<Connection, DbErro
     })?;
     conn.pragma_update(None, "foreign_keys", "ON")?;
     conn.pragma_update(None, "journal_mode", "WAL")?;
-    Ok(conn)
-}
-
-/// Öffnet die Datenbank und bringt das Aufgaben-Schema auf den Stand des Kerns (legt es beim ersten Start an).
-pub fn open_and_migrate(path: &Path, secrets: &dyn SecretStore) -> Result<Connection, DbError> {
-    let conn = open(path, secrets)?;
-    daedyx_tasks_core::migrate(&conn)?;
     Ok(conn)
 }

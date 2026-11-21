@@ -44,6 +44,7 @@
   "updates.ready": "Das Update ist installiert. Starte Daedyx Tasks neu, um es zu nutzen.",
   "updates.none_found": "Es wurde noch kein Update gefunden. Bitte zuerst nach Updates suchen.",
   "updates.restart": "Jetzt neu starten",
+  "updates.not_set_up": "Updates sind noch nicht eingerichtet.",
   "updates.error": "Das Update ist fehlgeschlagen: {text}",
   "updates.auto": "Beim Start nach Updates suchen",
   "updates.auto_hint": "Höchstens einmal pro Tag. Gesucht wird nur, ob eine neue Version bereitliegt.",
@@ -208,5 +209,11 @@
   "background.tray.tooltip": "Daedyx Tasks",
   "background.tray.open": "Daedyx Tasks öffnen",
   "background.tray.quit": "Beenden",
-  "settings.reset": "Darstellung zurücksetzen"
+  "settings.reset": "Darstellung zurücksetzen",
+  "start.title": "Daedyx Tasks kann nicht starten",
+  "start.error.backup_failed": "Vor dem Aktualisieren Ihrer Daten konnte keine Sicherung angelegt werden. Deshalb wurde nichts verändert, Ihre Daten sind unversehrt. Bitte schaffen Sie Platz auf dem Laufwerk, prüfen Sie, ob der Datenordner beschreibbar ist, und starten Sie Daedyx Tasks neu. Frühere Sicherungen liegen im Ordner „backups“ neben der Datenbank.",
+  "start.error.no_space": "Auf dem Laufwerk ist zu wenig Platz für die Sicherung vor dem Aktualisieren (nötig: {needed} MB, frei: {free} MB). Es wurde nichts verändert, Ihre Daten sind unversehrt. Bitte schaffen Sie Platz und starten Sie Daedyx Tasks neu.",
+  "start.error.too_new": "Diese Datenbank gehört zu einer neueren Version von Daedyx Tasks. Bitte installieren Sie die neueste Version. Ihre Daten wurden nicht verändert. Frühere Sicherungen liegen im Ordner „backups“ neben der Datenbank.",
+  "start.error.wrong_key": "Die Datenbank lässt sich mit dem gespeicherten Schlüssel nicht öffnen. Es wurde nichts gelöscht. Bitte wenden Sie sich an die Person, die Daedyx Tasks bei Ihnen betreut. Frühere Sicherungen liegen im Ordner „backups“ neben der Datenbank.",
+  "start.error.generic": "Die Datenbank konnte nicht geöffnet oder aktualisiert werden. Ihre Daten wurden nicht gelöscht. Bitte starten Sie Daedyx Tasks neu; hilft das nicht, wenden Sie sich an die Person, die Daedyx Tasks bei Ihnen betreut. Frühere Sicherungen liegen im Ordner „backups“ neben der Datenbank. Technische Angabe: {detail}"
 }

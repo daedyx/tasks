@@ -2,11 +2,16 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { t } from "../i18n";
 import { NO_UPDATE, tauriUpdater, type UpdateInfo, type UpdaterApi } from "./updater";
 
-export type UpdateState = "idle" | "checking" | "uptodate" | "available" | "downloading" | "ready" | "error";
+export type UpdateState = "idle" | "checking" | "uptodate" | "available" | "downloading" | "ready" | "error" | "unavailable";
 
 function message(e: unknown): string {
   if (e instanceof Error && e.message === NO_UPDATE) return t("updates.none_found");
   return e instanceof Error ? e.message : String(e);
+}
+
+/** Ohne eingetragenen Update-Schlüssel hängt die App das Plugin gar nicht ein; Tauri meldet dann „plugin updater not found“. */
+function notSetUp(e: unknown): boolean {
+  return /updater not found/i.test(e instanceof Error ? e.message : String(e));
 }
 
 /** Zustand der Update-Suche und -Installation. Fehler werden als Zustand gemeldet, nie geworfen. */
@@ -38,6 +43,10 @@ export function useUpdater(api: UpdaterApi = tauriUpdater) {
       setInfo(found);
       setState(found ? "available" : "uptodate");
     } catch (e) {
+      if (notSetUp(e)) {
+        setState("unavailable");
+        return;
+      }
       setError(message(e));
       setState("error");
     }

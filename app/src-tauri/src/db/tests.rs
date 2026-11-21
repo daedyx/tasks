@@ -74,12 +74,12 @@ fn first_start_creates_the_task_schema_and_a_second_start_keeps_the_data() {
     let path = temp_db("migrate");
     let store = MemoryStore::default();
     {
-        let conn = open_and_migrate(&path, &store).unwrap();
+        let conn = crate::startup::open_and_migrate(&path, &store).unwrap();
         let lists = daedyx_tasks_core::store::lists(&conn).unwrap();
         assert!(lists.is_empty(), "neue Datenbank beginnt leer");
         daedyx_tasks_core::edit_lists::create_list(&conn, "Testliste", "blue", 1_000).unwrap();
     }
-    let conn = open_and_migrate(&path, &store).unwrap();
+    let conn = crate::startup::open_and_migrate(&path, &store).unwrap();
     let lists = daedyx_tasks_core::store::lists(&conn).unwrap();
     assert_eq!(lists.len(), 1);
     assert_eq!(lists[0].name, "Testliste");
@@ -90,9 +90,9 @@ fn a_database_from_a_newer_core_is_rejected_not_changed() {
     let path = temp_db("toonew");
     let store = MemoryStore::default();
     {
-        let conn = open_and_migrate(&path, &store).unwrap();
+        let conn = crate::startup::open_and_migrate(&path, &store).unwrap();
         conn.execute("UPDATE task_meta SET value = '999' WHERE key = 'schema_version'", []).unwrap();
     }
-    let res = open_and_migrate(&path, &store);
-    assert!(matches!(res, Err(DbError::Tasks(daedyx_tasks_core::MigrateError::TooNew { .. }))), "{res:?}");
+    let res = crate::startup::open_and_migrate(&path, &store);
+    assert!(matches!(res, Err(crate::startup::StartupError::Migrate(daedyx_tasks_core::MigrateError::TooNew { .. }))), "{res:?}");
 }

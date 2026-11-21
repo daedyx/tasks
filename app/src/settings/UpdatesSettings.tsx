@@ -32,6 +32,7 @@ export function UpdatesSettings({ api }: Props) {
         {u.state === "available" && u.info && t("updates.available", { version: u.info.version })}
         {u.state === "downloading" && t("updates.installing")}
         {u.state === "ready" && t("updates.ready")}
+        {u.state === "unavailable" && t("updates.not_set_up")}
         {u.state === "error" && t("updates.error", { text: u.error ?? "" })}
       </div>
 

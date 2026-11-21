@@ -43,6 +43,14 @@ describe("useUpdater", () => {
     expect(result.current.error).toBe("kein Netz");
   });
 
+  it("ohne eingetragenen Update-Schlüssel: ehrlich \"nicht eingerichtet\" statt Fehlertext des Plugins", async () => {
+    const api = fake({ check: async () => Promise.reject(new Error("plugin updater not found")) });
+    const { result } = renderHook(() => useUpdater(api));
+    await act(async () => result.current.check());
+    expect(result.current.state).toBe("unavailable");
+    expect(result.current.error).toBeNull();
+  });
+
   it("Installieren meldet den Fortschritt und endet bereit", async () => {
     const api = fake({
       check: async () => found,

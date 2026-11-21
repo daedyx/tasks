@@ -27,7 +27,7 @@ Stand: 2026-11-19, Zweig `k4-funktionen`. Teil 1 (A–E): Board mit vielen Absch
 - [ ] Fenster verstecken (X). Daedyx Tasks erneut starten (Startmenü oder `npm run tauri:dev` nicht, sondern installierte Version/Exe). Erwartung: es öffnet sich **kein zweites** Fenster, sondern das versteckte kommt nach vorn.
 
 ## E. Mit Windows starten
-- [ ] Schalter „Mit Windows starten“ einschalten. Erwartung: kein Fehlertext. Windows-Einstellungen → Apps → Autostart zeigt „daedyx-tasks“.
+- [ ] Schalter „Mit Windows starten“ einschalten. Erwartung: kein Fehlertext. Windows-Einstellungen → Apps → Autostart zeigt „Daedyx Tasks“.
 - [ ] Windows abmelden und wieder anmelden. Erwartung: Daedyx Tasks läuft im Infobereich, **ohne** dass sich ein Fenster öffnet; Klick auf das Symbol zeigt es.
 - [ ] Schalter wieder ausschalten (Eintrag im Autostart verschwindet).
 

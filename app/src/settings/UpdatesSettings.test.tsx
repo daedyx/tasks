@@ -20,6 +20,12 @@ describe("UpdatesSettings", () => {
     expect(await screen.findByText("Du hast die neueste Version.")).toBeInTheDocument();
   });
 
+  it("ohne Update-Schlüssel steht \"Updates sind noch nicht eingerichtet\" statt eines Fehlers", async () => {
+    render(<UpdatesSettings api={fake({ check: async () => Promise.reject(new Error("plugin updater not found")) })} />);
+    expect(await screen.findByText("Updates sind noch nicht eingerichtet.")).toBeInTheDocument();
+    expect(screen.queryByText(/fehlgeschlagen/)).not.toBeInTheDocument();
+  });
+
   it("„Nach Updates suchen“ sucht erneut", async () => {
     const check = vi.fn(async () => null);
     render(<UpdatesSettings api={fake({ check })} />);

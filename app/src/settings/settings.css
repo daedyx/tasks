@@ -1,3 +1,7 @@
+.settings__content {
+  padding: var(--space-4);
+}
+
 .settings__title {
   margin: 0 0 var(--space-4);
   font-size: 20px;
