@@ -1,5 +1,6 @@
 # Release von Daedyx Tasks: bauen, signieren, in das öffentliche Repository daedyx/releases veröffentlichen.
-# Starten: Actions -> Release -> "Run workflow" (Version und Änderungsnotiz eintragen) oder einen Tag v<x.y.z> pushen.
+# Starten: Actions -> Release -> "Run workflow" auf dem Zweig main (Version, Änderungsnotiz und Bestätigung eintragen)
+#   oder einen Tag v<x.y.z> pushen, dessen Commit auf main liegt. Von jedem anderen Zweig geht nur der Trockenlauf.
 # Trockenlauf: Haken "Trockenlauf" setzen: es wird gebaut, getestet und signiert, aber nichts in daedyx/releases geschrieben
 #   und keine Version zurückgeschrieben; das Setup hängt 3 Tage als Download am Lauf. Nötig sind dann nur die Update-Schlüssel und CORE_READ_TOKEN.
 # Geheimnisse (Repository-Secrets, trägt Björn selbst ein, Anleitung: docs/RELEASE.md):
@@ -24,6 +25,11 @@ on:
         required: false
         type: boolean
         default: false
+      confirm:
+        description: "Bestätigung für die echte Veröffentlichung: die Version noch einmal eintippen (beim Trockenlauf leer lassen)"
+        required: false
+        type: string
+        default: ""
       dry_run:
         description: "Trockenlauf: bauen, testen, signieren, aber NICHT veröffentlichen (das Setup hängt als Download am Lauf)"
         required: false
@@ -55,33 +61,39 @@ jobs:
     steps:
       - name: Quellcode holen
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Eingaben prüfen
         id: input
         env:
           EVENT: ${{ github.event_name }}
-          REF_NAME: ${{ github.ref_name }}
+          REF: ${{ github.ref }}
+          SHA: ${{ github.sha }}
           INPUT_VERSION: ${{ github.event.inputs.version }}
           INPUT_NOTES: ${{ github.event.inputs.notes }}
           INPUT_SKIP_TESTS: ${{ github.event.inputs.skip_tests }}
           INPUT_DRY_RUN: ${{ github.event.inputs.dry_run }}
+          INPUT_CONFIRM: ${{ github.event.inputs.confirm }}
         run: |
-          # Eingaben nur über Umgebungsvariablen lesen (nie in den Skripttext einsetzen)
+          # Eingaben nur über Umgebungsvariablen lesen (nie in den Skripttext einsetzen).
+          # Regeln (scripts/ci/check-release-inputs.ps1, Probe: test-check-release-inputs.ps1):
+          # echte Veröffentlichung nur von main oder von einem Tag auf main, Tests überspringen nur im Trockenlauf, Bestätigung nötig.
+          $onMain = 'false'
           if ($env:EVENT -eq 'push') {
-            $version = $env:REF_NAME.TrimStart('v')
-            $notes = "Daedyx Tasks $version"
-          } else {
-            $version = $env:INPUT_VERSION.Trim()
-            $notes = $env:INPUT_NOTES.Trim()
+            git fetch --no-tags origin main
+            git merge-base --is-ancestor $env:SHA origin/main
+            if ($LASTEXITCODE -eq 0) { $onMain = 'true' }
           }
-          if ($version -notmatch '^\d+\.\d+\.\d+$') { throw "Ungültige Version: '$version' (erwartet x.y.z)" }
-          if (-not $notes) { throw "Die Änderungsnotiz fehlt." }
+          $r = ./scripts/ci/check-release-inputs.ps1 -EventName $env:EVENT -Ref $env:REF `
+            -InputVersion $env:INPUT_VERSION -InputNotes $env:INPUT_NOTES -InputSkipTests $env:INPUT_SKIP_TESTS `
+            -InputDryRun $env:INPUT_DRY_RUN -InputConfirm $env:INPUT_CONFIRM -TagOnMain $onMain -Product Tasks
           $file = Join-Path $env:RUNNER_TEMP 'release-notes.txt'
-          [System.IO.File]::WriteAllText($file, $notes, (New-Object System.Text.UTF8Encoding $false))
-          "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          [System.IO.File]::WriteAllText($file, $r.Notes, (New-Object System.Text.UTF8Encoding $false))
+          "version=$($r.Version)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
           "notes_file=$file" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
-          "skip_tests=$($env:INPUT_SKIP_TESTS -eq 'true')" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
-          "dry_run=$($env:INPUT_DRY_RUN -eq 'true')" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "skip_tests=$($r.SkipTests)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "dry_run=$($r.DryRun)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
           if (-not (Test-Path 'release/catalog.pub')) { throw "release/catalog.pub fehlt (öffentlicher Katalog-Schlüssel, siehe docs/RELEASE.md)." }
 
       - name: Secrets prüfen
@@ -104,14 +116,6 @@ jobs:
           }
           if ($missing) { throw "Diese Secrets fehlen im Repository: $($missing -join ', ') (Anleitung: docs/RELEASE.md)" }
 
-      - name: Zugriff auf den privaten Kern einrichten
-        env:
-          CORE_READ_TOKEN: ${{ secrets.CORE_READ_TOKEN }}
-        run: |
-          if (-not $env:CORE_READ_TOKEN) { throw "Secret CORE_READ_TOKEN fehlt (Lesezugriff auf daedyx/core)" }
-          git config --global url."https://x-access-token:$($env:CORE_READ_TOKEN)@github.com/daedyx/core".insteadOf "https://github.com/daedyx/core"
-          "CARGO_NET_GIT_FETCH_WITH_CLI=true" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
-
       - name: Node einrichten
         uses: actions/setup-node@v4
         with:
@@ -126,6 +130,20 @@ jobs:
         uses: Swatinem/rust-cache@v2
         with:
           workspaces: app/src-tauri
+
+      - name: Privaten Kern abrufen (Token nur für diesen Schritt)
+        env:
+          CORE_READ_TOKEN: ${{ secrets.CORE_READ_TOKEN }}
+        run: |
+          if (-not $env:CORE_READ_TOKEN) { throw "Secret CORE_READ_TOKEN fehlt (Lesezugriff auf daedyx/core)" }
+          # Die Umleitung gilt nur für Prozesse dieses Schritts (kein "git config --global"): spätere Schritte mit
+          # Fremdbibliotheken (npm ci, Build-Skripte) sehen das Token nicht. Danach baut cargo aus dem Zwischenspeicher.
+          $env:GIT_CONFIG_COUNT = '1'
+          $env:GIT_CONFIG_KEY_0 = 'url.https://x-access-token:' + $env:CORE_READ_TOKEN + '@github.com/daedyx/core.insteadOf'
+          $env:GIT_CONFIG_VALUE_0 = 'https://github.com/daedyx/core'
+          $env:CARGO_NET_GIT_FETCH_WITH_CLI = 'true'
+          cargo fetch --locked --manifest-path app/src-tauri/Cargo.toml
+          if ($LASTEXITCODE -ne 0) { throw "Abruf der Abhängigkeiten fehlgeschlagen" }
 
       - name: Abhängigkeiten installieren
         working-directory: app
