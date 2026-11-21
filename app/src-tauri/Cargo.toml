@@ -20,7 +20,7 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tauri-plugin-mcp-bridge = { version = "0.13.2", optional = true }
 rusqlite = { version = "0.37", features = ["bundled-sqlcipher-vendored-openssl"] }
-keyring = { version = "3", features = ["windows-native"] }
+keyring = "3"
 getrandom = "0.3"
 thiserror = "2"
 chrono = { version = "0.4", default-features = false, features = ["std", "clock"] }
@@ -36,6 +36,14 @@ lto = true
 opt-level = 3
 panic = "abort"
 strip = true
+
+# Echter Betriebssystem-Tresor je System. Ohne diese Features nähme keyring einen Ersatzspeicher nur im Arbeitsspeicher:
+# der Datenbank-Schlüssel wäre nach jedem Neustart weg. Neues Zielsystem = hier ergänzen.
+[target.'cfg(windows)'.dependencies]
+keyring = { version = "3", features = ["windows-native"] }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+keyring = { version = "3", features = ["apple-native"] }
 
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
 tauri-plugin-updater = "2"

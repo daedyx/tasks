@@ -13,7 +13,7 @@ use crate::secrets::{SecretError, SecretStore};
 use rusqlite::{Connection, ErrorCode};
 use std::path::Path;
 
-/// Dateiname der Datenbank im Datenordner der App (`%APPDATA%\de.daedyx.tasks`).
+/// Dateiname der Datenbank im Datenordner der App (Windows `%APPDATA%\de.daedyx.tasks`, macOS `~/Library/Application Support/de.daedyx.tasks`).
 pub const DB_FILE: &str = "daedyx-tasks.db";
 
 #[derive(Debug, thiserror::Error)]

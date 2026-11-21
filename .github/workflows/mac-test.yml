@@ -1,0 +1,92 @@
+# Mac-Testbau von Daedyx Tasks: baut nur Mac-Pakete zum Ausprobieren. Veröffentlicht NICHTS.
+# Auslöser: Push auf den Zweig mac-test (oder von Hand). Ergebnis: Download am Lauf (Artifacts, 7 Tage).
+# Nötig ist nur das Secret CORE_READ_TOKEN (Lesezugriff auf daedyx/core). Kein RELEASES_TOKEN, keine Update-Schlüssel.
+# macos-latest ist ein Apple-Silicon-Mac (arm64). Mac-Minuten zählen bei privaten Repositories zehnfach: sparsam auslösen.
+name: Mac-Test
+
+on:
+  push:
+    branches: [mac-test]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mac-test
+  cancel-in-progress: true
+
+jobs:
+  mac:
+    runs-on: macos-latest
+    timeout-minutes: 60
+    steps:
+      - name: Selbstschutz (keine Veröffentlichung)
+        run: |
+          # Dieser Lauf bekommt absichtlich keine Veröffentlichungs-Secrets. Tauchen sie trotzdem in der Umgebung auf (Kopierfehler), Abbruch.
+          for v in RELEASES_TOKEN TAURI_SIGNING_PRIVATE_KEY TAURI_SIGNING_PRIVATE_KEY_PASSWORD DAEDYX_CATALOG_KEY DAEDYX_KEY_PASSWORD; do
+            if [ -n "${!v}" ]; then echo "Veröffentlichungs-Geheimnis $v in der Umgebung: Abbruch"; exit 1; fi
+          done
+
+      - name: Quellcode holen
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Node einrichten
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+
+      - name: Rust einrichten
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust-Zwischenspeicher
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: app/src-tauri
+
+      - name: Privaten Kern abrufen (Token nur für diesen Schritt)
+        env:
+          CORE_READ_TOKEN: ${{ secrets.CORE_READ_TOKEN }}
+        run: |
+          if [ -z "$CORE_READ_TOKEN" ]; then echo "Secret CORE_READ_TOKEN fehlt (Lesezugriff auf daedyx/core)"; exit 1; fi
+          # Die Umleitung gilt nur für diesen Schritt (kein "git config --global"); danach baut cargo aus dem Zwischenspeicher.
+          export GIT_CONFIG_COUNT=1
+          export GIT_CONFIG_KEY_0="url.https://x-access-token:${CORE_READ_TOKEN}@github.com/daedyx/core.insteadOf"
+          export GIT_CONFIG_VALUE_0="https://github.com/daedyx/core"
+          export CARGO_NET_GIT_FETCH_WITH_CLI=true
+          cargo fetch --locked --manifest-path app/src-tauri/Cargo.toml
+
+      - name: Abhängigkeiten installieren
+        working-directory: app
+        run: npm ci
+
+      - name: Oberflächen-Tests
+        working-directory: app
+        run: npm test
+
+      - name: Rust-Tests
+        run: cargo test --locked --manifest-path app/src-tauri/Cargo.toml
+
+      - name: Mac-Pakete bauen (app und dmg)
+        working-directory: app
+        # tauri.macos.conf.json (Ziele app, dmg; ohne Update-Artefakte) wird von Tauri auf dem Mac automatisch dazugelegt.
+        run: npx tauri build --bundles app,dmg
+
+      - name: App als Zip packen
+        run: |
+          mkdir -p out
+          app=$(ls -d app/src-tauri/target/release/bundle/macos/*.app | head -n 1)
+          ditto -c -k --keepParent "$app" out/Daedyx-Tasks-mac.app.zip
+          cp app/src-tauri/target/release/bundle/dmg/*.dmg out/
+
+      - name: Pakete bereitstellen (7 Tage)
+        uses: actions/upload-artifact@v4
+        with:
+          name: daedyx-tasks-mac
+          path: out/*
+          retention-days: 7
+          if-no-files-found: error
