@@ -84,8 +84,9 @@ fn prune(dir: &Path) -> std::io::Result<()> {
         .filter_map(|e| Some((e.metadata().ok()?.modified().ok()?, e.path())))
         .collect();
     files.sort_by_key(|f| std::cmp::Reverse(f.0));
+    // Ein nicht löschbarer Altbestand darf die übrigen nicht aufhalten: Fehler je Datei übergehen und weiterlöschen.
     for (_, old) in files.into_iter().skip(KEEP) {
-        std::fs::remove_file(old)?;
+        let _ = std::fs::remove_file(old);
     }
     Ok(())
 }

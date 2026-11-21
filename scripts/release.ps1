@@ -64,7 +64,7 @@ if (-not $SkipTests) {
   # Proben der Freigabe-Regeln und des Installer-Symbols (sonst fiele ein Umbau erst auf, wenn jemand sie von Hand startet)
   npm run test:scripts; if ($LASTEXITCODE -ne 0) { Pop-Location; Fail "npm run test:scripts ist rot." }
   Pop-Location
-  powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $root "scripts\ci	est-check-release-inputs.ps1"); if ($LASTEXITCODE -ne 0) { Fail "Probe der Freigabe-Regeln ist rot." }
+  powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $root "scripts/ci/test-check-release-inputs.ps1"); if ($LASTEXITCODE -ne 0) { Fail "Probe der Freigabe-Regeln ist rot." }
   Push-Location (Join-Path $app "src-tauri")
   cargo test; if ($LASTEXITCODE -ne 0) { Pop-Location; Fail "cargo test ist rot." }
   Pop-Location

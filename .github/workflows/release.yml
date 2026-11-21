@@ -83,7 +83,6 @@ jobs:
           # echte Veröffentlichung nur von main oder von einem Tag auf main, Tests überspringen nur im Trockenlauf, Bestätigung nötig.
           $onMain = 'false'
           if ($env:EVENT -eq 'push') {
-            git fetch --no-tags origin main
             git merge-base --is-ancestor $env:SHA origin/main
             if ($LASTEXITCODE -eq 0) { $onMain = 'true' }
           }
