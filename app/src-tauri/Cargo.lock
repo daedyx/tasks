@@ -792,6 +792,8 @@ dependencies = [
 name = "daedyx-tasks-store"
 version = "0.1.0"
 dependencies = [
+ "chrono",
+ "chrono-tz",
  "daedyx-tasks-core",
  "getrandom 0.3.4",
  "iana-time-zone",

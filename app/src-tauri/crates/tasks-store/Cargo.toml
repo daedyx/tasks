@@ -15,6 +15,9 @@ keyring = "3"
 getrandom = "0.3"
 thiserror = "2"
 iana-time-zone = "0.1"
+# Geprüfter Erinnerungs-Durchgang (reminders_scan.rs); gleiche Fassungen wie Kern und Hülle.
+chrono = { version = "0.4", default-features = false, features = ["std", "clock"] }
+chrono-tz = "0.10"
 # Aufgaben-Kern (eigenes privates Repository), gleicher Tag wie in der Hülle.
 daedyx-tasks-core = { git = "https://github.com/daedyx/core", tag = "tasks-core-v0.2.1" }
 
