@@ -1,0 +1,10 @@
+[package]
+name = "xtask"
+description = "Eigene Prüfwerkzeuge des Repos (Scan auf Geheimnisse und echte Daten, Ausnahmenzähler, Mindestzahl der Tests); nur Standardbibliothek"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+publish = false
+
+[lints]
+workspace = true
