@@ -3,14 +3,16 @@ mod commands;
 mod commands_tasks;
 #[cfg(test)]
 mod config_tests;
-pub mod db;
-pub mod secrets;
+mod free_space;
 mod startup;
 mod startup_dialog;
 #[cfg(test)]
 mod startup_tests;
 mod startup_text;
 pub mod tasks;
+
+// Datenhaltung liegt im Tauri-freien Crate `daedyx-tasks-store`; die Pfade `crate::db`, `crate::secrets` bleiben.
+pub use daedyx_tasks_store::{db, secrets};
 
 use rusqlite::Connection;
 use secrets::KeyringStore;
@@ -61,13 +63,14 @@ pub fn run() {
             std::fs::create_dir_all(&dir)?;
             let secrets = KeyringStore::new();
             // Ohne gelungene Sicherung wird nicht migriert; bei jedem Fehler erklärt ein Fenster, was zu tun ist.
-            let conn = match startup::open_and_migrate(&dir.join(db::DB_FILE), &secrets) {
+            let opened = daedyx_tasks_store::startup::open_and_migrate(&dir.join(db::DB_FILE), &secrets, &free_space::available);
+            let conn = match opened {
                 Ok(conn) => conn,
                 Err(e) => {
                     for (_, window) in app.webview_windows() {
                         let _ = window.hide();
                     }
-                    startup_dialog::show_error(&startup_text::text("start.title", &[]), &e.message());
+                    startup_dialog::show_error(&startup_text::text("start.title", &[]), &startup::message(&e));
                     // Kein Fehler zurückgeben (das wäre ein Absturz mit Panik), sondern sauber beenden; die Datei bleibt unverändert.
                     app.handle().exit(1);
                     return Ok(());
@@ -76,10 +79,10 @@ pub fn run() {
             app.manage(AppState { db: Mutex::new(conn) });
             tasks::background::start(app.handle().clone());
             #[cfg(desktop)]
-            if background::launched_hidden(&std::env::args().collect::<Vec<_>>()) {
-                if let Some(w) = app.get_webview_window("main") {
-                    let _ = w.hide();
-                }
+            if background::launched_hidden(&std::env::args().collect::<Vec<_>>())
+                && let Some(w) = app.get_webview_window("main")
+            {
+                let _ = w.hide();
             }
 
             // Updater erst einhängen, wenn ein Update-Schlüssel eingetragen ist (sonst wäre die Konfiguration ungültig).

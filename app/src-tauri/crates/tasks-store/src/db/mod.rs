@@ -1,13 +1,15 @@
 //! Verschlüsselte Datenbank (SQLCipher). Schlüssel im Tresor; Schema und Versionierung gehören dem Aufgaben-Kern.
+#[cfg(test)]
+mod abuse_tests;
 mod backup;
 #[cfg(test)]
 pub(crate) mod backup_tests;
-mod free_space;
 mod key;
 #[cfg(test)]
 mod tests;
 
-pub use backup::{NotEnoughSpace, backup_before_migrate, backup_with_free_space};
+pub use backup::{backup_before_migrate, FreeSpace, NotEnoughSpace};
+pub use key::KEY_NAME;
 
 use crate::secrets::{SecretError, SecretStore};
 use rusqlite::{Connection, ErrorCode};
@@ -31,11 +33,19 @@ pub enum DbError {
     Tasks(#[from] daedyx_tasks_core::MigrateError),
     #[error("Zufallszahlen nicht verfügbar: {0}")]
     Random(String),
+    /// Die Datei ist da, aber leer. SQLite machte daraus still eine neue Datenbank; leer ist aber kein neuer Start,
+    /// sondern ein Hinweis auf Datenverlust (die Sicherungen liegen in `backups`).
+    #[error("Datenbank-Datei ist leer")]
+    EmptyFile,
 }
 
 /// Öffnet (oder erstellt) die verschlüsselte Datenbank. Der Schlüssel kommt aus dem Tresor.
 /// `WrongKey` nie zum Löschen der DB verwenden; andere Fehler kommen als `Sqlite` durch.
+/// Eine vorhandene, leere Datei wird nicht angefasst (`EmptyFile`).
 pub fn open(path: &Path, secrets: &dyn SecretStore) -> Result<Connection, DbError> {
+    if std::fs::metadata(path).is_ok_and(|m| m.is_file() && m.len() == 0) {
+        return Err(DbError::EmptyFile);
+    }
     let hex = key::get_or_create(secrets)?;
     let conn = Connection::open(path)?;
     conn.pragma_update(None, "key", format!("x'{hex}'"))?;

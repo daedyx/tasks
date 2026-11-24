@@ -4,10 +4,12 @@ use daedyx_tasks_core::schema::{STAND_1, STAND_2};
 use std::path::{Path, PathBuf};
 
 pub fn dir(name: &str) -> PathBuf {
-    let p = std::env::temp_dir().join(format!("daedyx-tasks-backup-{}-{name}", std::process::id()));
-    let _ = std::fs::remove_dir_all(&p);
-    std::fs::create_dir_all(&p).unwrap();
-    p
+    crate::test_support::test_dir(&format!("backup-{name}")).unwrap()
+}
+
+/// Ohne Messung (wie auf Systemen ohne Platzabfrage): Die Kopie selbst meldet dann den Fehler.
+pub fn unmeasured(_: &Path) -> Option<u64> {
+    None
 }
 
 /// Eine echte Datenbank im alten Stand 2 (ohne Farben, Verweise, Erinnerungsliste).
@@ -24,12 +26,13 @@ fn a_database_behind_the_latest_stand_is_copied_first() {
     let (d, store) = (dir("copy"), MemoryStore::default());
     let path = d.join("daedyx-tasks.db");
     let conn = old_db(&path, &store);
-    let saved = backup_before_migrate(&conn, &path).unwrap().expect("Kopie erwartet");
+    let saved = backup_before_migrate(&conn, &path, &unmeasured).unwrap().expect("Kopie erwartet");
     assert_eq!(saved.file_name().unwrap(), "daedyx-tasks-v2.db");
     assert_eq!(saved.parent().unwrap(), d.join("backups"));
     // Die Kopie ist mit demselben Schlüssel lesbar und hat noch den alten Stand.
     let copy = db::open(&saved, &store).unwrap();
-    let v: String = copy.query_row("SELECT value FROM task_meta WHERE key = 'schema_version'", [], |r| r.get(0)).unwrap();
+    let v: String =
+        copy.query_row("SELECT value FROM task_meta WHERE key = 'schema_version'", [], |r| r.get(0)).unwrap();
     assert_eq!(v, "2");
 }
 
@@ -38,9 +41,9 @@ fn nothing_is_copied_for_a_fresh_or_current_database() {
     let (d, store) = (dir("none"), MemoryStore::default());
     let path = d.join("daedyx-tasks.db");
     let fresh = db::open(&path, &store).unwrap();
-    assert!(backup_before_migrate(&fresh, &path).unwrap().is_none());
+    assert!(backup_before_migrate(&fresh, &path, &unmeasured).unwrap().is_none());
     daedyx_tasks_core::migrate(&fresh).unwrap();
-    assert!(backup_before_migrate(&fresh, &path).unwrap().is_none());
+    assert!(backup_before_migrate(&fresh, &path, &unmeasured).unwrap().is_none());
     assert!(!d.join("backups").exists());
 }
 
@@ -55,7 +58,7 @@ fn only_the_three_newest_backups_stay() {
     }
     let path = d.join("daedyx-tasks.db");
     let conn = old_db(&path, &store);
-    backup_before_migrate(&conn, &path).unwrap();
+    backup_before_migrate(&conn, &path, &unmeasured).unwrap();
     let names: Vec<_> = std::fs::read_dir(&b).unwrap().map(|e| e.unwrap().file_name()).collect();
     assert_eq!(names.len(), 3, "{names:?}");
     assert!(b.join("daedyx-tasks-v2.db").exists(), "die neue Kopie bleibt");
@@ -71,7 +74,7 @@ fn foreign_files_in_the_backup_folder_are_never_deleted() {
     }
     let path = d.join("daedyx-tasks.db");
     let conn = old_db(&path, &store);
-    backup_before_migrate(&conn, &path).unwrap();
+    backup_before_migrate(&conn, &path, &unmeasured).unwrap();
     assert!(b.join("notizen.txt").exists() && b.join("daedyx-desk-v1.db").exists());
 }
 
@@ -90,7 +93,7 @@ fn an_old_backup_that_cannot_be_deleted_does_not_stop_the_start() {
     std::thread::sleep(std::time::Duration::from_millis(30));
     let path = d.join("daedyx-tasks.db");
     let conn = old_db(&path, &store);
-    let saved = backup_before_migrate(&conn, &path).unwrap().expect("Kopie erwartet");
+    let saved = backup_before_migrate(&conn, &path, &unmeasured).unwrap().expect("Kopie erwartet");
     assert!(saved.exists(), "die neue Kopie ist angelegt");
     assert!(stuck.exists(), "die nicht löschbare Altlast bleibt, ohne zu stören");
 }
@@ -101,5 +104,5 @@ fn a_database_from_a_newer_version_is_not_copied() {
     let path = d.join("daedyx-tasks.db");
     let conn = old_db(&path, &store);
     conn.execute("UPDATE task_meta SET value = '99' WHERE key = 'schema_version'", []).unwrap();
-    assert!(backup_before_migrate(&conn, &path).unwrap().is_none());
+    assert!(backup_before_migrate(&conn, &path, &unmeasured).unwrap().is_none());
 }

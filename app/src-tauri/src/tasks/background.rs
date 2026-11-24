@@ -1,28 +1,21 @@
-//! Takt für Erinnerungen: alle 30 Sekunden nach Fälligem sehen und `tasks://reminder` melden.
-use super::reminders;
-use std::time::Duration;
+//! Takt für Erinnerungen: in festen Abständen einen Durchgang aus `daedyx-tasks-store` laufen lassen und Fälliges als
+//! `tasks://reminder` melden. Der Durchgang selbst ist eine reine Funktion (`reminders::tick_once`).
+use daedyx_tasks_store::reminders::{FIRST_TICK_DELAY, TICK_INTERVAL, local_zone, tick_once, unix_now};
 use tauri::{AppHandle, Emitter, Manager};
-
-fn unix_now() -> i64 {
-    std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_secs() as i64).unwrap_or(0)
-}
 
 pub fn start(app: AppHandle) {
     tauri::async_runtime::spawn(async move {
-        tokio::time::sleep(Duration::from_secs(4)).await;
+        tokio::time::sleep(FIRST_TICK_DELAY).await;
         loop {
             let a = app.clone();
             let _ = tauri::async_runtime::spawn_blocking(move || {
                 let state = a.state::<crate::AppState>();
-                let tz = iana_time_zone::get_timezone().unwrap_or_else(|_| "UTC".to_string());
-                if let Ok(conn) = state.db.lock() {
-                    let _ = reminders::tick(&conn, unix_now(), &tz, |r| {
-                        let _ = a.emit("tasks://reminder", r);
-                    });
-                }
+                tick_once(&state.db, unix_now(), &local_zone(), |r| {
+                    let _ = a.emit("tasks://reminder", r);
+                });
             })
             .await;
-            tokio::time::sleep(Duration::from_secs(30)).await;
+            tokio::time::sleep(TICK_INTERVAL).await;
         }
     });
 }

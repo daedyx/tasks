@@ -4,7 +4,7 @@ pub const TASKS_MAX_DEPTH: u32 = 6;
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::tasks::{edit_alarms, edit_tasks, edit_lists, TaskError};
+    use daedyx_tasks_core::{edit_alarms, edit_lists, edit_tasks, TaskError};
     use rusqlite::Connection;
     use serde_json::{json, Map, Value};
 
@@ -24,11 +24,13 @@ mod tests {
         let list = edit_lists::create_list(&conn, "Test", "", 1000).unwrap();
         let mut parent: Option<String> = None;
         for level in 0..=TASKS_MAX_DEPTH {
-            let t = edit_tasks::create_task_depth(&conn, &list.id, parent.as_deref(), &fields(json!({"title": format!("Ebene {level}")})), 1000, TASKS_MAX_DEPTH)
+            let f = fields(json!({"title": format!("Ebene {level}")}));
+            let t = edit_tasks::create_task_depth(&conn, &list.id, parent.as_deref(), &f, 1000, TASKS_MAX_DEPTH)
                 .unwrap_or_else(|e| panic!("Ebene {level} muss gehen: {e:?}"));
             parent = Some(t.id);
         }
-        let too_deep = edit_tasks::create_task_depth(&conn, &list.id, parent.as_deref(), &fields(json!({"title": "zu tief"})), 1000, TASKS_MAX_DEPTH);
+        let f = fields(json!({"title": "zu tief"}));
+        let too_deep = edit_tasks::create_task_depth(&conn, &list.id, parent.as_deref(), &f, 1000, TASKS_MAX_DEPTH);
         assert!(matches!(too_deep, Err(TaskError::TooDeep)));
     }
 

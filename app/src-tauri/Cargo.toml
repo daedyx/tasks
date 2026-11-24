@@ -1,3 +1,42 @@
+[workspace]
+members = [".", "crates/tasks-store", "xtask"]
+# Auch ein nacktes `cargo test` im Ordner prüft alle Crates (sonst nur die Tauri-Hülle).
+default-members = [".", "crates/tasks-store", "xtask"]
+resolver = "3"
+
+# Sicherheitsrahmen (SICHERHEIT.md, Anhang A). Gilt für jedes Crate mit `[lints] workspace = true`: das Store-Crate
+# `daedyx-tasks-store` und `xtask`. Die Tauri-Hülle erbt ihn bewusst nicht (wie Desk, Entscheidung E6: alte
+# Oberfläche ohne strenge Regeln, Feature-Stopp); Eintrag in docs/SICHERHEIT-AUSNAHMEN.md.
+[workspace.lints.rust]
+unsafe_code = "forbid"
+unused_must_use = "deny"
+
+[workspace.lints.clippy]
+# Absturzfreiheit (2.2)
+unwrap_used = "deny"
+expect_used = "deny"
+panic = "deny"
+unreachable = "deny"
+todo = "deny"
+unimplemented = "deny"
+indexing_slicing = "deny"
+string_slice = "deny"
+get_unwrap = "deny"
+# Keine Ausgaben/Protokolle (2.11)
+print_stdout = "deny"
+print_stderr = "deny"
+dbg_macro = "deny"
+# unsafe nur dokumentiert
+undocumented_unsafe_blocks = "deny"
+multiple_unsafe_ops_per_block = "deny"
+# Rechnen und Umwandeln
+cast_possible_truncation = "warn"
+cast_sign_loss = "warn"
+arithmetic_side_effects = "warn"
+mem_forget = "deny"
+exit = "deny"
+all = { level = "deny", priority = -1 }
+
 [package]
 name = "daedyx-tasks"
 version = "0.1.0"
@@ -5,6 +44,8 @@ description = "Daedyx Tasks"
 authors = ["Daedyx"]
 edition = "2024"
 license = "MIT"
+# Nie auf crates.io (Pfad-Abhängigkeit auf das eigene Store-Crate).
+publish = false
 
 [lib]
 name = "daedyx_tasks_lib"
@@ -20,15 +61,13 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tauri-plugin-mcp-bridge = { version = "0.13.2", optional = true }
 rusqlite = { version = "0.37", features = ["bundled-sqlcipher-vendored-openssl"] }
-keyring = "3"
-getrandom = "0.3"
-thiserror = "2"
 chrono = { version = "0.4", default-features = false, features = ["std", "clock"] }
 chrono-tz = "0.10"
-iana-time-zone = "0.1"
 tokio = { version = "1", features = ["time"] }
 # Aufgaben-Kern (eigenes privates Repository). Die Release-Pipeline braucht dafür das Secret CORE_READ_TOKEN.
 daedyx-tasks-core = { git = "https://github.com/daedyx/core", tag = "tasks-core-v0.2.1" }
+# Datenbank, Tresor, Sicherung, Startfehler, Erinnerungstakt (ohne Tauri); diese App ist die Tauri-Hülle darum.
+daedyx-tasks-store = { path = "crates/tasks-store" }
 
 [profile.release]
 codegen-units = 1
@@ -36,14 +75,10 @@ lto = true
 opt-level = 3
 panic = "abort"
 strip = true
-
-# Echter Betriebssystem-Tresor je System. Ohne diese Features nähme keyring einen Ersatzspeicher nur im Arbeitsspeicher:
-# der Datenbank-Schlüssel wäre nach jedem Neustart weg. Neues Zielsystem = hier ergänzen.
-[target.'cfg(windows)'.dependencies]
-keyring = { version = "3", features = ["windows-native"] }
-
-[target.'cfg(target_os = "macos")'.dependencies]
-keyring = { version = "3", features = ["apple-native"] }
+# SICHERHEIT.md Anhang A: Überläufe auch im fertigen Programm prüfen statt still umzubrechen. Das Store-Crate rechnet
+# sättigend oder geprüft (Clippy `arithmetic_side_effects`); ein übersehener Überlauf beendet die App (panic = abort).
+overflow-checks = true
+debug = false
 
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
 tauri-plugin-updater = "2"
@@ -52,5 +87,6 @@ tauri-plugin-autostart = "2"
 tauri-plugin-single-instance = "2"
 
 [features]
-# Nur für `npm run tauri:dev`: Konnektor, damit Claude die laufende App sehen kann (127.0.0.1).
-dev-bridge = ["dep:tauri-plugin-mcp-bridge"]
+# Nur für `npm run tauri:dev`: Konnektor, damit Claude die laufende App sehen kann (127.0.0.1),
+# und eigener Tresor-Dienst im Store-Crate (`dev-vault`).
+dev-bridge = ["dep:tauri-plugin-mcp-bridge", "daedyx-tasks-store/dev-vault"]

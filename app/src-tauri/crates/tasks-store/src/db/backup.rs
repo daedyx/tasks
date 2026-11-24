@@ -5,6 +5,11 @@ use std::path::{Path, PathBuf};
 
 const KEEP: usize = 3;
 
+/// Misst den freien Platz auf dem Laufwerk eines Ordners in Bytes; `None` = keine Messung möglich (dann meldet die
+/// Kopie selbst den Fehler). Die Messung braucht einen Betriebssystem-Aufruf und kommt deshalb von außen (die Hülle,
+/// später `daedyx-sys`), damit dieses Crate ohne `unsafe` bleibt.
+pub type FreeSpace<'a> = &'a dyn Fn(&Path) -> Option<u64>;
+
 /// Zu wenig freier Platz für die Kopie (Werte in Bytes); die Datenbank wird dann nicht angefasst.
 #[derive(Debug)]
 pub struct NotEnoughSpace {
@@ -24,45 +29,44 @@ impl std::error::Error for NotEnoughSpace {}
 /// (dann meldet die Migration den Fehler selbst und ändert nichts).
 fn stored_version(conn: &Connection) -> rusqlite::Result<i64> {
     let has = |name: &str| -> rusqlite::Result<bool> {
-        conn.query_row("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?1", [name], |_| Ok(())).optional().map(|r| r.is_some())
+        conn.query_row("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?1", [name], |_| Ok(()))
+            .optional()
+            .map(|r| r.is_some())
     };
     if !has("task_meta")? {
         return Ok(if has("task_lists")? { 1 } else { 0 });
     }
-    let value: Option<String> = conn.query_row("SELECT value FROM task_meta WHERE key = 'schema_version'", [], |r| r.get(0)).optional()?;
+    let value: Option<String> =
+        conn.query_row("SELECT value FROM task_meta WHERE key = 'schema_version'", [], |r| r.get(0)).optional()?;
     Ok(value.and_then(|v| v.parse().ok()).unwrap_or(0))
 }
 
 /// Kopiert die Datenbank nach `backups/daedyx-tasks-v<alterStand>.db`, wenn ihr Stand älter als der des Kerns,
 /// aber nicht neu angelegt ist. Behält die drei neuesten Kopien. `None`, wenn nichts zu sichern war.
-pub fn backup_before_migrate(conn: &Connection, db_path: &Path) -> std::io::Result<Option<PathBuf>> {
-    backup_with_free_space(conn, db_path, &super::free_space::available)
-}
-
-/// Wie `backup_before_migrate`, mit austauschbarer Messung des freien Platzes (für Tests).
 /// Fehlt der Platz, kommt ein `NotEnoughSpace` im `io::Error`; eine angefangene Kopie wird entfernt.
-pub fn backup_with_free_space(
+pub fn backup_before_migrate(
     conn: &Connection,
     db_path: &Path,
-    free_space: &dyn Fn(&Path) -> Option<u64>,
+    free_space: FreeSpace<'_>,
 ) -> std::io::Result<Option<PathBuf>> {
     let current = stored_version(conn).map_err(std::io::Error::other)?;
     if current <= 0 || current >= SCHEMA_VERSION {
         return Ok(None);
     }
     // WAL in die Hauptdatei schreiben, damit die einzelne Datei vollständig ist.
-    let busy: i64 = conn.query_row("PRAGMA wal_checkpoint(TRUNCATE)", [], |r| r.get(0)).map_err(std::io::Error::other)?;
+    let busy: i64 =
+        conn.query_row("PRAGMA wal_checkpoint(TRUNCATE)", [], |r| r.get(0)).map_err(std::io::Error::other)?;
     if busy != 0 {
         return Err(std::io::Error::other("Datenbank war beim Sichern belegt"));
     }
     let dir = db_path.parent().unwrap_or(Path::new(".")).join("backups");
     std::fs::create_dir_all(&dir)?;
     let size = std::fs::metadata(db_path)?.len();
-    let needed = size + size / 10;
-    if let Some(free) = free_space(&dir) {
-        if free < needed {
-            return Err(std::io::Error::other(NotEnoughSpace { needed, free }));
-        }
+    let needed = size.saturating_add(size / 10);
+    if let Some(free) = free_space(&dir)
+        && free < needed
+    {
+        return Err(std::io::Error::other(NotEnoughSpace { needed, free }));
     }
     let target = dir.join(format!("daedyx-tasks-v{current}.db"));
     if let Err(e) = std::fs::copy(db_path, &target) {

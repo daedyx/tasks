@@ -1,0 +1,36 @@
+[package]
+name = "daedyx-tasks-store"
+version = "0.1.0"
+description = "Datenhaltung von Daedyx Tasks ohne Oberfläche: verschlüsselte Datenbank, Tresor, Sicherung, Startfehler als Codes, Erinnerungstakt"
+edition = "2024"
+license = "MIT"
+publish = false
+
+[lints]
+workspace = true
+
+[dependencies]
+rusqlite = { version = "0.37", features = ["bundled-sqlcipher-vendored-openssl"] }
+keyring = "3"
+getrandom = "0.3"
+thiserror = "2"
+iana-time-zone = "0.1"
+# Aufgaben-Kern (eigenes privates Repository), gleicher Tag wie in der Hülle.
+daedyx-tasks-core = { git = "https://github.com/daedyx/core", tag = "tasks-core-v0.2.1" }
+
+[dev-dependencies]
+serde_json = "1"
+
+# Echter Betriebssystem-Tresor je System. Ohne diese Features nähme keyring einen Ersatzspeicher nur im Arbeitsspeicher:
+# der Datenbank-Schlüssel wäre nach jedem Neustart weg. Neues Zielsystem = hier ergänzen.
+[target.'cfg(windows)'.dependencies]
+keyring = { version = "3", features = ["windows-native"] }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+keyring = { version = "3", features = ["apple-native"] }
+
+[features]
+# Eigener Tresor-Dienst für Entwicklungs-Builds (die Hülle schaltet es mit `dev-bridge` ein).
+dev-vault = []
+# `MemoryStore` und Test-Ordner für Tests anderer Crates (nie im Produkt-Bau).
+test-support = []

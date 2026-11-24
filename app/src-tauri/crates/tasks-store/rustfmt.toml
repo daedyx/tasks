@@ -1,0 +1,4 @@
+# Bestehender Stil: lange Zeilen bis 120 Zeichen, Importe wie bisher sortiert.
+max_width = 120
+use_small_heuristics = "Max"
+style_edition = "2021"

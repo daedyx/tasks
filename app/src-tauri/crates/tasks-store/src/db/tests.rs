@@ -1,15 +1,12 @@
 use super::*;
+use crate::db::backup_tests::unmeasured;
 use crate::secrets::{MemoryStore, SecretStore};
 use std::path::{Path, PathBuf};
 
 const MARKER: &str = "GEHEIMER-TESTWERT-4711";
 
 fn temp_db(name: &str) -> PathBuf {
-    let dir = std::env::temp_dir().join(format!("daedyx-tasks-test-{}-{name}", std::process::id()));
-    std::fs::create_dir_all(&dir).unwrap();
-    let path = dir.join("test.db");
-    let _ = std::fs::remove_file(&path);
-    path
+    crate::test_support::test_dir(&format!("db-{name}")).unwrap().join("test.db")
 }
 
 fn write_marker(path: &Path, store: &MemoryStore) {
@@ -74,12 +71,12 @@ fn first_start_creates_the_task_schema_and_a_second_start_keeps_the_data() {
     let path = temp_db("migrate");
     let store = MemoryStore::default();
     {
-        let conn = crate::startup::open_and_migrate(&path, &store).unwrap();
+        let conn = crate::startup::open_and_migrate(&path, &store, &unmeasured).unwrap();
         let lists = daedyx_tasks_core::store::lists(&conn).unwrap();
         assert!(lists.is_empty(), "neue Datenbank beginnt leer");
         daedyx_tasks_core::edit_lists::create_list(&conn, "Testliste", "blue", 1_000).unwrap();
     }
-    let conn = crate::startup::open_and_migrate(&path, &store).unwrap();
+    let conn = crate::startup::open_and_migrate(&path, &store, &unmeasured).unwrap();
     let lists = daedyx_tasks_core::store::lists(&conn).unwrap();
     assert_eq!(lists.len(), 1);
     assert_eq!(lists[0].name, "Testliste");
@@ -90,9 +87,12 @@ fn a_database_from_a_newer_core_is_rejected_not_changed() {
     let path = temp_db("toonew");
     let store = MemoryStore::default();
     {
-        let conn = crate::startup::open_and_migrate(&path, &store).unwrap();
+        let conn = crate::startup::open_and_migrate(&path, &store, &unmeasured).unwrap();
         conn.execute("UPDATE task_meta SET value = '999' WHERE key = 'schema_version'", []).unwrap();
     }
-    let res = crate::startup::open_and_migrate(&path, &store);
-    assert!(matches!(res, Err(crate::startup::StartupError::Migrate(daedyx_tasks_core::MigrateError::TooNew { .. }))), "{res:?}");
+    let res = crate::startup::open_and_migrate(&path, &store, &unmeasured);
+    assert!(
+        matches!(res, Err(crate::startup::StartupError::Migrate(daedyx_tasks_core::MigrateError::TooNew { .. }))),
+        "{res:?}"
+    );
 }
