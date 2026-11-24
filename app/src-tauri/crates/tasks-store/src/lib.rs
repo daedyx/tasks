@@ -10,6 +10,8 @@ pub mod startup;
 pub mod test_support;
 
 #[cfg(test)]
+mod guard_core_tests;
+#[cfg(test)]
 mod guard_tests;
 #[cfg(test)]
 mod startup_tests;

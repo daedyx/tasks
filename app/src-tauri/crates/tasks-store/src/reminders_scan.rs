@@ -10,7 +10,7 @@ use daedyx_tasks_core::smart::due_day;
 use daedyx_tasks_core::store::{task_from_row, TASK_COLS};
 use daedyx_tasks_core::types::Task;
 use daedyx_tasks_core::zone::zone;
-use daedyx_tasks_core::{edit_alarms, TaskError};
+use daedyx_tasks_core::TaskError;
 use rusqlite::Connection;
 
 /// Letzte Sekunde, die als Uhrzeit oder Fälligkeit gilt (9999-12-31 23:59:59 UTC); die erste ist 1970-01-01.
@@ -38,13 +38,22 @@ pub fn pending_checked(conn: &Connection, from: i64, to: i64, tz_name: &str) -> 
          AND (remind_minutes IS NOT NULL OR EXISTS (SELECT 1 FROM task_alarms a WHERE a.task_id = tasks.id AND a.deleted_at IS NULL)) \
          AND list_id IN (SELECT id FROM task_lists WHERE deleted_at IS NULL)"
     );
-    let tasks = conn.prepare(&sql)?.query_map([], task_from_row)?.collect::<Result<Vec<_>, _>>()?;
+    // Zeilen einzeln: Eine Zeile mit falschem Datentyp (SQLite erlaubt ihn in jeder Spalte) fällt allein weg und
+    // schaltet nicht alle Erinnerungen ab (Review T0, N-7).
+    let tasks: Vec<Task> = conn.prepare(&sql)?.query_map([], task_from_row)?.filter_map(Result::ok).collect();
+    let mut alarm_rows = conn.prepare(
+        "SELECT minutes_before FROM task_alarms WHERE task_id = ?1 AND deleted_at IS NULL ORDER BY minutes_before",
+    )?;
     let mut fired = conn.prepare("SELECT 1 FROM task_alarms_fired WHERE task_id = ?1 AND fire_at = ?2")?;
     let mut out = Vec::new();
     for t in tasks {
         let Some(base) = base_secs(&t, tz) else { continue };
-        let mut mins = edit_alarms::alarms(conn, &t.id)?;
-        if mins.is_empty() {
+        // Wie `edit_alarms::alarms`, aber je Zeile: kaputte Zeilen zählen als vorhanden (kein Rückfall auf das alte
+        // Einzelfeld), werden aber nicht gemeldet.
+        let rows: Vec<rusqlite::Result<i64>> = alarm_rows.query_map([&t.id], |r| r.get(0))?.collect();
+        let has_rows = !rows.is_empty();
+        let mut mins: Vec<i64> = rows.into_iter().filter_map(Result::ok).collect();
+        if !has_rows {
             mins.extend(t.remind_minutes);
         }
         for min in mins {

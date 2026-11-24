@@ -35,6 +35,8 @@ Funktion von außen, damit hier kein `unsafe` nötig ist).
 | 7 | G1 | Uhr oder Zeitzone unsinnig (negativ, `i64::MAX`, lange Namen) | Takt prüft den Zeitraum vor dem Kern, nie Panik | `hostile_clock_and_zone_values_do_not_panic` |
 | 8 | – | Panik an anderer Stelle hält die Datenbank-Sperre | Durchgang fällt still aus | `a_poisoned_lock_skips_the_tick_without_panic` |
 | 9 | G1/G7 | Unsinnige Werte in der Datenbank (Erinnerung `i64::MAX` Minuten, Fälligkeit `i64::MIN`): der Kern-Durchgang läuft über, mit `panic = "abort"` Absturz bei jedem Start (Review T0, M-1) | eigener, geprüft rechnender Durchgang im Store; Minuten nur 0–525 600, Fälligkeit nur 1970–9999, ungültige Erinnerungen übersprungen, Datenbank unverändert | `absurd_reminder_minutes_in_the_database_are_skipped_without_panic`, `an_absurd_due_time_in_the_database_is_skipped_without_panic`, `a_broken_task_does_not_hide_the_valid_ones`, `the_checked_scan_matches_the_core_for_valid_data` |
+| 10 | G1/G7 | Zeile mit falschem Datentyp (Titel als Binärwert, Minuten als Text) schaltet alle Erinnerungen still ab (Review T0, N-7) | Zeilen einzeln lesen, kaputte überspringen; Aufgabe mit nur kaputten Erinnerungszeilen fällt nicht auf das alte Einzelfeld zurück | `a_row_with_a_wrong_data_type_does_not_silence_the_other_reminders` |
+| 11 | G8 | Späterer Code ruft doch den ungeprüften Kern-Durchgang auf | Hülle reicht `reminders` des Kerns nicht weiter; Wächter mit Gegenprobe | `nobody_reaches_the_unchecked_core_tick`, `the_guard_sees_every_way_in` |
 
 **Netz:** keins. Der Baum des Store-Crates steht als Erlaubnisliste im Test `guard_tests` (geschlossene Welt, Review T0 N-5).
 

@@ -109,3 +109,25 @@ fn the_checked_scan_matches_the_core_for_valid_data() {
     assert!(tick_checked(&conn, NINE, "Europe/Berlin", |_| {}).unwrap() > 0);
     compare(&conn);
 }
+
+/// Review T0, N-7: Falsche Datentypen (SQLite erlaubt sie in jeder Spalte) schalten nur die betroffene Zeile ab.
+#[test]
+fn a_row_with_a_wrong_data_type_does_not_silence_the_other_reminders() {
+    let (conn, list) = fresh();
+    task(&conn, &list, "Gültige Aufgabe", &[0]);
+    let blob = task(&conn, &list, "Titel wird Binärwert", &[0]);
+    conn.execute("UPDATE tasks SET title = X'00FF' WHERE id = ?1", [&blob]).unwrap();
+    let mixed = task(&conn, &list, "Eine Erinnerung kaputt", &[0, 5]);
+    conn.execute("UPDATE task_alarms SET minutes_before = 'abc' WHERE task_id = ?1 AND minutes_before = 5", [&mixed])
+        .unwrap();
+    let all_text = task(&conn, &list, "Alle Erinnerungen kaputt", &[0]);
+    conn.execute("UPDATE task_alarms SET minutes_before = 'abc' WHERE task_id = ?1", [&all_text]).unwrap();
+    let data = |c: &Connection| dump(c).into_iter().filter(|l| !l.starts_with("task_alarms_fired")).collect::<Vec<_>>();
+    let before = data(&conn);
+    let db = Mutex::new(conn);
+    let mut seen = tick_without_panic(&db, NINE);
+    seen.sort();
+    // „Alle Erinnerungen kaputt“ fällt nicht auf das alte Einzelfeld zurück: die Aufgabe hat eigene (kaputte) Zeilen.
+    assert_eq!(seen, vec!["Eine Erinnerung kaputt", "Gültige Aufgabe"]);
+    assert_eq!(data(&db.lock().unwrap()), before, "Aufgaben oder Erinnerungen verändert");
+}
