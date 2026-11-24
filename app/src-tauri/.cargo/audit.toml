@@ -1,0 +1,7 @@
+# cargo audit: dieselben Ausnahmen wie deny.toml (cargo xtask exceptions prüft, dass beide gleich sind).
+# Begründung und Ablauf: docs/SICHERHEIT-AUSNAHMEN.md A-013 bis A-015, A-020 bis A-025.
+[advisories]
+ignore = [
+  "RUSTSEC-2026-0459", "RUSTSEC-2026-0543", "RUSTSEC-2026-0555", "RUSTSEC-2026-0594",
+  "RUSTSEC-2024-0370", "RUSTSEC-2026-0370", "RUSTSEC-2026-0371", "RUSTSEC-2026-0372", "RUSTSEC-2024-0429",
+]

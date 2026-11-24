@@ -1,0 +1,19 @@
+#!/bin/sh
+# Sicherheitsrahmen (docs/SICHERHEIT.md 6.2): lokale Prüfung vor jedem Commit, ohne Netz und ohne Fremddienst.
+# Einschalten je Klon (einmal):  git config core.hooksPath .githooks
+# Nie mit --no-verify umgehen (SICHERHEIT 5.7). Der Cargo-Workspace liegt in app/src-tauri.
+set -e
+top=$(git rev-parse --show-toplevel)
+# Zuerst ohne Cargo: Die Cargo-Konfiguration darf nur den xtask-Alias enthalten, sonst könnte ein `runner` oder
+# `rustc-wrapper` die Prüfungen unten abschalten (Review Prüflücken H-1).
+andere=$(git -C "$top" ls-files | grep -iE '(^|/)(\.cargo/config(\.toml)?|rust-toolchain(\.toml)?)$' | grep -vx 'app/src-tauri/.cargo/config.toml' || true)
+inhalt=$(grep -v '^[[:space:]]*#' "$top/app/src-tauri/.cargo/config.toml" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | tr -d '\r' | grep -v '^$')
+erwartet=$(printf '%s\n%s' '[alias]' 'xtask = "run --quiet --package xtask --"')
+if [ -n "$andere" ] || [ "$inhalt" != "$erwartet" ]; then
+  echo "Cargo-Konfiguration: nur app/src-tauri/.cargo/config.toml mit dem xtask-Alias ist erlaubt." >&2
+  exit 1
+fi
+cd "$top/app/src-tauri"
+cargo fmt -p daedyx-tasks-store -p xtask --check
+cargo xtask scan --staged
+cargo xtask exceptions

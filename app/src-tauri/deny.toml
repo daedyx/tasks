@@ -1,0 +1,48 @@
+# Lieferketten-Tor für Tasks (docs/SICHERHEIT.md 4.2, Anhang C), nach dem Muster von Kern und Launcher
+# (Zweige paket-sicherheitsrahmen). Ausnahmen nur mit Eintrag in docs/SICHERHEIT-AUSNAHMEN.md.
+# Prüfen: cargo deny --locked --offline check advisories bans licenses sources
+[graph]
+all-features = true
+
+[advisories]
+yanked = "deny"
+unmaintained = "all"
+# Je Zeile ein Eintrag in docs/SICHERHEIT-AUSNAHMEN.md (Ja des Betreuers ausstehend).
+ignore = [
+  # Wie im Kern (dort A-004 bis A-006) und in Desk:
+  { id = "RUSTSEC-2026-0459", reason = "SQLite-Lücke nur mit präparierter DB-/WAL-Datei; SQLCipher bündelt auch in libsqlite3-sys 0.39 noch ein betroffenes SQLite. Neu prüfen, sobald sqlcipher-src SQLite >= 3.54 enthält (Kern A-004)." },
+  { id = "RUSTSEC-2026-0543", reason = "chrono nicht mehr gepflegt, keine bekannte Lücke; Ersatz ist ein eigener Auftrag (wie Kern)." },
+  { id = "RUSTSEC-2026-0555", reason = "chrono-tz nicht mehr gepflegt, keine bekannte Lücke; Ersatz zusammen mit chrono (wie Kern)." },
+  # Nur die alte Tauri-Hülle (Feature-Stopp, Entscheidung 5), wie in Desk:
+  { id = "RUSTSEC-2026-0594", reason = "cookie: Nonces wiederholen sich nur nach fork(); Windows ist laut Meldung nicht betroffen, Tauri nutzt keine privaten Cookies. Behoben in 0.18.3, kommt mit dem nächsten Tauri-Update." },
+  { id = "RUSTSEC-2024-0370", reason = "proc-macro-error nicht gepflegt, nur Bauzeit-Makro über gtk/glib (Linux) der Tauri-Hülle." },
+  { id = "RUSTSEC-2026-0370", reason = "zvariant nicht gepflegt, nur Linux-D-Bus über tauri-plugin-notification; wie Desk/Launcher." },
+  { id = "RUSTSEC-2026-0371", reason = "zbus_names nicht gepflegt, wie zvariant." },
+  { id = "RUSTSEC-2026-0372", reason = "zvariant_derive nicht gepflegt, wie zvariant." },
+  { id = "RUSTSEC-2024-0429", reason = "glib (gtk, nur Linux über Tauri-Infobereich): Unsoundness in VariantStrIter; unter Windows nicht im Bau, die Hülle ruft es nicht auf." },
+]
+
+[licenses]
+# Nur Lizenzen, die mit MIT verträglich sind.
+allow = [
+  "MIT", "Apache-2.0", "Apache-2.0 WITH LLVM-exception", "BSD-2-Clause", "BSD-3-Clause",
+  "ISC", "Zlib", "Unicode-3.0", "CC0-1.0", "0BSD", "BSL-1.0", "MPL-2.0", "CDLA-Permissive-2.0",
+]
+confidence-threshold = 0.9
+exceptions = []
+
+[bans]
+multiple-versions = "warn"
+wildcards = "deny"
+# Eigene Crates im Workspace stehen nur mit Pfad (publish = false).
+allow-wildcard-paths = true
+deny = [
+  { name = "openssl", reason = "TLS nur über rustls (SICHERHEIT 4.2); OpenSSL steckt nur als C-Code für SQLCipher in openssl-src" },
+  { name = "native-tls", reason = "TLS nur über rustls (SICHERHEIT 4.2)" },
+]
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]
+allow-git = ["https://github.com/daedyx/core"]
