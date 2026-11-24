@@ -1,6 +1,19 @@
 # Stand — Daedyx Tasks
 
-Letzte Änderung: 2026-11-19, Paket K4 Teil 1 und 2 „Tasks-Funktionen“ im Zweig `k4-funktionen` (nicht in `main`, Merge entscheidet Björn nach der Abnahme `docs/abnahme-k4.md`). Version 0.1.0, nichts veröffentlicht.
+Letzte Änderung: 2026-11-24, Rust-Umbau Meilenstein **T0 „Store ohne Tauri“** im Zweig `tasks-rust-t0` (ab `mac-vorbereitung-tasks`, nicht in `main`). Plan: `plan-tasks-rust.md` (Notizordner des Master-Chats). Version 0.1.0, nichts veröffentlicht.
+
+## T0 Store ohne Tauri (Zweig tasks-rust-t0), Stand 2026-11-24
+- `app/src-tauri` ist ein Cargo-Workspace: Tauri-Hülle `daedyx-tasks`, neues Bibliotheks-Crate **`daedyx-tasks-store`** (`crates/tasks-store`) und das Prüfwerkzeug `xtask` (Kopie aus Desk). `default-members` = alle, ein nacktes `cargo test` prüft also alles.
+- **Im Store-Crate (ohne Tauri, ohne Netz, ohne `unsafe`):** `db/` (öffnen mit Schlüssel aus dem Tresor, Sicherung vor Migration), `secrets/` (`SecretStore`, `KeyringStore`, `MemoryStore` nur mit `cfg(test)` oder Merkmal `test-support`), `startup.rs` (Fehler nur als `StartupCode`, keine Texte), `reminders.rs` (Erinnerungstakt als reine Funktion `tick_once`), `limits.rs` (`TASKS_MAX_DEPTH`). Die Platzmessung (`free_space.rs`, `unsafe`) und das Meldungsfenster (`startup_dialog.rs`, `unsafe`) bleiben bis T1 in der Hülle; die Hülle reicht die Messung als Funktion hinein.
+- **Hülle:** ruft das Crate (`pub use daedyx_tasks_store::{db, secrets}`), macht die Texte zum Fehlercode (`startup.rs`) und den Takt-Thread (`tasks/background.rs`). Befehle, Ereignisse und Oberfläche unverändert (Feature-Stopp). `dev-bridge` schaltet `daedyx-tasks-store/dev-vault` ein (eigener Tresor-Dienst).
+- **Härtungen (nur bei kaputten Eingaben anders):** Eine vorhandene **leere** Datenbank-Datei wird abgewiesen statt still zu einer neuen, leeren Datenbank (Fehler `EmptyFile`, Code `Other`). Der Takt nimmt nur Uhrzeiten von 1970 bis 9999 an; vorher brachte eine unsinnige Uhrzeit den Kern zum Überlauf (`reminders::tick` rechnet `now - 2 Tage` ungeprüft, Kern-Tag `tasks-core-v0.2.1`).
+- **Belegt:** `cargo test --workspace --locked` 110 bestanden + 1 ignoriert (Hülle 11, Store 35 + 1, xtask 64); alle 33 alten Testnamen vorhanden (Namenslisten verglichen). Strenges Clippy für Store und xtask (`--all-features`) und Clippy über den ganzen Workspace grün, `cargo fmt` (Store, xtask), `cargo xtask exceptions` (27 Stellen, alle eingetragen), `cargo xtask scan` (258 Dateien, ohne lokale Wortliste), `cargo deny` und `cargo audit` grün. `cargo tree -p daedyx-tasks-store` ohne `tauri`, `wry`, `tao`, `webview2` und ohne Netz-Crate (auch als Dauertest `guard_tests`). `npm test` 195/195, `npm run test:scripts` 36/36, `tsc` sauber.
+- **Lieferkette:** `url` 2.5.8 → 2.5.9 und `form_urlencoded` 1.2.2 → 1.2.3 (RUSTSEC-2026-0592, Regel N-5, beide lagen lokal vor, wie Desk `fdf0b74`); sonst nur die zwei eigenen Crates neu im Lockfile.
+- **Offen:** Alle Ausnahmen in `docs/SICHERHEIT-AUSNAHMEN.md` (A-001 bis A-025) brauchen das Ja des Betreuers. Keine `rust-toolchain.toml` (das Prüfwerkzeug verbietet sie seit der Prüflücken-Runde, und lokal würde rustup eine zweite Toolchain laden); die Version nagelt künftig die CI fest (T6). Der Pre-Commit-Haken liegt in `.githooks/`, ist aber nicht eingeschaltet. Die App wurde nach dem Umbau **nicht gestartet** (weder Dev-App noch Installer); dass sich nichts geändert hat, belegen nur die Tests.
+- **Wünsche:** `docs/WUENSCHE.md` (Seite „Erinnerungen“ mit „Später“, Entscheid T-F5). Bedrohungsmodell: `docs/BEDROHUNGSMODELL.md`.
+
+## Ältere Stände
+Stand vor T0: 2026-11-19, Paket K4 Teil 1 und 2 „Tasks-Funktionen“ im Zweig `k4-funktionen`.
 
 ## Was gebaut ist
 - Tauri-2-Projekt (React/TS + Rust), aus Daedyx Desk `main` (0.6.0, Stand nach Merge von K1) abgeleitet. Nur der Aufgabenbereich (Listen, Abschnitte, Board, Unteraufgaben eine Ebene, Wiederholung, Erinnerung, Smart-Listen) als Hauptfenster, dazu Einstellungen (Dunkelmodus, Über und Updates). Kein Mail, kein Kalender, keine Konten, keine Schnellsuche-Palette.
@@ -41,7 +54,7 @@ Letzte Änderung: 2026-11-19, Paket K4 Teil 1 und 2 „Tasks-Funktionen“ im Zw
 - Nächste Pakete laut Konzept: K2 (Schema Stand 3, liegt im Kern), K4 und K5 (Funktionen, Farben), K6 (Link-Schema, Single-Instance).
 
 ## Befehle
-- Rust: in PowerShell `$env:Path = "C:\Strawberry\perl\bin;C:\Strawberry\c\bin;" + $env:Path + ";$env:USERPROFILE\.cargo\bin"`, dann `cd app\src-tauri; cargo test` (erster Bau ca. 6 Minuten).
+- Rust: in PowerShell `$env:Path = "C:\Strawberry\perl\bin;C:\Strawberry\c\bin;" + $env:Path + ";$env:USERPROFILE\.cargo\bin"`, dann `cd app\src-tauri; cargo test --workspace --locked` (erster Bau ca. 6 Minuten). Prüfungen seit T0: `cargo clippy -p daedyx-tasks-store -p xtask --all-targets --all-features --locked -- -Dwarnings`, `cargo fmt -p daedyx-tasks-store -p xtask --check`, `cargo xtask exceptions`, `cargo xtask scan`, `cargo deny --locked check advisories bans licenses sources`, `cargo audit --deny warnings`.
 - Oberfläche: `cd app; npm test`; Dev-App mit Konnektor: `npm run tauri:dev`; Installer: `npm run tauri build`.
 
 ## Offene Punkte aus dem Review der Härtung (2026-11-21)
