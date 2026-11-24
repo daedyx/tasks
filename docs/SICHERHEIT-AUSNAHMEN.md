@@ -8,7 +8,7 @@ Ausnahme nicht erlaubt. `cargo xtask exceptions` (im Ordner `app/src-tauri`) zä
 und Regel** mit dieser Tabelle; eine Stelle ohne passende Zeile, eine Zeile ohne Stelle oder ein abgelaufener Eintrag
 sind rot. Das Werkzeug ist eine Kopie des Desk-Werkzeugs (gleicher Aufbau: Workspace unter der Repo-Wurzel).
 
-**Alle Einträge sind Vorschläge des Bau-Chats T0 (2026-11-24): Ja des Betreuers ausstehend.** Die meisten entsprechen
+**Alle Einträge sind Vorschläge des Bau-Chats T0 (2026-11-24, A-026 nach dem Review): Ja des Betreuers ausstehend.** Die meisten entsprechen
 Einträgen, die der Betreuer für Desk am 2026-11-24 angenommen hat (in Klammern genannt). Die Tauri-Hülle steht nicht
 unter den strengen Lints (wie Desk, Entscheidung E6; Eintrag A-007) und fällt mit dem Wechsel auf die Rust-Fassung weg.
 
@@ -45,6 +45,7 @@ unter den strengen Lints (wie Desk, Entscheidung E6; Eintrag A-007) und fällt m
 | A-023 | app/src-tauri/deny.toml | RUSTSEC-2026-0371 (zbus_names, nur Tauri-Hülle) | wie A-022 (Launcher A-021). | Bau-Chat T0, Ja des Betreuers ausstehend | 2026-11-24 | 2027-03-31 |
 | A-024 | app/src-tauri/deny.toml | RUSTSEC-2026-0372 (zvariant_derive, nur Tauri-Hülle) | wie A-022 (Launcher A-022). | Bau-Chat T0, Ja des Betreuers ausstehend | 2026-11-24 | 2027-03-31 |
 | A-025 | app/src-tauri/deny.toml | RUSTSEC-2024-0429 (glib, nur Tauri-Hülle) | Unsoundness in `VariantStrIter`; `glib` kommt nur über gtk (Linux-Infobereich von Tauri, Merkmal `tray-icon`), unter Windows nicht im Bau, die Hülle ruft es nicht auf. Neu in Tasks (Desk hat kein `tray-icon`). Fällt mit der Hülle weg. | Bau-Chat T0, Ja des Betreuers ausstehend | 2026-11-24 | 2027-03-31 |
+| A-026 | app/src-tauri/deny.toml | graph.targets=["x86_64-pc-windows-msvc", "aarch64-apple-darwin", "x86_64-apple-darwin"] | `cargo deny` prüft nur die Systeme, für die Tasks gebaut wird (Windows; macOS im Mac-Testbau). So braucht die Prüfung keine Quellen für Linux, Android oder iOS (Review T0, N-3: keine Downloads für die Prüfung). Folge: Meldungen, die nur Linux-Teile betreffen (A-021 bis A-025), sieht `cargo deny` nicht mehr; `cargo audit` prüft weiter den ganzen Lockfile. | Bau-Chat T0 (Auftrag Master nach Review), Ja des Betreuers ausstehend | 2026-11-24 | 2027-05-31 |
 
 Eine Zeile mit Regel `scan:<regel>` erlaubt genau diesen Fund des Scans in genau dieser Datei bis zum Ablaufdatum; sie
 zählt nicht als Code-Stelle. Format für `cargo xtask exceptions`: Spalte 2 ist der Pfad ab der Repo-Wurzel, Spalte 3 die

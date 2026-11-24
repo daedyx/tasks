@@ -3,6 +3,9 @@
 # Prüfen: cargo deny --locked --offline check advisories bans licenses sources
 [graph]
 all-features = true
+# Nur die Systeme, für die Tasks gebaut wird (Windows; macOS im Mac-Testbau). Linux, Android und iOS werden nicht
+# gebaut; ihre Quellen braucht die Prüfung dann nicht (Review T0, N-3: keine Downloads für die Prüfung).
+targets = ["x86_64-pc-windows-msvc", "aarch64-apple-darwin", "x86_64-apple-darwin"]
 
 [advisories]
 yanked = "deny"
