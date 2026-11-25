@@ -21,8 +21,8 @@ produkt = []
 [dependencies]
 # Gerüst und Aufgaben-Oberfläche aus daedyx/ui. Bis zum nächsten ui-Tag per rev auf Zweig paket-t3 (Tasks T3);
 # alle Teile aus daedyx/ui müssen dieselbe Fassung sein (auch daedyx-sys in der Hülle).
-daedyx-ui = { git = "https://github.com/daedyx/ui", rev = "696d574ad4da0a8a9671bd7af89f2e32498feed9" }
-daedyx-tasks-ui = { git = "https://github.com/daedyx/ui", rev = "696d574ad4da0a8a9671bd7af89f2e32498feed9" }
+daedyx-ui = { git = "https://github.com/daedyx/ui", rev = "3e314dbff312be7ff069e3babff7b24cade136f8" }
+daedyx-tasks-ui = { git = "https://github.com/daedyx/ui", rev = "3e314dbff312be7ff069e3babff7b24cade136f8" }
 # Fehlercodes beim Start (StartupCode); die echte Datenbank öffnet die App erst ab T5.
 daedyx-tasks-store = { path = "../tasks-store" }
 eframe = { version = "=0.37.0", default-features = false, features = ["accesskit", "default_fonts", "glow"] }
@@ -34,11 +34,11 @@ iana-time-zone = "0.1"
 rusqlite = { version = "0.37", features = ["bundled-sqlcipher-vendored-openssl"] }
 
 [build-dependencies]
-daedyx-build = { git = "https://github.com/daedyx/ui", rev = "696d574ad4da0a8a9671bd7af89f2e32498feed9" }
+daedyx-build = { git = "https://github.com/daedyx/ui", rev = "3e314dbff312be7ff069e3babff7b24cade136f8" }
 
 [dev-dependencies]
 egui_kittest = "=0.37.0"
-daedyx-ui = { git = "https://github.com/daedyx/ui", rev = "696d574ad4da0a8a9671bd7af89f2e32498feed9", features = ["lint"] }
-daedyx-tasks-ui = { git = "https://github.com/daedyx/ui", rev = "696d574ad4da0a8a9671bd7af89f2e32498feed9", features = ["lint"] }
+daedyx-ui = { git = "https://github.com/daedyx/ui", rev = "3e314dbff312be7ff069e3babff7b24cade136f8", features = ["lint"] }
+daedyx-tasks-ui = { git = "https://github.com/daedyx/ui", rev = "3e314dbff312be7ff069e3babff7b24cade136f8", features = ["lint"] }
 # Startprobe des gebauten Programms mit Zeitgrenze (Prozesse nur über daedyx-sys).
-daedyx-sys = { git = "https://github.com/daedyx/ui", rev = "696d574ad4da0a8a9671bd7af89f2e32498feed9" }
+daedyx-sys = { git = "https://github.com/daedyx/ui", rev = "3e314dbff312be7ff069e3babff7b24cade136f8" }

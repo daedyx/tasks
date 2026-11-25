@@ -1041,12 +1041,12 @@ checksum = "f27ae1dd37df86211c42e150270f82743308803d90a6f6e6651cd730d5e1732f"
 [[package]]
 name = "daedyx-build"
 version = "0.1.0"
-source = "git+https://github.com/daedyx/ui?rev=696d574ad4da0a8a9671bd7af89f2e32498feed9#696d574ad4da0a8a9671bd7af89f2e32498feed9"
+source = "git+https://github.com/daedyx/ui?rev=3e314dbff312be7ff069e3babff7b24cade136f8#3e314dbff312be7ff069e3babff7b24cade136f8"
 
 [[package]]
 name = "daedyx-sys"
 version = "0.1.0"
-source = "git+https://github.com/daedyx/ui?rev=696d574ad4da0a8a9671bd7af89f2e32498feed9#696d574ad4da0a8a9671bd7af89f2e32498feed9"
+source = "git+https://github.com/daedyx/ui?rev=3e314dbff312be7ff069e3babff7b24cade136f8#3e314dbff312be7ff069e3babff7b24cade136f8"
 
 [[package]]
 name = "daedyx-tasks"
@@ -1121,7 +1121,7 @@ dependencies = [
 [[package]]
 name = "daedyx-tasks-ui"
 version = "0.1.0"
-source = "git+https://github.com/daedyx/ui?rev=696d574ad4da0a8a9671bd7af89f2e32498feed9#696d574ad4da0a8a9671bd7af89f2e32498feed9"
+source = "git+https://github.com/daedyx/ui?rev=3e314dbff312be7ff069e3babff7b24cade136f8#3e314dbff312be7ff069e3babff7b24cade136f8"
 dependencies = [
  "chrono",
  "chrono-tz",
@@ -1136,7 +1136,7 @@ dependencies = [
 [[package]]
 name = "daedyx-ui"
 version = "0.1.0"
-source = "git+https://github.com/daedyx/ui?rev=696d574ad4da0a8a9671bd7af89f2e32498feed9#696d574ad4da0a8a9671bd7af89f2e32498feed9"
+source = "git+https://github.com/daedyx/ui?rev=3e314dbff312be7ff069e3babff7b24cade136f8#3e314dbff312be7ff069e3babff7b24cade136f8"
 dependencies = [
  "eframe",
  "png",
