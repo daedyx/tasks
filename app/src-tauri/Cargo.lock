@@ -777,7 +777,7 @@ dependencies = [
 [[package]]
 name = "daedyx-tasks-core"
 version = "0.2.0"
-source = "git+https://github.com/daedyx/core?tag=tasks-core-v0.2.1#c4e54bba57c9abbfa80e3999671416cb8a2af4b0"
+source = "git+https://github.com/daedyx/core?tag=tasks-core-v0.2.2#9b8e046d846fc803d0cefb2408c561c86d6d323d"
 dependencies = [
  "chrono",
  "chrono-tz",

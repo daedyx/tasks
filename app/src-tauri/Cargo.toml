@@ -65,7 +65,7 @@ chrono = { version = "0.4", default-features = false, features = ["std", "clock"
 chrono-tz = "0.10"
 tokio = { version = "1", features = ["time"] }
 # Aufgaben-Kern (eigenes privates Repository). Die Release-Pipeline braucht dafür das Secret CORE_READ_TOKEN.
-daedyx-tasks-core = { git = "https://github.com/daedyx/core", tag = "tasks-core-v0.2.1" }
+daedyx-tasks-core = { git = "https://github.com/daedyx/core", tag = "tasks-core-v0.2.2" }
 # Datenbank, Tresor, Sicherung, Startfehler, Erinnerungstakt (ohne Tauri); diese App ist die Tauri-Hülle darum.
 daedyx-tasks-store = { path = "crates/tasks-store" }
 

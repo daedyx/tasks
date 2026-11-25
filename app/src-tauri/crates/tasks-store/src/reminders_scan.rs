@@ -1,9 +1,10 @@
 //! Geprüfter Erinnerungs-Durchgang (Review T0, M-1). Gleiche Regeln wie `daedyx_tasks_core::reminders::{pending,
-//! tick}` (Kern-Tag `tasks-core-v0.2.1`), aber jede Rechnung geprüft: Der Kern rechnet `due - minuten * 60` ungeprüft,
-//! und unsinnige Werte aus der Datenbank (veränderte Datei, später ein Abgleich) brächten das Programm mit
-//! `overflow-checks` und `panic = "abort"` bei jedem Start zum Absturz. Ungültige Erinnerungen werden übersprungen.
-//! Ein Test hält die Gleichheit mit dem Kern für gültige Daten fest; mit einem Kern-Tag, der selbst prüft, kann diese
-//! Datei wieder entfallen.
+//! tick}` (geschrieben gegen Kern-Tag `tasks-core-v0.2.1`), aber jede Rechnung geprüft: Der Kern rechnete
+//! `due - minuten * 60` ungeprüft, und unsinnige Werte aus der Datenbank (veränderte Datei, später ein Abgleich)
+//! brächten das Programm mit `overflow-checks` und `panic = "abort"` bei jedem Start zum Absturz. Ungültige
+//! Erinnerungen werden übersprungen.
+//! Ein Test hält die Gleichheit mit dem Kern für gültige Daten fest. Ab `tasks-core-v0.2.2` prüft der Kern selbst
+//! (Tasks T1a bindet ihn ein); der Rückbau dieser Datei ist ein eigener Schritt, T1a zieht nur um.
 use chrono::TimeZone;
 use daedyx_tasks_core::reminders::{mark_fired, DueReminder, CATCH_UP_SECS};
 use daedyx_tasks_core::smart::due_day;

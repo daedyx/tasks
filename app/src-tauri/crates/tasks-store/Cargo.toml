@@ -19,7 +19,7 @@ iana-time-zone = "0.1"
 chrono = { version = "0.4", default-features = false, features = ["std", "clock"] }
 chrono-tz = "0.10"
 # Aufgaben-Kern (eigenes privates Repository), gleicher Tag wie in der Hülle.
-daedyx-tasks-core = { git = "https://github.com/daedyx/core", tag = "tasks-core-v0.2.1" }
+daedyx-tasks-core = { git = "https://github.com/daedyx/core", tag = "tasks-core-v0.2.2" }
 
 [dev-dependencies]
 serde_json = "1"
