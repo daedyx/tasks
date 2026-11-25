@@ -3,10 +3,11 @@
 use crate::db::backup_tests::unmeasured;
 use crate::secrets::{MemoryStore, SecretError, SecretStore};
 use crate::startup::{open_and_migrate, StartupCode, StartupError};
-use std::path::{Path, PathBuf};
+use crate::test_support::TestFile;
+use std::path::Path;
 
-fn db_path(name: &str) -> PathBuf {
-    crate::test_support::test_dir(&format!("abuse-{name}")).unwrap().join("daedyx-tasks.db")
+fn db_path(name: &str) -> TestFile {
+    crate::test_support::test_dir(&format!("abuse-{name}")).unwrap().file("daedyx-tasks.db")
 }
 
 /// Startet und prüft: Fehler (keine Panik), erwarteter Code, Datei unverändert, kein Ordner `backups`.

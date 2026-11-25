@@ -62,7 +62,8 @@ fn datenordner_traegt_die_kennung_der_vorschau() {
 
 #[test]
 fn frische_datenbank_ist_verschluesselt_stand_3_mit_erfundenen_aufgaben_und_standardwerten() {
-    let dir = data_dir_in(&tmp("t5-frisch")).unwrap();
+    let base = tmp("t5-frisch");
+    let dir = data_dir_in(&base).unwrap();
     let vault = MemoryStore::default();
     let o = open(&dir, &vault);
     assert!(o.created);
@@ -89,7 +90,8 @@ fn frische_datenbank_ist_verschluesselt_stand_3_mit_erfundenen_aufgaben_und_stan
 
 #[test]
 fn zweiter_start_fuellt_nicht_noch_einmal() {
-    let dir = data_dir_in(&tmp("t5-zweiter")).unwrap();
+    let base = tmp("t5-zweiter");
+    let dir = data_dir_in(&base).unwrap();
     let vault = MemoryStore::default();
     let first = count(&open(&dir, &vault), "tasks");
     let again = open(&dir, &vault);
@@ -124,7 +126,8 @@ fn tauri_db(path: &Path, vault: &MemoryStore) {
 
 #[test]
 fn vorhandene_stand_3_datei_oeffnet_mit_allem_und_ohne_schemaaenderung() {
-    let dir = data_dir_in(&tmp("t5-tauri")).unwrap();
+    let base = tmp("t5-tauri");
+    let dir = data_dir_in(&base).unwrap();
     let vault = MemoryStore::default();
     tauri_db(&dir.db_path(), &vault);
     let o = open(&dir, &vault);
@@ -152,7 +155,8 @@ fn vorhandene_stand_3_datei_oeffnet_mit_allem_und_ohne_schemaaenderung() {
 
 #[test]
 fn stand_2_wird_erst_gesichert_dann_migriert() {
-    let dir = data_dir_in(&tmp("t5-stand2")).unwrap();
+    let base = tmp("t5-stand2");
+    let dir = data_dir_in(&base).unwrap();
     let vault = MemoryStore::default();
     {
         let conn = db::open(&dir.db_path(), &vault).unwrap();

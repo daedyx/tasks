@@ -33,7 +33,7 @@ pub fn harness(app: TasksApp, width: f32) -> Harness<'static, TasksApp> {
 }
 
 /// Frischer Wegwerf-Ordner im System-Temp (über den Store, Ausnahme A-005); nie ein Datenordner einer App.
-pub fn tmp(name: &str) -> std::path::PathBuf {
+pub fn tmp(name: &str) -> daedyx_tasks_store::test_support::TestDir {
     daedyx_tasks_store::test_support::test_dir(&format!("app-{name}")).unwrap()
 }
 

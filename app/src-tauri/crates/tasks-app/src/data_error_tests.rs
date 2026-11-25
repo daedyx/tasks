@@ -49,7 +49,8 @@ fn old_db(dir: &DataDir, vault: &MemoryStore) {
 
 #[test]
 fn zu_neue_datenbank() {
-    let dir = data_dir_in(&tmp("t5-zuneu")).unwrap();
+    let base = tmp("t5-zuneu");
+    let dir = data_dir_in(&base).unwrap();
     let vault = MemoryStore::default();
     drop(data::open(&dir, &vault, &unmeasured, Berlin, clock()).unwrap());
     {
@@ -68,7 +69,8 @@ fn zu_neue_datenbank() {
 
 #[test]
 fn falscher_schluessel() {
-    let dir = data_dir_in(&tmp("t5-schluessel")).unwrap();
+    let base = tmp("t5-schluessel");
+    let dir = data_dir_in(&base).unwrap();
     drop(data::open(&dir, &MemoryStore::default(), &unmeasured, Berlin, clock()).unwrap());
     assert_eq!(
         refused(&dir, &MemoryStore::default(), &unmeasured),
@@ -79,7 +81,8 @@ fn falscher_schluessel() {
 
 #[test]
 fn kaputte_datei() {
-    let dir = data_dir_in(&tmp("t5-kaputt")).unwrap();
+    let base = tmp("t5-kaputt");
+    let dir = data_dir_in(&base).unwrap();
     let junk: Vec<u8> = (0..8192u32)
         .map(|i| u8::try_from(i.wrapping_mul(2_654_435_761) >> 24).unwrap())
         .collect();
@@ -93,7 +96,8 @@ fn kaputte_datei() {
 
 #[test]
 fn leere_datei_wird_nicht_zur_neuen_datenbank() {
-    let dir = data_dir_in(&tmp("t5-leer")).unwrap();
+    let base = tmp("t5-leer");
+    let dir = data_dir_in(&base).unwrap();
     std::fs::write(dir.db_path(), b"").unwrap();
     assert_eq!(
         refused(&dir, &MemoryStore::default(), &unmeasured),
@@ -105,7 +109,8 @@ fn leere_datei_wird_nicht_zur_neuen_datenbank() {
 
 #[test]
 fn zu_wenig_platz_fuer_die_sicherung() {
-    let dir = data_dir_in(&tmp("t5-platz")).unwrap();
+    let base = tmp("t5-platz");
+    let dir = data_dir_in(&base).unwrap();
     let vault = MemoryStore::default();
     old_db(&dir, &vault);
     let code = refused(&dir, &vault, &|_| Some(0));
@@ -118,7 +123,8 @@ fn zu_wenig_platz_fuer_die_sicherung() {
 
 #[test]
 fn sicherung_scheitert_dann_keine_migration() {
-    let dir = data_dir_in(&tmp("t5-sicherung")).unwrap();
+    let base = tmp("t5-sicherung");
+    let dir = data_dir_in(&base).unwrap();
     let vault = MemoryStore::default();
     old_db(&dir, &vault);
     // Eine Datei namens `backups` versperrt den Ordner für die Sicherung.

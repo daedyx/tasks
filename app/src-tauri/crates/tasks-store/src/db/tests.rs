@@ -1,12 +1,13 @@
 use super::*;
 use crate::db::backup_tests::unmeasured;
 use crate::secrets::{MemoryStore, SecretStore};
-use std::path::{Path, PathBuf};
+use crate::test_support::TestFile;
+use std::path::Path;
 
 const MARKER: &str = "GEHEIMER-TESTWERT-4711";
 
-fn temp_db(name: &str) -> PathBuf {
-    crate::test_support::test_dir(&format!("db-{name}")).unwrap().join("test.db")
+fn temp_db(name: &str) -> TestFile {
+    crate::test_support::test_dir(&format!("db-{name}")).unwrap().file("test.db")
 }
 
 fn write_marker(path: &Path, store: &MemoryStore) {

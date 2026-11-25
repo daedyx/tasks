@@ -10,7 +10,7 @@ use egui_kittest::Harness;
 use egui_kittest::kittest::{NodeT, Queryable};
 
 /// Einstellungen in einem hohen Fenster, damit alle Abschnitte ohne Bildlauf sichtbar und anklickbar sind.
-fn settings_page() -> Harness<'static, crate::app::TasksApp> {
+pub(crate) fn settings_page() -> Harness<'static, crate::app::TasksApp> {
     let mut h = Harness::builder()
         .with_size((1280.0, 2400.0))
         .with_context_setup(|ctx| theme::install(ctx, daedyx_ui::tokens::AppAccent::Tasks))

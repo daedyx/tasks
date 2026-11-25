@@ -1,0 +1,4 @@
+# Erzeugte Lizenzdateien: immer LF, sonst findet die Seite „Über“ unter Windows (autocrlf) keine Abschnitte (wie Desk).
+app/src-tauri/crates/tasks-app/lizenztexte.txt text eol=lf
+app/src-tauri/crates/tasks-app/lizenzen.tsv text eol=lf
+app/src-tauri/crates/tasks-app/lizenzen-ausgenommen.tsv text eol=lf

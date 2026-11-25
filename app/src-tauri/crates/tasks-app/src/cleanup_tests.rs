@@ -14,7 +14,7 @@ fn unmeasured(_: &Path) -> Option<u64> {
 }
 
 /// Datenordner mit echter (erfundener) Datenbank und einer Sicherung.
-fn filled(name: &str) -> (std::path::PathBuf, MemoryStore) {
+fn filled(name: &str) -> (daedyx_tasks_store::test_support::TestDir, MemoryStore) {
     let base = tmp(name);
     let dir = data_dir_in(&base).unwrap();
     let vault = MemoryStore::default();

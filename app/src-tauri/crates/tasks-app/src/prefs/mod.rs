@@ -4,6 +4,8 @@
 mod about;
 mod background;
 mod dark;
+pub(crate) mod license_texts;
+pub(crate) mod licenses;
 mod look;
 
 use crate::app::TasksApp;

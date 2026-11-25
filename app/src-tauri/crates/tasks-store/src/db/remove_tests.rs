@@ -32,6 +32,7 @@ fn fremde_dateien_bleiben_samt_ordner() {
 
 #[test]
 fn ohne_ordner_gibt_es_nichts_zu_tun() {
-    let base = dir("remove-none").join("gibt-es-nicht");
+    let root = dir("remove-none");
+    let base = root.join("gibt-es-nicht");
     assert!(remove_files(&base));
 }

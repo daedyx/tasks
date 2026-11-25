@@ -27,7 +27,8 @@ fn start(o: &Opened, settings: &Settings, ctx: &Context) -> TasksApp {
 
 #[test]
 fn einstellungen_werden_gespeichert_und_beim_naechsten_start_geladen() {
-    let dir = data_dir_in(&tmp("t5-prefs")).unwrap();
+    let base = tmp("t5-prefs");
+    let dir = data_dir_in(&base).unwrap();
     let vault = MemoryStore::default();
     let o = data::open(&dir, &vault, &unmeasured, Berlin, clock()).unwrap();
     let ctx = Context::default();
@@ -60,7 +61,8 @@ fn einstellungen_werden_gespeichert_und_beim_naechsten_start_geladen() {
 
 #[test]
 fn zurueck_zum_standard_entfernt_den_eintrag() {
-    let dir = data_dir_in(&tmp("t5-prefs-weg")).unwrap();
+    let base = tmp("t5-prefs-weg");
+    let dir = data_dir_in(&base).unwrap();
     let o = data::open(&dir, &MemoryStore::default(), &unmeasured, Berlin, clock()).unwrap();
     let ctx = Context::default();
     let mut app = start(&o, &Settings::default(), &ctx);
@@ -85,7 +87,8 @@ fn zurueck_zum_standard_entfernt_den_eintrag() {
 
 #[test]
 fn kaputte_werte_ergeben_den_standard_und_umgebung_gewinnt() {
-    let dir = data_dir_in(&tmp("t5-prefs-kaputt")).unwrap();
+    let base = tmp("t5-prefs-kaputt");
+    let dir = data_dir_in(&base).unwrap();
     let o = data::open(&dir, &MemoryStore::default(), &unmeasured, Berlin, clock()).unwrap();
     {
         let conn = o.db.lock().unwrap();

@@ -1,9 +1,10 @@
 use crate::db::{self, backup_before_migrate};
 use crate::secrets::MemoryStore;
+use crate::test_support::TestDir;
 use daedyx_tasks_core::schema::{STAND_1, STAND_2};
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
-pub fn dir(name: &str) -> PathBuf {
+pub fn dir(name: &str) -> TestDir {
     crate::test_support::test_dir(&format!("backup-{name}")).unwrap()
 }
 
