@@ -14,7 +14,7 @@ fn kind(on: bool) -> ButtonKind {
 
 pub fn show(ui: &mut Ui, app: &mut TasksApp) {
     let t = &app.texts;
-    let (name, preview) = (t.t("status.leiste"), t.t("status.vorschau"));
+    let (name, preview) = (t.t("status.leiste"), t.t("status.hinweis"));
     let (light, dark_label) = (t.t("status.hell"), t.t("status.dunkel"));
     named_scope(ui, "status", Role::Status, &name, |ui| {
         ui.horizontal_centered(|ui| {

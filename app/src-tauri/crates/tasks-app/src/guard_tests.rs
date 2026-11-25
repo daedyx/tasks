@@ -51,8 +51,14 @@ fn alle_sprachen_haben_dieselben_app_schluessel() {
 fn echte_kennung_nur_in_ids_rs() {
     for f in files() {
         let src = std::fs::read_to_string(&f).unwrap();
-        if !f.ends_with("ids.rs") {
+        // Kein loser Endungstext: Er könnte im Programm direkt hinter einer echten Kennung liegen und dann Byte für
+        // Byte wie die Vorschau-Kennung aussehen (Review T2, N1-1). Nur die zwei vollständigen Namen in `ids.rs`.
+        let endings = src.matches("vorschau\"").count();
+        if f.ends_with("ids.rs") {
+            assert_eq!(endings, 2, "nur APP_ID und VAULT der Vorschau");
+        } else {
             assert!(!src.contains("de.daedyx.tasks"), "{}", f.display());
+            assert_eq!(endings, 0, "{}", f.display());
         }
     }
 }
@@ -70,6 +76,20 @@ fn kennung_und_tresor_gehoeren_zur_selben_fassung() {
     assert_eq!((APP_ID, VAULT), (id, service));
     assert_eq!(vault().service(), VAULT);
     assert!(consistent());
+}
+
+/// Gemischte Fassungen fallen auf (Startprobe endet dann mit 1). Namen hier nur als Testdaten, nicht im Programm.
+#[test]
+fn gemischte_fassungen_sind_nicht_dieselbe() {
+    use crate::ids::same_version;
+    let (pid, pvault) = ("de.daedyx.tasks.vorschau", "daedyx-tasks-vorschau");
+    let (rid, rvault) = ("de.daedyx.tasks", "daedyx-tasks");
+    assert!(same_version(pid, pvault, true));
+    assert!(same_version(rid, rvault, false));
+    assert!(!same_version(pid, rvault, true));
+    assert!(!same_version(rid, pvault, true));
+    assert!(!same_version(pid, pvault, false));
+    assert!(!same_version(rid, rvault, true));
 }
 
 /// `Connection::open` ist im ganzen Workspace per Clippy gesperrt (Plan 4.2); der Store öffnet nur an einer Stelle mit

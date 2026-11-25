@@ -7,11 +7,13 @@ use daedyx_tasks_store::secrets::KeyringStore;
 mod names {
     pub const APP_ID: &str = "de.daedyx.tasks.vorschau";
     pub const VAULT: &str = "daedyx-tasks-vorschau";
+    pub const PREVIEW: bool = true;
 }
 #[cfg(feature = "produkt")]
 mod names {
     pub const APP_ID: &str = "de.daedyx.tasks";
     pub const VAULT: &str = "daedyx-tasks";
+    pub const PREVIEW: bool = false;
 }
 
 /// Kennung der App (Datenordner, Fensterkennung, später App-Kennung für Benachrichtigungen).
@@ -25,8 +27,17 @@ pub fn vault() -> KeyringStore {
 }
 
 /// Kennung und Tresor gehören zur selben Fassung (Vorschau oder Produkt). Die Startprobe prüft das.
-/// `black_box` hält beide Namen im gebauten Programm, damit `tests/kennung.rs` sie dort sieht.
+/// `black_box` hält beide Namen im gebauten Programm, damit `tests/kennung.rs` sie dort sieht. Bewusst ohne
+/// einzelne Endungstexte wie „.vorschau“: Rust legt Texte lückenlos hintereinander, ein loses „.vorschau“ hinter
+/// einer echten Kennung würde den Programmtest täuschen (Review T2, N1-1). Verglichen wird das letzte Glied beider
+/// Namen miteinander („vorschau“/„vorschau“ oder „tasks“/„tasks“) und mit `PREVIEW`.
 pub fn consistent() -> bool {
-    let (id, vault) = std::hint::black_box((APP_ID, VAULT));
-    id.ends_with(".vorschau") == vault.ends_with("-vorschau")
+    let (id, vault, preview) = std::hint::black_box((APP_ID, VAULT, names::PREVIEW));
+    same_version(id, vault, preview)
+}
+
+/// Der Vergleich von `consistent` für beliebige Namen (testbar auch für gemischte Fassungen).
+pub fn same_version(id: &str, vault: &str, preview: bool) -> bool {
+    let (id_end, vault_end) = (id.rsplit('.').next(), vault.rsplit('-').next());
+    id_end == vault_end && (id_end == Some("tasks")) != preview
 }

@@ -21,9 +21,32 @@ fn programm_traegt_nur_die_namen_seiner_fassung() {
     if cfg!(feature = "produkt") {
         product(&bytes);
     } else {
+        preview_counts(&bytes);
         preview_id(&bytes);
         preview_vault(&bytes);
     }
+}
+
+/// Zählprüfung (Review T2, N1-1): Jede Kennung ist die der Vorschau, und es gibt keinen losen Endungstext, der
+/// hinter einer echten Kennung liegen und den Vergleich unten täuschen könnte. Deshalb endet auch kein Textschlüssel
+/// auf `.vorschau` (früher `status.vorschau`, jetzt `status.hinweis`).
+fn preview_counts(bytes: &[u8]) {
+    let n = |t: &[u8]| hits(bytes, t).len();
+    assert_eq!(
+        n(b"de.daedyx.tasks"),
+        n(b"de.daedyx.tasks.vorschau"),
+        "echte Kennung"
+    );
+    assert_eq!(
+        n(b".vorschau"),
+        n(b"de.daedyx.tasks.vorschau"),
+        "loser Text .vorschau"
+    );
+    assert_eq!(
+        n(b"-vorschau"),
+        n(b"daedyx-tasks-vorschau"),
+        "loser Text -vorschau"
+    );
 }
 
 fn preview_id(bytes: &[u8]) {

@@ -67,7 +67,7 @@ fn about(ui: &mut Ui, app: &TasksApp) {
         &[("version", env!("CARGO_PKG_VERSION"))],
     );
     ui.label(version);
-    ui.label(RichText::new(app.texts.t("einstellungen.vorschau")).color(look.p.text_muted));
+    ui.label(RichText::new(app.texts.t("einstellungen.hinweis")).color(look.p.text_muted));
 }
 
 pub fn show(ui: &mut Ui, app: &mut TasksApp) {
