@@ -87,9 +87,13 @@ fn zweiter_start_holt_das_fenster_und_unsinn_wirkt_nicht() {
         .unwrap();
     rt.block_on(instance::notify_primary(&name, instance::QUIT))
         .unwrap();
-    assert_eq!(
-        events(&rx, Duration::from_millis(700)),
-        vec![Event::Show, Event::Quit]
+    // Jede Verbindung wird in einer eigenen Aufgabe bedient: beide Wörter kommen an, die Reihenfolge ist nicht
+    // festgelegt (unter Last kam QUIT schon vor SHOW, Tasks T6).
+    let got = events(&rx, Duration::from_millis(700));
+    assert_eq!(got.len(), 2, "{got:?}");
+    assert!(
+        got.contains(&Event::Show) && got.contains(&Event::Quit),
+        "{got:?}"
     );
     rt.shutdown_timeout(Duration::from_secs(1));
 }

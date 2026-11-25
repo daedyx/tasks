@@ -56,7 +56,10 @@ fn probe_schuetzt_die_echte_app() {
     // Datenordner der Vorschau: vorher vorhanden = Abbruch (keine fremden Daten löschen), nachher muss er fehlen
     // (`--cleanup` entfernt ihn ab T5).
     let data = PROBE.find("if (Test-Path -LiteralPath $dataDir)").unwrap();
-    assert!(data < first_write, "Datenordner-Schutz vor dem ersten Schreiben");
+    assert!(
+        data < first_write,
+        "Datenordner-Schutz vor dem ersten Schreiben"
+    );
     assert!(PROBE.contains(r#"Join-Path $env:APPDATA "de.daedyx.tasks.vorschau""#));
     assert!(PROBE.contains("if (-not (Test-Path -LiteralPath $dataDir))"));
     assert!(
