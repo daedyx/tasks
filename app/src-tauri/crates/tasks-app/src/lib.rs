@@ -20,6 +20,10 @@ mod app_tests;
 #[cfg(test)]
 mod guard_tests;
 #[cfg(test)]
+mod installer_tests;
+#[cfg(test)]
+mod license_tests;
+#[cfg(test)]
 mod reminder_tests;
 #[cfg(test)]
 mod startfehler_tests;

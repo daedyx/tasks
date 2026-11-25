@@ -42,6 +42,8 @@ daedyx-build = { git = "https://github.com/daedyx/ui", tag = "ui-v0.1.4" }
 
 [dev-dependencies]
 egui_kittest = "=0.37.0"
+# Installer-Vorlage als Text für die Tests der Setup-Kennungen (T6); dieselbe Fassung wie die Bau-Abhängigkeit.
+daedyx-build = { git = "https://github.com/daedyx/ui", tag = "ui-v0.1.4" }
 daedyx-ui = { git = "https://github.com/daedyx/ui", tag = "ui-v0.1.4", features = ["lint"] }
 daedyx-tasks-ui = { git = "https://github.com/daedyx/ui", tag = "ui-v0.1.4", features = ["lint"] }
 # Startprobe des gebauten Programms mit Zeitgrenze (Prozesse nur über daedyx-sys).
