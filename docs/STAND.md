@@ -1,9 +1,9 @@
 # Stand — Daedyx Tasks
 
-Letzte Änderung: 2026-11-25, Zusammenführung T3 + T4 (Zweig `tasks-rust-t34`, ui per `rev` auf `paket-t34`). Davor T3 Liste, Detail, Leiste und Board (`tasks-rust-t3`) und T4 Hintergrund und Einstellungen (`tasks-rust-t4`), beide ab T2. Davor T2 mit Korrekturrunde (Review T2, Entscheide T2-1 bis T2-5): Gerüst der Rust-Fassung `daedyx-tasks-app` (Zweig `tasks-rust-t2`). Davor T1b: Platzmessung aus `daedyx-sys` (Zweig `tasks-rust-t1b`). Davor 2026-11-24, Rust-Umbau Meilenstein **T0 „Store ohne Tauri“** im Zweig `tasks-rust-t0` (ab `mac-vorbereitung-tasks`, nicht in `main`). Plan: `plan-tasks-rust.md` (Notizordner des Master-Chats). Version 0.1.0, nichts veröffentlicht.
+Letzte Änderung: 2026-11-25, Zusammenführung T3 + T4 (Zweig `tasks-rust-t34`, ui per Tag `ui-v0.1.4`). Davor T3 Liste, Detail, Leiste und Board (`tasks-rust-t3`) und T4 Hintergrund und Einstellungen (`tasks-rust-t4`), beide ab T2. Davor T2 mit Korrekturrunde (Review T2, Entscheide T2-1 bis T2-5): Gerüst der Rust-Fassung `daedyx-tasks-app` (Zweig `tasks-rust-t2`). Davor T1b: Platzmessung aus `daedyx-sys` (Zweig `tasks-rust-t1b`). Davor 2026-11-24, Rust-Umbau Meilenstein **T0 „Store ohne Tauri“** im Zweig `tasks-rust-t0` (ab `mac-vorbereitung-tasks`, nicht in `main`). Plan: `plan-tasks-rust.md` (Notizordner des Master-Chats). Version 0.1.0, nichts veröffentlicht.
 
 ## Zusammenführung T3 + T4 (Zweig tasks-rust-t34), Stand 2026-11-25
-- `tasks-rust-t3` und `tasks-rust-t4` per Merge zusammengeführt (Verlauf erhalten), ebenso im ui-Repo `paket-t3` und `paket-t4` zu `paket-t34`. Tasks bindet ui per `rev` auf `paket-t34` bis zum nächsten Tag; A-027 ist ein Text für beide Erweiterungen.
+- `tasks-rust-t3` und `tasks-rust-t4` per Merge zusammengeführt (Verlauf erhalten), ebenso im ui-Repo `paket-t3` und `paket-t4` zu `paket-t34`. Tasks bindet ui per Tag `ui-v0.1.4` (ui main `c7d2e5a`); A-027 ist ein Text für beide Erweiterungen.
 - Nachgezogen: Wird die Fälligkeit erst beim Beenden geleert (`commit_draft`, T4), gehen die Erinnerungen mit, wie im Detail (T3a).
 - **Für T5 vorgemerkt (Review T4, H4-6):** Der Erinnerungstakt sieht die Merkliste heute alle 30 s komplett durch. Sobald die echte Datenbank angebunden ist, nur noch die fälligen Einträge abfragen (Index oder Zeitfenster statt Vollscan).
 

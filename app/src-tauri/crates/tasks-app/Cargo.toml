@@ -19,12 +19,12 @@ path = "src/main.rs"
 produkt = []
 
 [dependencies]
-# Gerüst, Aufgaben-Oberfläche und Hintergrund aus daedyx/ui. Per `rev` auf `paket-t34` (Tasks T3 + T4) bis zum nächsten Tag;
+# Gerüst, Aufgaben-Oberfläche und Hintergrund aus daedyx/ui. Per Tag `ui-v0.1.4` (Tasks T3 + T4);
 # alle Teile aus daedyx/ui müssen dieselbe Fassung sein (auch daedyx-sys in der Hülle).
-daedyx-ui = { git = "https://github.com/daedyx/ui", rev = "042a6929c4ae869eb5c81906fa8f6ab45621ae28" }
-daedyx-tasks-ui = { git = "https://github.com/daedyx/ui", rev = "042a6929c4ae869eb5c81906fa8f6ab45621ae28" }
+daedyx-ui = { git = "https://github.com/daedyx/ui", tag = "ui-v0.1.4" }
+daedyx-tasks-ui = { git = "https://github.com/daedyx/ui", tag = "ui-v0.1.4" }
 # Hintergrund (T4): Schließen versteckt, Takt, Benachrichtigung, Infobereich, Autostart, Einzelinstanz.
-daedyx-background = { git = "https://github.com/daedyx/ui", rev = "042a6929c4ae869eb5c81906fa8f6ab45621ae28" }
+daedyx-background = { git = "https://github.com/daedyx/ui", tag = "ui-v0.1.4" }
 # Kern-Schema für die Speicher-Datenbank der Vorschau, die Oberfläche und Takt teilen (T4).
 daedyx-tasks-core = { git = "https://github.com/daedyx/core", tag = "tasks-core-v0.2.3" }
 # Fehlercodes beim Start (StartupCode); die echte Datenbank öffnet die App erst ab T5.
@@ -38,14 +38,14 @@ iana-time-zone = "0.1"
 rusqlite = { version = "0.37", features = ["bundled-sqlcipher-vendored-openssl"] }
 
 [build-dependencies]
-daedyx-build = { git = "https://github.com/daedyx/ui", rev = "042a6929c4ae869eb5c81906fa8f6ab45621ae28" }
+daedyx-build = { git = "https://github.com/daedyx/ui", tag = "ui-v0.1.4" }
 
 [dev-dependencies]
 egui_kittest = "=0.37.0"
-daedyx-ui = { git = "https://github.com/daedyx/ui", rev = "042a6929c4ae869eb5c81906fa8f6ab45621ae28", features = ["lint"] }
-daedyx-tasks-ui = { git = "https://github.com/daedyx/ui", rev = "042a6929c4ae869eb5c81906fa8f6ab45621ae28", features = ["lint"] }
+daedyx-ui = { git = "https://github.com/daedyx/ui", tag = "ui-v0.1.4", features = ["lint"] }
+daedyx-tasks-ui = { git = "https://github.com/daedyx/ui", tag = "ui-v0.1.4", features = ["lint"] }
 # Startprobe des gebauten Programms mit Zeitgrenze (Prozesse nur über daedyx-sys).
-daedyx-sys = { git = "https://github.com/daedyx/ui", rev = "042a6929c4ae869eb5c81906fa8f6ab45621ae28" }
+daedyx-sys = { git = "https://github.com/daedyx/ui", tag = "ui-v0.1.4" }
 
 [target.'cfg(windows)'.dev-dependencies]
 # Autostart-Test unter einem eigenen Testschlüssel (T4); dieselbe Fassung wie in daedyx-background.
