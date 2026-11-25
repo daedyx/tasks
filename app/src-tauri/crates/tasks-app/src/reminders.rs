@@ -1,4 +1,5 @@
-//! Takt der Erinnerungen (T4): Jeder Durchgang ruft den geprüften Durchgang des Stores (`reminders::tick_once`) auf
+//! Takt der Erinnerungen (T4): Jeder Durchgang ruft den geprüften Durchgang des Stores (`reminders::Takt`, ab T5 mit
+//! Aufräumen höchstens einmal je Stunde) auf
 //! derselben Speicher-Datenbank, die die Oberfläche zeigt. Der Store merkt sich jede gemeldete Erinnerung, so kommt
 //! jede genau einmal, auch bei bis zu zehn Erinnerungen je Aufgabe. Kommen in einem Durchgang mehrere Erinnerungen
 //! derselben Aufgabe (nachgeholt nach Ruhezustand), zeigt nur die späteste eine Meldung, die anderen gelten still als
@@ -6,7 +7,7 @@
 //! und ist ohne Titel, solange der Schalter aus ist (T-F6).
 use daedyx_background::ticker::{Jobs, Tick};
 use daedyx_background::{Notice, NoticeKind};
-use daedyx_tasks_store::reminders::{Reminder, tick_once, unix_now};
+use daedyx_tasks_store::reminders::{Reminder, Takt, unix_now};
 use daedyx_tasks_ui::TaskDb;
 use rusqlite::Connection;
 use std::sync::{Arc, Mutex, MutexGuard};
@@ -30,6 +31,8 @@ pub struct ReminderJobs {
     db: SharedConn,
     zone: String,
     now: Now,
+    /// Räumt alte Merker höchstens einmal je Stunde auf (Review T4, H4-6).
+    takt: Mutex<Takt>,
 }
 
 impl ReminderJobs {
@@ -42,6 +45,7 @@ impl ReminderJobs {
             db,
             zone: zone.to_owned(),
             now,
+            takt: Mutex::new(Takt::default()),
         }
     }
 }
@@ -62,7 +66,11 @@ impl Jobs for ReminderJobs {
         let now = (self.now)();
         // Je Aufgabe nur die späteste Erinnerung dieses Durchgangs; der Store merkt sich trotzdem alle als gemeldet.
         let mut latest: Vec<Reminder> = Vec::new();
-        tick_once(&self.db, now, &self.zone, |r| {
+        let mut takt = self
+            .takt
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        takt.tick(&self.db, now, &self.zone, |r| {
             match latest.iter_mut().find(|l| l.task_id == r.task_id) {
                 Some(l) if r.fire_at >= l.fire_at => *l = r.clone(),
                 Some(_) => {}

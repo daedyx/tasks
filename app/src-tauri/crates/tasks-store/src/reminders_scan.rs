@@ -121,14 +121,28 @@ fn prune_fired(conn: &Connection, now: i64, tz_name: &str) -> Result<(), TaskErr
     Ok(())
 }
 
-/// Ein Durchgang wie `daedyx_tasks_core::reminders::tick`, mit geprüften Rechnungen.
+/// Ein Durchgang wie `daedyx_tasks_core::reminders::tick`, mit geprüften Rechnungen und Aufräumen alter Merker.
 pub fn tick_checked(
     conn: &Connection,
     now: i64,
     tz_name: &str,
+    fire: impl FnMut(&DueReminder),
+) -> Result<usize, TaskError> {
+    tick_with(conn, now, tz_name, true, fire)
+}
+
+/// Wie [`tick_checked`]; `prune` entscheidet, ob alte Merker in diesem Durchgang aufgeräumt werden (Review T4, H4-6:
+/// das muss nicht alle 30 s sein, siehe `reminders::Takt`).
+pub fn tick_with(
+    conn: &Connection,
+    now: i64,
+    tz_name: &str,
+    prune: bool,
     mut fire: impl FnMut(&DueReminder),
 ) -> Result<usize, TaskError> {
-    prune_fired(conn, now, tz_name)?;
+    if prune {
+        prune_fired(conn, now, tz_name)?;
+    }
     let due = pending_checked(conn, now.saturating_sub(CATCH_UP_SECS), now.saturating_add(1), tz_name)?;
     for r in &due {
         fire(r);

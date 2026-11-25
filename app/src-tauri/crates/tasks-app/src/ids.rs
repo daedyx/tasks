@@ -70,3 +70,6 @@ pub fn same_version(id: &str, vault: &str, preview: bool) -> bool {
     let (id_end, vault_end) = (id.rsplit('.').next(), vault.rsplit('-').next());
     id_end == vault_end && (id_end == Some("tasks")) != preview
 }
+
+/// Basis des Datenordners unter macOS (unter `HOME`); technische Pfadteile, keine Oberflächentexte (T5).
+pub const MAC_DATA: [&str; 2] = ["Library", "Application Support"];

@@ -3,6 +3,7 @@
 //! als reine Funktion. Kein Tauri, kein Netz. Schema und Rechenregeln gehören dem Aufgaben-Kern `daedyx-tasks-core`.
 pub mod db;
 pub mod limits;
+pub mod prefs;
 pub mod reminders;
 pub mod secrets;
 pub mod startup;

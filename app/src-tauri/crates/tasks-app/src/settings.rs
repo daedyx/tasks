@@ -9,6 +9,8 @@ use eframe::egui::Theme;
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct Settings {
     pub language: Language,
+    /// `DAEDYX_LANG` war gesetzt: gewinnt über die gespeicherte Sprache (T5).
+    pub language_from_env: bool,
     /// `None`: wie das System.
     pub dark: Option<bool>,
     pub page: Page,
@@ -43,6 +45,7 @@ impl Settings {
                 Some("fr") => Language::Fr,
                 _ => Language::De,
             },
+            language_from_env: var("DAEDYX_LANG").is_some(),
             dark: match var("DAEDYX_THEME").as_deref() {
                 Some("dark") => Some(true),
                 Some("light") => Some(false),

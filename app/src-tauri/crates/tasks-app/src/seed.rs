@@ -7,7 +7,8 @@ use daedyx_tasks_ui::{Clock, TaskStore};
 use rusqlite::Connection;
 use std::sync::{Arc, Mutex};
 
-const DEMO: &str = include_str!("../testdata/aufgaben.json");
+/// Erfundene Aufgaben (Generator der Vorschau, auch für den Erststart der echten Datenbank, T5).
+pub const DEMO: &str = include_str!("../testdata/aufgaben.json");
 
 /// Zeitzone des Systems; unbekannt: Europe/Berlin.
 pub fn zone() -> Tz {

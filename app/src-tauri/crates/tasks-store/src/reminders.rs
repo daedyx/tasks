@@ -9,7 +9,7 @@ use std::sync::Mutex;
 use std::time::Duration;
 
 pub use daedyx_tasks_core::reminders::DueReminder as Reminder;
-pub use scan::{pending_checked, tick_checked, MAX_MINUTES, MAX_SECS};
+pub use scan::{pending_checked, tick_checked, tick_with, MAX_MINUTES, MAX_SECS};
 
 /// Wartezeit nach dem Start bis zum ersten Durchgang (die Oberfläche soll zuerst stehen).
 pub const FIRST_TICK_DELAY: Duration = Duration::from_secs(4);
@@ -45,9 +45,44 @@ pub fn tick_once(db: &Mutex<Connection>, now: i64, tz: &str, fire: impl FnMut(&D
     }
 }
 
+/// Abstand der Aufräumrunde für alte Merker (Review T4, H4-6): einmal je Stunde statt in jedem Durchgang. Der Rand
+/// von zwei Tagen verträgt das; ein später gelöschter Merker kann keine Erinnerung doppelt auslösen.
+pub const PRUNE_EVERY: i64 = 3600;
+
+/// Takt mit Gedächtnis: wie [`tick_once`], räumt aber höchstens einmal je [`PRUNE_EVERY`] auf. Springt die Uhr zurück,
+/// wird beim nächsten Durchgang wieder aufgeräumt.
+#[derive(Debug, Default)]
+pub struct Takt {
+    last_prune: Option<i64>,
+}
+
+impl Takt {
+    pub fn tick(&mut self, db: &Mutex<Connection>, now: i64, tz: &str, fire: impl FnMut(&DueReminder)) -> usize {
+        if !(0..=MAX_SECS).contains(&now) {
+            return 0;
+        }
+        let prune = self.last_prune.is_none_or(|last| now < last || now.saturating_sub(last) >= PRUNE_EVERY);
+        let Ok(conn) = db.lock() else {
+            return 0;
+        };
+        match tick_with(&conn, now, tz, prune, fire) {
+            Ok(n) => {
+                if prune {
+                    self.last_prune = Some(now);
+                }
+                n
+            }
+            Err(_) => 0,
+        }
+    }
+}
+
 #[cfg(test)]
 #[path = "reminders_hostile_tests.rs"]
 mod hostile_tests;
+#[cfg(test)]
+#[path = "reminders_takt_tests.rs"]
+mod takt_tests;
 #[cfg(test)]
 #[path = "reminders_tests.rs"]
 mod tests;

@@ -67,7 +67,16 @@ fn preview_vault(bytes: &[u8]) {
         !hits(bytes, b"daedyx-tasks-vorschau").is_empty(),
         "Vorschau-Tresor fehlt im Programm"
     );
-    let allowed: [&[u8]; 5] = [b"-vorschau", b"-core", b"-ui", b"-store", b"-app"];
+    // Seit T5 zusätzlich die Dateinamen der Datenbank (`daedyx-tasks.db`) und der Sicherungen (`daedyx-tasks-v<Stand>.db`).
+    let allowed: [&[u8]; 7] = [
+        b"-vorschau",
+        b"-core",
+        b"-ui",
+        b"-store",
+        b"-app",
+        b".db",
+        b"-v",
+    ];
     for (n, rest) in hits(bytes, b"daedyx-tasks").iter().enumerate() {
         assert!(
             allowed.iter().any(|a| rest.starts_with(a)),

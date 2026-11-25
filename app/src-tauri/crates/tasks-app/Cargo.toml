@@ -25,6 +25,8 @@ daedyx-ui = { git = "https://github.com/daedyx/ui", tag = "ui-v0.1.4" }
 daedyx-tasks-ui = { git = "https://github.com/daedyx/ui", tag = "ui-v0.1.4" }
 # Hintergrund (T4): Schließen versteckt, Takt, Benachrichtigung, Infobereich, Autostart, Einzelinstanz.
 daedyx-background = { git = "https://github.com/daedyx/ui", tag = "ui-v0.1.4" }
+# Freier Platz vor der Sicherung (T5) und Startprobe mit Zeitgrenze in den Tests (Prozesse nur über daedyx-sys).
+daedyx-sys = { git = "https://github.com/daedyx/ui", tag = "ui-v0.1.4" }
 # Kern-Schema für die Speicher-Datenbank der Vorschau, die Oberfläche und Takt teilen (T4).
 daedyx-tasks-core = { git = "https://github.com/daedyx/core", tag = "tasks-core-v0.2.3" }
 # Fehlercodes beim Start (StartupCode); die echte Datenbank öffnet die App erst ab T5.
@@ -42,10 +44,10 @@ daedyx-build = { git = "https://github.com/daedyx/ui", tag = "ui-v0.1.4" }
 
 [dev-dependencies]
 egui_kittest = "=0.37.0"
+# MemoryStore und Wegwerf-Ordner für die Daten-Tests (T5); nie im Programm.
+daedyx-tasks-store = { path = "../tasks-store", features = ["test-support"] }
 daedyx-ui = { git = "https://github.com/daedyx/ui", tag = "ui-v0.1.4", features = ["lint"] }
 daedyx-tasks-ui = { git = "https://github.com/daedyx/ui", tag = "ui-v0.1.4", features = ["lint"] }
-# Startprobe des gebauten Programms mit Zeitgrenze (Prozesse nur über daedyx-sys).
-daedyx-sys = { git = "https://github.com/daedyx/ui", tag = "ui-v0.1.4" }
 
 [target.'cfg(windows)'.dev-dependencies]
 # Autostart-Test unter einem eigenen Testschlüssel (T4); dieselbe Fassung wie in daedyx-background.

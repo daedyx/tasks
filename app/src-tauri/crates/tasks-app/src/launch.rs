@@ -5,14 +5,16 @@
 use crate::app::TasksApp;
 use crate::ids::{self, APP_ID, BACKGROUND};
 use crate::settings::Settings;
-use crate::{seed, startfehler};
+use crate::{data, paths, seed, startfehler};
 use daedyx_background::args::Args;
 use daedyx_background::aumid;
 use daedyx_background::instance::{self, Role};
 use daedyx_background::notify::WinToast;
 use daedyx_background::start::{self as bg, code as bg_code};
 use daedyx_background::tray::{self, Tray, TrayTexts};
+use daedyx_tasks_store::startup::StartupCode;
 use daedyx_tasks_ui::Clock;
+use daedyx_ui::i18n::Texts;
 use daedyx_ui::screenshot::Shot;
 use daedyx_ui::theme;
 use daedyx_ui::tokens::AppAccent;
@@ -43,6 +45,21 @@ impl eframe::App for Shell {
     }
 }
 
+/// Startfehler-Fenster (egui) mit Code, danach Rückgabe 9.
+fn startup_error(settings: &Settings, texts: &Texts, code: StartupCode) -> ExitCode {
+    let window = startfehler::window(code, texts);
+    let title = texts.t("app.titel");
+    let _ = daedyx_ui::startup::run(APP_ID, &title, AppAccent::Tasks, settings.theme(), window);
+    ExitCode::from(code::STARTUP_ERROR)
+}
+
+/// Öffnet die Datenbank im Datenordner dieser Fassung mit dem Tresor dieser Fassung (`ids.rs`).
+fn open_data(zone: chrono_tz::Tz) -> Result<data::Opened, StartupCode> {
+    let dir = paths::data_dir().ok_or(StartupCode::Other)?;
+    let free = |p: &std::path::Path| daedyx_sys::available_space(p);
+    data::open(&dir, &ids::vault(), &free, zone, Clock::System).map_err(|e| e.code())
+}
+
 pub fn run(settings: Settings, args: Args) -> ExitCode {
     // `--start-probe`: laden und sofort enden (Bericht M7b). Gehören die Kennungen nicht zur selben Fassung: 1.
     if args.start_probe {
@@ -54,15 +71,7 @@ pub fn run(settings: Settings, args: Args) -> ExitCode {
     }
     let texts = crate::texts::texts(settings.language);
     if let Some(code) = settings.startup_error {
-        let window = startfehler::window(code, &texts);
-        let _ = daedyx_ui::startup::run(
-            APP_ID,
-            &texts.t("app.titel"),
-            AppAccent::Tasks,
-            settings.theme(),
-            window,
-        );
-        return ExitCode::from(code::STARTUP_ERROR);
+        return startup_error(&settings, &texts, code);
     }
     if args.cleanup {
         return bg::cleanup(&BACKGROUND);
@@ -75,6 +84,12 @@ pub fn run(settings: Settings, args: Args) -> ExitCode {
             &texts.t("hintergrund.test.text"),
         );
     }
+    // Echte Datenbank der Vorschau (T5): eigener Ordner, eigener Tresor-Dienst, nie die der echten App.
+    let zone = seed::zone();
+    let opened = match open_data(zone) {
+        Ok(o) => o,
+        Err(code) => return startup_error(&settings, &texts, code),
+    };
     let Ok(rt) = bg::runtime() else {
         return ExitCode::from(bg_code::RUNTIME);
     };
@@ -112,9 +127,10 @@ pub fn run(settings: Settings, args: Args) -> ExitCode {
         options,
         Box::new(move |cc| {
             theme::install(&cc.egui_ctx, AppAccent::Tasks);
-            let zone = seed::zone();
-            let (store, db) = seed::demo_shared(zone, Clock::System).unzip();
-            let mut app = TasksApp::new(&settings, store).with_shot(Shot::from_env());
+            let store = data::store(&opened, zone, Clock::System);
+            let db = Some(Arc::clone(&opened.db));
+            let mut app = TasksApp::new(&settings, Some(store)).with_shot(Shot::from_env());
+            app.load_prefs(&cc.egui_ctx, Arc::clone(&opened.db), &settings);
             let sink = app.bg.sink.clone();
             sink.attach(&cc.egui_ctx);
             app.bg.notifier = Arc::new(WinToast {

@@ -31,3 +31,42 @@ pub fn harness(app: TasksApp, width: f32) -> Harness<'static, TasksApp> {
     h.run();
     h
 }
+
+/// Frischer Wegwerf-Ordner im System-Temp (über den Store, Ausnahme A-005); nie ein Datenordner einer App.
+pub fn tmp(name: &str) -> std::path::PathBuf {
+    daedyx_tasks_store::test_support::test_dir(&format!("app-{name}")).unwrap()
+}
+
+/// Prüfsumme (FNV-1a, 64 Bit) über den Inhalt; zeigt, ob eine Datei unverändert blieb.
+pub fn checksum(path: &std::path::Path) -> u64 {
+    std::fs::read(path)
+        .unwrap()
+        .iter()
+        .fold(0xcbf2_9ce4_8422_2325, |h, b| {
+            (h ^ u64::from(*b)).wrapping_mul(0x0000_0100_0000_01b3)
+        })
+}
+
+/// Plan 4.5: Im Datenordner liegen nur `daedyx-tasks.db`, `-wal`, `-shm` und `backups\` mit Sicherungen.
+pub fn allowed_files_only(dir: &crate::paths::DataDir) {
+    for entry in std::fs::read_dir(dir.path()).unwrap() {
+        let entry = entry.unwrap();
+        let name = entry.file_name().to_string_lossy().into_owned();
+        let ok = match name.as_str() {
+            "daedyx-tasks.db" | "daedyx-tasks.db-wal" | "daedyx-tasks.db-shm" => {
+                entry.path().is_file()
+            }
+            "backups" => entry.path().is_dir(),
+            _ => false,
+        };
+        assert!(ok, "{name}");
+    }
+    let backups = dir.path().join("backups");
+    if backups.is_dir() {
+        for entry in std::fs::read_dir(&backups).unwrap() {
+            let name = entry.unwrap().file_name().to_string_lossy().into_owned();
+            let ok = name.starts_with("daedyx-tasks-v") && name.ends_with(".db");
+            assert!(ok, "{name}");
+        }
+    }
+}

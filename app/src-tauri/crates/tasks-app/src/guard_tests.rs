@@ -158,3 +158,44 @@ fn clippy_sperrt_das_oeffnen_der_datenbank_ausserhalb_des_stores() {
     );
     assert!(src.contains("A-030"));
 }
+
+/// Plan 4.2 (T5): Tests benutzen nie den echten Tresor (`KeyringStore`), nur `MemoryStore`. Ausgenommen ist allein die
+/// Testdatei des Tresor-Moduls im Store: dort steht der ignorierte Handtest und ein Test, der nur den Dienstnamen liest.
+#[test]
+fn tests_benutzen_nie_den_echten_tresor() {
+    let root = Path::new(env!("CARGO_MANIFEST_DIR"));
+    let store = root.join("../tasks-store/src");
+    fn walk(dir: &Path, out: &mut Vec<PathBuf>) {
+        for entry in std::fs::read_dir(dir).unwrap().flatten() {
+            let p = entry.path();
+            if p.is_dir() {
+                walk(&p, out);
+            } else if p.extension().is_some_and(|e| e == "rs") {
+                out.push(p);
+            }
+        }
+    }
+    let mut files = Vec::new();
+    for dir in [root.join("src"), root.join("tests"), store.clone()] {
+        walk(&dir, &mut files);
+    }
+    files.retain(|f| {
+        let name = f.file_name().and_then(|n| n.to_str()).unwrap_or_default();
+        (name.ends_with("_tests.rs") || name == "tests.rs" || f.starts_with(root.join("tests")))
+            && !f.ends_with(Path::new("secrets").join("tests.rs"))
+            && !f.ends_with(Path::new("src").join("guard_tests.rs"))
+    });
+    assert!(files.len() > 15, "Testdateien gefunden: {}", files.len());
+    for f in files {
+        let src = std::fs::read_to_string(&f).unwrap();
+        assert!(!src.contains("KeyringStore"), "{}", f.display());
+    }
+    let vault_tests = std::fs::read_to_string(store.join("secrets").join("tests.rs")).unwrap();
+    let handtest = vault_tests.find("fn keyring_store_roundtrip").unwrap();
+    let before = vault_tests.get(..handtest).unwrap();
+    let attrs = before.get(before.rfind("#[test]").unwrap()..).unwrap();
+    assert!(
+        attrs.contains("#[ignore"),
+        "der Handtest am echten Tresor bleibt ignoriert"
+    );
+}

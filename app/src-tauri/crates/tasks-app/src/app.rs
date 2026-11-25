@@ -20,6 +20,8 @@ pub struct TasksApp {
     /// Feinstellung des Dunkelmodus (T-F3); `None`: Farben der Tokens. Gilt erst nach [`TasksApp::set_dark_tuning`].
     pub dark_tuning: Option<DarkTuning>,
     dark: Option<bool>,
+    /// Einstellungen in `task_meta` (T5); ohne Datenbank (Tests, Speicher-Vorschau) bleibt alles nur im Speicher.
+    pub(crate) stored: Option<crate::stored::Stored>,
     started: bool,
     shot: Option<Shot>,
 }
@@ -34,6 +36,7 @@ impl TasksApp {
             bg: Background::new(settings.language),
             dark_tuning: None,
             dark: settings.dark,
+            stored: None,
             started: false,
             shot: None,
         };

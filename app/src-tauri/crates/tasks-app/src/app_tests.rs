@@ -29,7 +29,7 @@ fn leiste_kopf_und_statusleiste_haben_rollen_und_namen() {
     let _ = h.get_by_role_and_label(Role::Tab, "Einstellungen");
     let _ = h.get_by_role_and_label(Role::Banner, "Kopfzeile");
     let _ = h.get_by_role_and_label(Role::Status, "Statusleiste");
-    let _ = h.get_by_label("Vorschau mit erfundenen Daten – es wird nichts gespeichert");
+    let _ = h.get_by_label("Vorschau mit erfundenen Daten – nur auf diesem Gerät gespeichert");
 }
 
 #[test]

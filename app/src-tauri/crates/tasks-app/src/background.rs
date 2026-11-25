@@ -10,6 +10,7 @@ use std::time::Duration;
 impl TasksApp {
     /// Läuft vor jedem Bild und bei verstecktem Fenster allein (`eframe::App::logic`).
     pub fn logic(&mut self, ctx: &Context) {
+        self.save_prefs(ctx);
         // Bildschirmfoto-Modus: Das Foto schließt das Fenster; das soll wirklich beenden, nicht verstecken.
         if self.has_shot() {
             self.bg.window.quitting = true;
