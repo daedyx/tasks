@@ -32,7 +32,12 @@ pub fn data_dir_in(base: &Path) -> Option<DataDir> {
 
 /// Datenordner der App unter `%APPDATA%` (macOS: `~/Library/Application Support`).
 pub fn data_dir() -> Option<DataDir> {
-    let base = if cfg!(target_os = "macos") {
+    data_dir_in(&data_base()?)
+}
+
+/// Basisordner der Datenordner (`%APPDATA%`, macOS `~/Library/Application Support`), ohne etwas anzulegen.
+pub fn data_base() -> Option<PathBuf> {
+    if cfg!(target_os = "macos") {
         std::env::var_os("HOME").map(|h| {
             ids::MAC_DATA
                 .iter()
@@ -40,6 +45,5 @@ pub fn data_dir() -> Option<DataDir> {
         })
     } else {
         std::env::var_os("APPDATA").map(PathBuf::from)
-    }?;
-    data_dir_in(&base)
+    }
 }

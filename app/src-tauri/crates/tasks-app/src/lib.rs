@@ -4,6 +4,7 @@
 //! Kennungen der Vorschau (ohne Merkmal `produkt`).
 pub mod app;
 mod background;
+pub mod cleanup;
 pub mod data;
 pub mod ids;
 pub mod launch;
@@ -22,9 +23,13 @@ pub mod texts;
 #[cfg(test)]
 mod app_tests;
 #[cfg(test)]
+mod cleanup_tests;
+#[cfg(test)]
 mod data_error_tests;
 #[cfg(test)]
 mod data_tests;
+#[cfg(test)]
+mod guard_data_tests;
 #[cfg(test)]
 mod guard_tests;
 #[cfg(test)]

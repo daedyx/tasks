@@ -25,6 +25,8 @@ mod names {
 pub const APP_ID: &str = names::APP_ID;
 /// Dienst im Windows-Tresor (macOS: Schlüsselbund), Eintrag `db-key` kommt mit T5.
 pub const VAULT: &str = names::VAULT;
+/// Vorschau-Fassung? Nur dann entfernt `--cleanup` auch Daten und Tresor-Eintrag (Master-Entscheid T5-1).
+pub const PREVIEW: bool = names::PREVIEW;
 
 /// Name des Autostart-Werts unter `HKCU\...\Run` (T4).
 pub const RUN_VALUE: &str = names::RUN_VALUE;

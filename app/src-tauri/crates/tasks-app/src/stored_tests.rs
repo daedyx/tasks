@@ -106,6 +106,10 @@ fn kaputte_werte_ergeben_den_standard_und_umgebung_gewinnt() {
     assert!(app.bg.window.keep_running(), "Standard an (T-F9)");
     assert_eq!(app.dark_tuning, None);
     assert!(app.tasks.board_lists.is_empty(), "Liste gibt es nicht");
+    assert!(
+        prefs::board_modes(&o.db.lock().unwrap()).is_empty(),
+        "Eintrag der fehlenden Liste entfernt (H5-3)"
+    );
     {
         let conn = o.db.lock().unwrap();
         prefs::set(&conn, "app.language", "en").unwrap();

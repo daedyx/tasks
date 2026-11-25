@@ -61,13 +61,30 @@ fn preview_id(bytes: &[u8]) {
     }
 }
 
-/// `daedyx-tasks` kommt sonst nur als Teil von Crate-Namen vor (Pfade in Meldungen).
+/// `daedyx-tasks` kommt sonst nur als Teil von Crate-Namen vor (Pfade in Meldungen). Seit T5 stehen auch die
+/// Dateinamen `daedyx-tasks.db` und `daedyx-tasks-v…` (Sicherungen) im Programm. Am Byte lässt sich ein echter
+/// Tresor-Name, hinter dem zufällig ein Text `.db…` oder `-v…` liegt, davon nicht unterscheiden. Deshalb ist die
+/// Anzahl dieser Fundstellen festgeschrieben (Review T5, N5-3): Kommt eine dazu, wird der Test rot, und ein Mensch
+/// sieht nach, ob es wirklich ein Dateiname ist.
+const DB_NAMES: usize = 2;
+const BACKUP_NAMES: usize = 3;
+
 fn preview_vault(bytes: &[u8]) {
+    let n = |t: &[u8]| hits(bytes, t).len();
     assert!(
-        !hits(bytes, b"daedyx-tasks-vorschau").is_empty(),
+        n(b"daedyx-tasks-vorschau") > 0,
         "Vorschau-Tresor fehlt im Programm"
     );
-    // Seit T5 zusätzlich die Dateinamen der Datenbank (`daedyx-tasks.db`) und der Sicherungen (`daedyx-tasks-v<Stand>.db`).
+    assert_eq!(
+        n(b"daedyx-tasks.db"),
+        DB_NAMES,
+        "Dateiname der Datenbank (neu gezählt?)"
+    );
+    assert_eq!(
+        n(b"daedyx-tasks-v").saturating_sub(n(b"daedyx-tasks-vorschau")),
+        BACKUP_NAMES,
+        "Dateiname der Sicherungen (neu gezählt?)"
+    );
     let allowed: [&[u8]; 7] = [
         b"-vorschau",
         b"-core",

@@ -146,11 +146,14 @@ impl TasksApp {
                 self.set_dark_tuning(ctx, Some(t));
             }
             let ids: BTreeSet<&str> = self.tasks.lists.iter().map(|l| l.id.as_str()).collect();
-            self.tasks.board_lists = prefs::board_modes(&conn)
+            let (keep, stale): (Vec<_>, Vec<_>) = prefs::board_modes(&conn)
                 .into_iter()
-                .filter(|(id, v)| v == "board" && ids.contains(id.as_str()))
-                .map(|(id, _)| id)
-                .collect();
+                .partition(|(id, v)| v == "board" && ids.contains(id.as_str()));
+            // Einträge gelöschter Listen (oder mit unbekanntem Wert) gleich entfernen (Review T5, H5-3).
+            for (id, _) in stale {
+                let _ = prefs::remove(&conn, &format!("{}{id}", prefs::BOARD_MODE));
+            }
+            self.tasks.board_lists = keep.into_iter().map(|(id, _)| id).collect();
         }
         let last = snapshot(self, ctx);
         self.stored = Some(Stored { db, last });

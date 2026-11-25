@@ -10,6 +10,16 @@ Letzte Änderung: 2026-11-25, T5 „Echte Daten anbinden“ (Zweig `tasks-rust-t
 - **H4-6 erledigt:** Der Takt meldet weiter alle 30 s, räumt die Merkliste gemeldeter Erinnerungen aber nur noch beim ersten Durchgang, dann höchstens einmal je Stunde und nach einem Uhrsprung zurück auf (`reminders::Takt`).
 - Statuszeile und Hinweis in den Einstellungen sagen jetzt „nur auf diesem Gerät gespeichert“ statt „es wird nichts gespeichert“.
 - **Wächter:** Kein Test benutzt den echten Tresor (`KeyringStore`, außer dem ignorierten Handtest); nach jedem Datentest stehen im Datenordner nur die erlaubten Dateien; Programmtest der Kennungen kennt jetzt die Dateinamen `daedyx-tasks.db` und `daedyx-tasks-v…`.
+- **Korrekturrunde nach dem Sicherheitsreview T5 (M5-1, N5-1 bis N5-3) und Master-Entscheid T5-1:**
+  - Einzelinstanz vor Datenbank (M5-1): Zweitstart und `--quit-running` öffnen oder erzeugen die Datenbank nie; die Pipe sperrt einen gleichzeitigen Erststart. Programmtest mit `APPDATA` auf einem Wegwerf-Ordner, Wächter auf die Reihenfolge in `launch::run`.
+  - Wächter für Tests (N5-1, `guard_data_tests.rs`): außer `KeyringStore` auch `ids::vault()` (nur `.service()` erlaubt), `data_dir()`/`data_base()`, `open_data` und `launch::run` verboten.
+  - Schlüssel im Speicher (N5-2): `db::key` gibt `Zeroizing<String>` zurück, auch der `PRAGMA`-Text liegt in `Zeroizing`; `zeroize` stand schon im Baum. Kopien in `keyring` und SQLite bleiben außerhalb unserer Hand.
+  - Kennungstest (N5-3): Die Anzahl der Dateinamen `daedyx-tasks.db` und `daedyx-tasks-v…` im Programm ist festgeschrieben.
+  - `--cleanup` (T5-1): In der Vorschau entfernt es zusätzlich den Datenordner (nur bekannte Dateien, nie über eine Junction, fremde Dateien bleiben) und danach den Tresor-Eintrag `db-key` der Vorschau; Rückgabe 10, wenn etwas übrig bleibt. Die Produkt-Fassung lässt Nutzerdaten immer stehen. Der Installer (T6) ruft es bei der Deinstallation.
+  - Sicherungen (T5-1): höchstens die drei neuesten, ältere werden nach einer erfolgreichen neuen Sicherung gelöscht (gab es im Store schon, Test `only_the_three_newest_backups_stay`).
+  - Board-Modi gelöschter Listen werden beim Laden aus `task_meta` entfernt (H5-3).
+  - Neue Ausnahme **A-033** (Programmtest `quit_running.rs` startet das Programm mit eigenem `APPDATA`; `daedyx-sys` kann das nicht), Freigabe ausstehend.
+  - Pipe-Test aus T4 (`zweiter_start_holt_das_fenster…`) kippte unter Last, weil SHOW und QUIT zwei Verbindungen ohne feste Reihenfolge sind; er wartet jetzt erst auf SHOW.
 
 ## Zusammenführung T3 + T4 (Zweig tasks-rust-t34), Stand 2026-11-25
 - `tasks-rust-t3` und `tasks-rust-t4` per Merge zusammengeführt (Verlauf erhalten), ebenso im ui-Repo `paket-t3` und `paket-t4` zu `paket-t34`. Tasks bindet ui per Tag `ui-v0.1.4` (ui main `c7d2e5a`); A-027 ist ein Text für beide Erweiterungen.

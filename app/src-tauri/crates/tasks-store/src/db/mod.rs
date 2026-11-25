@@ -5,11 +5,15 @@ mod backup;
 #[cfg(test)]
 pub(crate) mod backup_tests;
 mod key;
+mod remove;
+#[cfg(test)]
+mod remove_tests;
 #[cfg(test)]
 mod tests;
 
 pub use backup::{backup_before_migrate, FreeSpace, NotEnoughSpace};
 pub use key::KEY_NAME;
+pub use remove::remove_files;
 
 use crate::secrets::{SecretError, SecretStore};
 use rusqlite::{Connection, ErrorCode};
@@ -53,8 +57,9 @@ pub fn open(path: &Path, secrets: &dyn SecretStore) -> Result<Connection, DbErro
         return Err(DbError::EmptyFile);
     }
     let hex = key::get_or_create(secrets)?;
+    let pragma = key::pragma(&hex);
     let conn = connect(path)?;
-    conn.pragma_update(None, "key", format!("x'{hex}'"))?;
+    conn.pragma_update(None, "key", pragma.as_str())?;
     // Erst die Prüfabfrage zeigt, ob der Schlüssel zur Datei passt.
     conn.query_row("SELECT count(*) FROM sqlite_master", [], |r| r.get::<_, i64>(0)).map_err(|e| match e {
         rusqlite::Error::SqliteFailure(f, _) if f.code == ErrorCode::NotADatabase => DbError::WrongKey,

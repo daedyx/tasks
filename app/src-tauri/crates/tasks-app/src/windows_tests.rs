@@ -83,13 +83,13 @@ fn zweiter_start_holt_das_fenster_und_unsinn_wirkt_nicht() {
         events(&rx, Duration::from_millis(700)).is_empty(),
         "Unsinn wirkt nicht"
     );
+    // Jede Nachricht ist eine eigene Verbindung; deren Reihenfolge ist nicht festgelegt. Deshalb erst SHOW abwarten,
+    // dann QUIT schicken (Korrekturrunde T5: vorher kippte der Test unter Last).
     rt.block_on(instance::notify_primary(&name, instance::SHOW))
         .unwrap();
+    assert_eq!(events(&rx, Duration::from_millis(700)), vec![Event::Show]);
     rt.block_on(instance::notify_primary(&name, instance::QUIT))
         .unwrap();
-    assert_eq!(
-        events(&rx, Duration::from_millis(700)),
-        vec![Event::Show, Event::Quit]
-    );
+    assert_eq!(events(&rx, Duration::from_millis(700)), vec![Event::Quit]);
     rt.shutdown_timeout(Duration::from_secs(1));
 }

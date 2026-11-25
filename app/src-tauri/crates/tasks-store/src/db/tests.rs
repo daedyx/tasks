@@ -96,3 +96,18 @@ fn a_database_from_a_newer_core_is_rejected_not_changed() {
         "{res:?}"
     );
 }
+
+/// Review T5, N5-2: Der Schlüssel liegt als `Zeroizing` im Speicher (wird beim Freigeben überschrieben), hat kein
+/// `Debug` nach außen und ist genau 64 Hex-Zeichen lang; der Text für das `PRAGMA` ebenso.
+#[test]
+fn schluessel_und_pragma_werden_im_speicher_geloescht() {
+    let store = MemoryStore::default();
+    let key: zeroize::Zeroizing<String> = key::get_or_create(&store).unwrap();
+    assert_eq!(key.len(), 64);
+    assert!(key.chars().all(|c| c.is_ascii_hexdigit() && !c.is_ascii_uppercase()));
+    let again = key::get_or_create(&store).unwrap();
+    assert_eq!(*key, *again);
+    let pragma: zeroize::Zeroizing<String> = key::pragma(&key);
+    assert_eq!(pragma.len(), 67);
+    assert!(pragma.starts_with("x'") && pragma.ends_with('\''));
+}

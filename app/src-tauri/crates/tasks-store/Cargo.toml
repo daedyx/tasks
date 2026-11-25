@@ -13,6 +13,8 @@ workspace = true
 rusqlite = { version = "0.37", features = ["bundled-sqlcipher-vendored-openssl"] }
 keyring = "3"
 getrandom = "0.3"
+# Schlüssel im Speicher überschreiben (Review T5, N5-2); stand schon im Baum.
+zeroize = "1"
 thiserror = "2"
 iana-time-zone = "0.1"
 # Geprüfter Erinnerungs-Durchgang (reminders_scan.rs); gleiche Fassungen wie Kern und Hülle.

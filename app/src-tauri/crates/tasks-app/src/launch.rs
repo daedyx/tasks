@@ -5,7 +5,7 @@
 use crate::app::TasksApp;
 use crate::ids::{self, APP_ID, BACKGROUND};
 use crate::settings::Settings;
-use crate::{data, paths, seed, startfehler};
+use crate::{cleanup, data, paths, seed, startfehler};
 use daedyx_background::args::Args;
 use daedyx_background::aumid;
 use daedyx_background::instance::{self, Role};
@@ -27,6 +27,7 @@ use std::time::Duration;
 pub mod code {
     pub const GUI: u8 = 6;
     pub const STARTUP_ERROR: u8 = 9;
+    pub const CLEANUP_DATA: u8 = 10;
 }
 
 /// Hält das Symbol im Infobereich am Leben.
@@ -74,7 +75,16 @@ pub fn run(settings: Settings, args: Args) -> ExitCode {
         return startup_error(&settings, &texts, code);
     }
     if args.cleanup {
-        return bg::cleanup(&BACKGROUND);
+        // Vorschau: auch Datenordner und Tresor-Eintrag; Produkt: Nutzerdaten bleiben immer (T5-1).
+        let data = !ids::PREVIEW
+            || paths::data_base()
+                .is_none_or(|b| cleanup::remove_data(&b, &ids::vault(), ids::PREVIEW));
+        let background = bg::cleanup(&BACKGROUND);
+        return if data {
+            background
+        } else {
+            ExitCode::from(code::CLEANUP_DATA)
+        };
     }
     if args.probe_toast {
         return bg::probe_toast(
@@ -84,12 +94,6 @@ pub fn run(settings: Settings, args: Args) -> ExitCode {
             &texts.t("hintergrund.test.text"),
         );
     }
-    // Echte Datenbank der Vorschau (T5): eigener Ordner, eigener Tresor-Dienst, nie die der echten App.
-    let zone = seed::zone();
-    let opened = match open_data(zone) {
-        Ok(o) => o,
-        Err(code) => return startup_error(&settings, &texts, code),
-    };
     let Ok(rt) = bg::runtime() else {
         return ExitCode::from(bg_code::RUNTIME);
     };
@@ -109,6 +113,13 @@ pub fn run(settings: Settings, args: Args) -> ExitCode {
             };
         }
         Err(_) => return ExitCode::from(bg_code::PIPE),
+    };
+    // Erst jetzt die Datenbank (Review T5, M5-1): Zweitstart und `--quit-running` fassen sie nie an, und die Pipe
+    // sperrt einen gleichzeitigen Erststart. Eigener Ordner, eigener Tresor-Dienst, nie die der echten App.
+    let zone = seed::zone();
+    let opened = match open_data(zone) {
+        Ok(o) => o,
+        Err(code) => return startup_error(&settings, &texts, code),
     };
     let _ = aumid::register(APP_ID, &texts.t("app.titel"));
     let options = eframe::NativeOptions {
