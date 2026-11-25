@@ -156,3 +156,33 @@ fn ueber_zeigt_version_und_lizenz() {
     let _ = h.get_by_role_and_label(Role::Heading, "Lizenzen");
     let _ = h.get_by_label("Daedyx Tasks steht unter der MIT-Lizenz.");
 }
+
+/// Review T4, N4-4: Die aktive Vorlage meldet sich als „ausgewählt“, nicht nur über die Farbe.
+#[test]
+fn aktive_dunkel_vorlage_ist_fuer_screenreader_ausgewaehlt() {
+    let mut h = settings_page();
+    let selected = |h: &Harness<'static, crate::app::TasksApp>, name: &str| {
+        h.get_by_role_and_label(Role::Group, "Vorlagen")
+            .get_by_role_and_label(Role::Button, name)
+            .accesskit_node()
+            .is_selected()
+    };
+    assert_eq!(selected(&h, "Grün"), Some(false), "ohne Feinstellung keine");
+    h.get_by_role_and_label(Role::Group, "Vorlagen")
+        .get_by_role_and_label(Role::Button, "Grün")
+        .click();
+    h.run();
+    h.run();
+    assert_eq!(selected(&h, "Grün"), Some(true));
+    assert_eq!(selected(&h, "Lila"), Some(false));
+}
+
+/// Entscheid T4-3: Direkt am Schalter steht, was „aus“ kostet; beim Schließen gibt es keine Rückfrage.
+#[test]
+fn hinweis_am_infobereich_schalter() {
+    let h = settings_page();
+    let _ = h.get_by_label("Aus: Nach dem Schließen kommen keine Erinnerungen.");
+    let _ = h.get_by_label(
+        "An: Erinnerungen kommen auch ohne offenes Fenster, Schließen versteckt es nur.",
+    );
+}

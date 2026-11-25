@@ -38,6 +38,8 @@ pub fn show(ui: &mut Ui, app: &mut TasksApp) {
     {
         app.set_keep_running(keep);
     }
+    // Direkt am Schalter, was „aus“ kostet (Entscheid T4-3): keine Rückfrage beim Schließen, nur dieser Hinweis.
+    hint(ui, &t.t("hintergrund.weiterlaufen.aus"));
     hint(ui, &t.t("hintergrund.weiterlaufen.hinweis"));
 
     // Titel stehen sonst unverschlüsselt im Info-Center und auf dem Sperrbildschirm (Desk N-1, Tasks T-F6).

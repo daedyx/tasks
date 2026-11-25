@@ -1,6 +1,6 @@
 //! Takt der Erinnerungen (T4): jede Erinnerung genau einmal, auch bei mehreren Erinnerungen derselben Aufgabe;
 //! Benachrichtigung standardmäßig neutral ohne Titel (T-F6). Speicher-Datenbank, feste Uhr, erfundene Aufgabe.
-use crate::reminders::{ReminderJobs, SharedConn, SharedDb};
+use crate::reminders::{ReminderJobs, SharedConn, SharedDb, minutes_until};
 use crate::seed;
 use daedyx_background::notify::Recorder;
 use daedyx_background::ticker::{Jobs, NoticeStyle, run_once};
@@ -51,7 +51,7 @@ fn leads(j: &ReminderJobs) -> Vec<i64> {
         .notices
         .into_iter()
         .map(|n| match n.kind {
-            NoticeKind::TaskLead { minutes_before } => minutes_before,
+            NoticeKind::TaskLead { minutes_until } => minutes_until,
             other => panic!("unerwartete Art {other:?}"),
         })
         .collect()
@@ -78,12 +78,50 @@ fn jede_erinnerung_genau_einmal_auch_bei_zweien_je_aufgabe() {
 }
 
 #[test]
-fn verpasste_erinnerungen_kommen_beim_naechsten_durchgang_je_einmal() {
+fn verpasste_erinnerungen_derselben_aufgabe_eine_meldung_mit_echter_restzeit() {
+    // Review T4, N4-1: PC schlief über beide Erinnerungen hinweg; beim Aufwachen 2 Minuten vor der Fälligkeit kommt
+    // eine Meldung „Fällig in 2 Minuten“, nicht „10“ und „5“. Beide gelten danach als gemeldet.
     let db = db_with_two_alarms();
-    let now = Arc::new(AtomicI64::new(DUE - 60));
+    let now = Arc::new(AtomicI64::new(DUE - 2 * 60));
     let j = jobs(&db, &now);
-    assert_eq!(leads(&j), vec![10, 5], "beide nachgeholt, in Reihenfolge");
-    assert!(leads(&j).is_empty());
+    assert_eq!(leads(&j), vec![2]);
+    assert!(leads(&j).is_empty(), "die andere still als gemeldet");
+}
+
+#[test]
+fn nachgeholt_nach_der_faelligkeit_sagt_seit_wann() {
+    let db = db_with_two_alarms();
+    let now = Arc::new(AtomicI64::new(DUE + 7 * 60 + 10));
+    let j = jobs(&db, &now);
+    assert_eq!(leads(&j), vec![-7]);
+    let rec = Recorder::default();
+    let (sink, _rx) = Sink::new();
+    now.store(DUE + 20, Ordering::Relaxed);
+    let db2 = db_with_two_alarms();
+    let j2 = jobs(&db2, &now);
+    run_once(&j2, &rec, &sink, NoticeStyle::new(Language::De));
+    assert_eq!(rec.sent().unwrap().last().unwrap().1, "Jetzt fällig");
+}
+
+#[test]
+fn restzeit_rechnet_geprueft() {
+    let r = |fire_at: i64, minutes_before: i64| daedyx_tasks_store::reminders::Reminder {
+        task_id: "a".into(),
+        title: "Gießkanne füllen".into(),
+        fire_at,
+        minutes_before,
+        due_has_time: true,
+    };
+    assert_eq!(minutes_until(&r(DUE - 600, 10), DUE - 600), 10);
+    assert_eq!(minutes_until(&r(DUE - 600, 10), DUE - 29), 0);
+    assert_eq!(minutes_until(&r(DUE - 600, 10), DUE + 31), -1);
+    assert_eq!(
+        minutes_until(&r(i64::MAX, 10), 0),
+        0,
+        "Überlauf ergibt jetzt"
+    );
+    assert_eq!(minutes_until(&r(0, i64::MAX), 0), 0);
+    assert_eq!(minutes_until(&r(0, 0), i64::MIN), 0);
 }
 
 #[test]

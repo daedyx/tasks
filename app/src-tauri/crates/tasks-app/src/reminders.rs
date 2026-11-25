@@ -1,10 +1,12 @@
 //! Takt der Erinnerungen (T4): Jeder Durchgang ruft den geprüften Durchgang des Stores (`reminders::tick_once`) auf
 //! derselben Speicher-Datenbank, die die Oberfläche zeigt. Der Store merkt sich jede gemeldete Erinnerung, so kommt
-//! jede genau einmal, auch bei bis zu zehn Erinnerungen je Aufgabe. Die Benachrichtigung sagt „Fällig in …“ und ist
-//! ohne Titel, solange der Schalter aus ist (T-F6).
+//! jede genau einmal, auch bei bis zu zehn Erinnerungen je Aufgabe. Kommen in einem Durchgang mehrere Erinnerungen
+//! derselben Aufgabe (nachgeholt nach Ruhezustand), zeigt nur die späteste eine Meldung, die anderen gelten still als
+//! gemeldet (Review T4, N4-1). Der Text nennt die echte Restzeit („Fällig in …“, „Jetzt fällig“, „Seit … fällig“)
+//! und ist ohne Titel, solange der Schalter aus ist (T-F6).
 use daedyx_background::ticker::{Jobs, Tick};
 use daedyx_background::{Notice, NoticeKind};
-use daedyx_tasks_store::reminders::{tick_once, unix_now};
+use daedyx_tasks_store::reminders::{Reminder, tick_once, unix_now};
 use daedyx_tasks_ui::TaskDb;
 use rusqlite::Connection;
 use std::sync::{Arc, Mutex, MutexGuard};
@@ -44,18 +46,39 @@ impl ReminderJobs {
     }
 }
 
+/// Ganze Minuten von `now` bis zur Fälligkeit (Zeitpunkt der Erinnerung plus Vorlauf), auf die nächste Minute
+/// gerundet; negativ, wenn schon fällig. Rechnet geprüft; ein unsinniger Wert ergibt „Jetzt fällig“.
+pub fn minutes_until(r: &Reminder, now: i64) -> i64 {
+    r.minutes_before
+        .checked_mul(60)
+        .and_then(|lead| r.fire_at.checked_add(lead))
+        .and_then(|due| due.checked_sub(now))
+        .and_then(|secs| secs.checked_add(30))
+        .map_or(0, |secs| secs.div_euclid(60))
+}
+
 impl Jobs for ReminderJobs {
     fn run(&self) -> Tick {
-        let mut notices = Vec::new();
-        tick_once(&self.db, (self.now)(), &self.zone, |r| {
-            notices.push(Notice {
+        let now = (self.now)();
+        // Je Aufgabe nur die späteste Erinnerung dieses Durchgangs; der Store merkt sich trotzdem alle als gemeldet.
+        let mut latest: Vec<Reminder> = Vec::new();
+        tick_once(&self.db, now, &self.zone, |r| {
+            match latest.iter_mut().find(|l| l.task_id == r.task_id) {
+                Some(l) if r.fire_at >= l.fire_at => *l = r.clone(),
+                Some(_) => {}
+                None => latest.push(r.clone()),
+            }
+        });
+        let notices = latest
+            .iter()
+            .map(|r| Notice {
                 kind: NoticeKind::TaskLead {
-                    minutes_before: r.minutes_before,
+                    minutes_until: minutes_until(r, now),
                 },
                 title: r.title.clone(),
                 time: String::new(),
-            });
-        });
+            })
+            .collect();
         Tick {
             notices,
             sync_due: 0,

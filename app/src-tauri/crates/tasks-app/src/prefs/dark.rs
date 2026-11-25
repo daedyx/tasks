@@ -2,7 +2,7 @@
 //! Die Regler sind in `daedyx-ui` so begrenzt, dass jede Stellung die Kontrastregeln erfüllt.
 use super::{heading, hint, kind, row};
 use crate::app::TasksApp;
-use daedyx_ui::a11y::named_scope;
+use daedyx_ui::a11y::{mark_selected, named_scope};
 use daedyx_ui::theme::{DarkTuning, PRESETS};
 use daedyx_ui::widgets::{ButtonKind, button};
 use eframe::egui::{Slider, Ui, accesskit::Role};
@@ -47,7 +47,10 @@ pub fn show(ui: &mut Ui, app: &mut TasksApp) {
             ui.horizontal_wrapped(|ui| {
                 for p in &PRESETS {
                     let on = app.dark_tuning.and_then(|d| d.preset()) == Some(p);
-                    if button(ui, kind(on), &t.t(preset_key(p.id))).clicked() {
+                    let r = button(ui, kind(on), &t.t(preset_key(p.id)));
+                    // Die aktive Vorlage auch für Screenreader, nicht nur an der Farbe (Review T4, N4-4).
+                    mark_selected(ui, r.id, on);
+                    if r.clicked() {
                         next = next.with_preset(p);
                         changed = true;
                     }

@@ -66,6 +66,15 @@ Infobereich, Autostart in HKCU). Weiter kein Netz, keine Datei, kein Tresor.
 | T4-6 | Unsinnige Uhrzeit oder Fälligkeit bringt den Takt zum Absturz | geprüfter Durchgang des Stores, Uhr nur 1970–9999 | `uhr_ausserhalb_des_bereichs_meldet_nichts` |
 | T4-7 | Feinstellung macht Schrift unlesbar | Regler begrenzt, Farben aus den Tokens, Kontrast-Test für jede Stellung | `jede_stellung_erfuellt_die_kontrastregeln` (daedyx/ui) |
 
-**Nicht geschützt:** Ein Prozess desselben Benutzers kann `QUIT` schicken (Pipe-Rechte „nur dieser Benutzer“ offen
-wie in Desk). Was Windows mit gezeigten Benachrichtigungen macht (Info-Center), liegt außerhalb der App; `--cleanup`
-entfernt die eigenen.
+| T4-8 | Pipe-Dienst endet nach einem Fehler, der nächste Start läuft als zweite Instanz | Anlegen der nächsten Pipe-Instanz wird mit wachsender Pause wiederholt (daedyx-background, Review T4 H4-1) | `pipe_dienst_versucht_mit_pause_erneut` (daedyx/ui) |
+| T4-9 | Uhr springt weit vor und zurück, eine Erinnerung kommt doppelt | Merker gültiger Erinnerungen bleiben, aufgeräumt wird nur Veraltetes (Review T4 N4-2) | `a_clock_jumping_far_ahead_and_back_does_not_repeat_a_reminder` |
+
+**Nicht geschützt:**
+- **Prozesse desselben Benutzers** können `SHOW` oder `QUIT` schicken. Dagegen helfen keine Pipe-Rechte, denn sie
+  laufen als derselbe Benutzer; das gilt für jedes Programm dieses Benutzers.
+- **Andere Konten auf demselben PC** (gemeinsamer Schul-PC, Terminalserver) können heute lesend verbinden und
+  Instanzen kurz belegen, und sie könnten die Pipe mit dem vorhersagbaren Namen vorher anlegen, sodass die App nicht
+  startet. Rechte „nur dieser Benutzer“ schließen nur das Erste, gegen das Zweite hilft nur eine Eigentümerprüfung
+  beim zweiten Start. Beides zusammen ist für T7 vorgemerkt (STAND); bis dahin offen wie in Desk.
+- Was Windows mit gezeigten Benachrichtigungen macht (Info-Center), liegt außerhalb der App; `--cleanup` entfernt
+  die eigenen.

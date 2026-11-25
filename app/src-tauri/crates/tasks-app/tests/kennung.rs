@@ -106,4 +106,7 @@ fn product(bytes: &[u8]) {
     assert!(hits(bytes, b"daedyx-tasks-vorschau").is_empty());
     assert!(hits(bytes, b"DaedyxTasksVorschau").is_empty());
     assert!(!hits(bytes, b"DaedyxTasks").is_empty());
+    // Pipe der Produkt-Fassung (Review T4, H4-3), keine der Vorschau.
+    assert!(!hits(bytes, b"daedyx-tasks-instanz").is_empty());
+    assert!(hits(bytes, b"daedyx-tasks-vorschau-instanz").is_empty());
 }

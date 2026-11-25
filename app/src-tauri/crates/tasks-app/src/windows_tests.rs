@@ -8,11 +8,23 @@ use daedyx_background::instance::{self, Role};
 use daedyx_background::{Event, Sink};
 use std::time::Duration;
 
+/// Räumt den Testschlüssel auch dann ab, wenn eine Prüfung mittendrin fehlschlägt (Review T4, N4-3).
+struct TestKey(String);
+
+impl Drop for TestKey {
+    fn drop(&mut self) {
+        let hkcu = winreg::RegKey::predef(winreg::enums::HKEY_CURRENT_USER);
+        let _ = hkcu.delete_subkey_all(&self.0);
+        let _ = hkcu.delete_subkey(r"Software\DaedyxTasksVorschauTest");
+    }
+}
+
 #[test]
 fn autostart_ein_aus_und_blockiert_unter_testschluessel() {
     use winreg::RegKey;
     use winreg::enums::{HKEY_CURRENT_USER, REG_BINARY};
     let base = format!(r"Software\DaedyxTasksVorschauTest\{}", std::process::id());
+    let guard = TestKey(base.clone());
     let mut store = RegistryStore {
         run_key: format!(r"{base}\Run"),
         approved_key: format!(r"{base}\Approved"),
@@ -32,8 +44,7 @@ fn autostart_ein_aus_und_blockiert_unter_testschluessel() {
     assert_eq!(store.state().unwrap(), State::Blocked);
     store.set(false).unwrap();
     assert_eq!(store.state().unwrap(), State::Off);
-    hkcu.delete_subkey_all(&base).unwrap();
-    let _ = hkcu.delete_subkey(r"Software\DaedyxTasksVorschauTest");
+    drop(guard);
     assert!(hkcu.open_subkey(&base).is_err(), "keine Reste");
 }
 
