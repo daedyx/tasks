@@ -126,3 +126,10 @@ fn startseite_aus_den_einstellungen() {
     let h = harness(app(&settings), 1280.0);
     assert_eq!(h.state().active(), Page::Board);
 }
+
+#[test]
+fn tasks_schaltet_baum_sortierung_und_erinnerungen_ein() {
+    let h = harness(app(&Settings::default()), 1280.0);
+    assert_eq!(h.state().tasks.features, daedyx_tasks_ui::Features::TASKS);
+    let _ = h.get_by_role_and_label(Role::Button, "Sortierung: von Hand");
+}

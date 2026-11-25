@@ -30,6 +30,8 @@ impl TasksApp {
         };
         // Liste und Board wechselt die Navigationsleiste; der Umschalter der Aufgaben-Oberfläche bleibt aus (T2-1).
         app.tasks.mode_switch = false;
+        // Tasks kann mehr als Desk: Baum bis Ebene 6, Sortierungen, Ziehen, mehrere Erinnerungen (T3a).
+        app.tasks.features = daedyx_tasks_ui::Features::TASKS;
         app.open(settings.page);
         app
     }

@@ -63,11 +63,11 @@ Zeile verglichen ist (offene Frage im Bericht T2).
 | `styles/tokens.test.ts` | color-scheme folgt dem Thema (native Bedienelemente) | T2 | Tokens und Kontrast (daedyx-ui) | offen |
 | `styles/tokens.test.ts` | jede Palettenfarbe steht in allen drei Blöcken (hell, dunkel per Windows, dunkel per Umschalter) | T2 | Tokens und Kontrast (daedyx-ui) | offen |
 | `styles/tokens.test.ts` | Schrift auf Kalenderfarben und Schriftfarben stehen in den nötigen Blöcken | T2 | Tokens und Kontrast (daedyx-ui) | offen |
-| `tasks/AlarmFields.test.tsx` | listet die Erinnerungen mit lesbaren Texten, auch ungewöhnliche Werte | T3a | mehrere Erinnerungen | offen |
-| `tasks/AlarmFields.test.tsx` | fügt über die Auswahl eine weitere Erinnerung hinzu (sortiert, ohne schon vorhandene) | T3a | mehrere Erinnerungen | offen |
-| `tasks/AlarmFields.test.tsx` | entfernt eine einzelne Erinnerung | T3a | mehrere Erinnerungen | offen |
-| `tasks/AlarmFields.test.tsx` | ohne Fälligkeit ist alles gesperrt und es steht ein Hinweis da | T3a | mehrere Erinnerungen | offen |
-| `tasks/AlarmFields.test.tsx` | bietet bei zehn Erinnerungen nichts mehr zum Hinzufügen an | T3a | mehrere Erinnerungen | offen |
+| `tasks/AlarmFields.test.tsx` | listet die Erinnerungen mit lesbaren Texten, auch ungewöhnliche Werte | T3a | mehrere Erinnerungen | daedyx-tasks-ui `alarm_tests::zeigt_ungewoehnliche_werte_lesbar_und_ohne_doppelte` |
+| `tasks/AlarmFields.test.tsx` | fügt über die Auswahl eine weitere Erinnerung hinzu (sortiert, ohne schon vorhandene) | T3a | mehrere Erinnerungen | daedyx-tasks-ui `alarm_tests::legt_zwei_an_behaelt_sie_beim_erneuten_oeffnen_und_entfernt_eine` |
+| `tasks/AlarmFields.test.tsx` | entfernt eine einzelne Erinnerung | T3a | mehrere Erinnerungen | daedyx-tasks-ui `alarm_tests::legt_zwei_an_behaelt_sie_beim_erneuten_oeffnen_und_entfernt_eine` |
+| `tasks/AlarmFields.test.tsx` | ohne Fälligkeit ist alles gesperrt und es steht ein Hinweis da | T3a | mehrere Erinnerungen | daedyx-tasks-ui `alarm_tests::ohne_faelligkeit_ist_alles_gesperrt_mit_hinweis` |
+| `tasks/AlarmFields.test.tsx` | bietet bei zehn Erinnerungen nichts mehr zum Hinzufügen an | T3a | mehrere Erinnerungen | daedyx-tasks-ui `alarm_tests::zehn_gehen_die_elfte_wird_abgelehnt_und_nichts_mehr_angeboten` |
 | `tasks/api.contract.test.ts` | ruft nur Befehle auf, die der Kern registriert hat, und umgekehrt | – | entfällt: Vertrag Oberfläche ↔ Tauri-Befehle (Plan 2.4) | offen |
 | `tasks/api.contract.test.ts` | jeder Befehlsname der Befehlsdatei steht in der Befehlsliste | – | entfällt: Vertrag Oberfläche ↔ Tauri-Befehle (Plan 2.4) | offen |
 | `tasks/boardModel.test.ts` | zeigt ohne Abschnitte nur „Ohne Abschnitt“, auch wenn sie leer ist | T3b | Board-Modell | offen |
@@ -106,25 +106,25 @@ Zeile verglichen ist (offene Frage im Bericht T2).
 | `tasks/quickEntry.test.ts` | Ausrufezeichen setzen die Priorität und gehören nicht zum Titel | T3a | Schnelleingabe (Kern quick, T1a) | offen |
 | `tasks/quickEntry.test.ts` | ein Tag macht eine ganztägige Fälligkeit | T3a | Schnelleingabe (Kern quick, T1a) | offen |
 | `tasks/quickEntry.test.ts` | Tag mit Uhrzeit macht eine Fälligkeit mit Uhrzeit (UTC-Sekunden) | T3a | Schnelleingabe (Kern quick, T1a) | offen |
-| `tasks/RepeatFields.test.tsx` | monatlich bietet „Fester Tag im Monat“, leer = Tag der Fälligkeit | T3a | Wiederholung voll | offen |
-| `tasks/RepeatFields.test.tsx` | jeden 15. des Monats eintragen setzt monthDay | T3a | Wiederholung voll | offen |
-| `tasks/RepeatFields.test.tsx` | begrenzt auf 1 bis 31 und löscht den Anker bei leerem Feld | T3a | Wiederholung voll | offen |
-| `tasks/RepeatFields.test.tsx` | gibt es für täglich und wöchentlich nicht; Wechsel zu täglich entfernt den Anker | T3a | Wiederholung voll | offen |
-| `tasks/RepeatFields.test.tsx` | jährlich zeigt den Tag ebenfalls | T3a | Wiederholung voll | offen |
+| `tasks/RepeatFields.test.tsx` | monatlich bietet „Fester Tag im Monat“, leer = Tag der Fälligkeit | T3a | Wiederholung voll | daedyx-tasks-ui `repeat_tests::fester_monatstag_begrenzt_auf_1_bis_31_und_leer_loescht_den_anker` |
+| `tasks/RepeatFields.test.tsx` | jeden 15. des Monats eintragen setzt monthDay | T3a | Wiederholung voll | daedyx-tasks-ui `repeat_tests::fester_monatstag_begrenzt_auf_1_bis_31_und_leer_loescht_den_anker` |
+| `tasks/RepeatFields.test.tsx` | begrenzt auf 1 bis 31 und löscht den Anker bei leerem Feld | T3a | Wiederholung voll | daedyx-tasks-ui `repeat_tests::fester_monatstag_begrenzt_auf_1_bis_31_und_leer_loescht_den_anker` |
+| `tasks/RepeatFields.test.tsx` | gibt es für täglich und wöchentlich nicht; Wechsel zu täglich entfernt den Anker | T3a | Wiederholung voll | daedyx-tasks-ui `repeat_tests::abstand_und_ab_abhaken`, `wechsel_der_art_und_begrenzen_der_zahlen` |
+| `tasks/RepeatFields.test.tsx` | jährlich zeigt den Tag ebenfalls | T3a | Wiederholung voll | daedyx-tasks-ui `repeat_tests::wechsel_der_art_und_begrenzen_der_zahlen` |
 | `tasks/repeatNext.test.ts` | monatlich ohne festen Tag nimmt den Tag der Fälligkeit, kurze Monate den letzten Tag | T3a | Kern repeat (Fake in TS entfällt) | offen |
 | `tasks/repeatNext.test.ts` | monatlich mit festem Tag springt auf diesen Tag, auch wenn die Fälligkeit anders lag | T3a | Kern repeat (Fake in TS entfällt) | offen |
-| `tasks/repeatNext.test.ts` | der Anker bleibt nach einem kurzen Monat erhalten (31. → 28. Feb. → 31. März) | T3a | Kern repeat (Fake in TS entfällt) | offen |
+| `tasks/repeatNext.test.ts` | der Anker bleibt nach einem kurzen Monat erhalten (31. → 28. Feb. → 31. März) | T3a | Kern repeat (Fake in TS entfällt) | daedyx-tasks-ui `repeat_tests::monatstag_31_rutscht_in_kurzen_monaten_und_kehrt_zurueck` (über den Kern) |
 | `tasks/repeatNext.test.ts` | beachtet den Abstand in Monaten und das Jahr | T3a | Kern repeat (Fake in TS entfällt) | offen |
 | `tasks/repeatNext.test.ts` | täglich und wöchentlich bleiben wie bisher | T3a | Kern repeat (Fake in TS entfällt) | offen |
-| `tasks/sorting.test.ts` | Handreihenfolge nach Position, Unteraufgaben direkt nach der Oberaufgabe | T3a | vier Sortierungen | offen |
-| `tasks/sorting.test.ts` | nach Fälligkeit, ohne Datum zuletzt | T3a | vier Sortierungen | offen |
-| `tasks/sorting.test.ts` | nach Priorität, hohe zuerst | T3a | vier Sortierungen | offen |
-| `tasks/sorting.test.ts` | nach Titel ohne Beachtung von Groß- und Kleinschreibung und mit Umlauten | T3a | vier Sortierungen | offen |
-| `tasks/sorting.test.ts` | Unteraufgabe ohne Oberaufgabe in der Ansicht zählt als oberste | T3a | vier Sortierungen | offen |
-| `tasks/sorting.test.ts` | Position zwischen Nachbarn und am Rand | T3a | vier Sortierungen | offen |
-| `tasks/sorting.test.ts` | Position vor einer Aufgabe, am Anfang und am Ende | T3a | vier Sortierungen | offen |
-| `tasks/sorting.test.ts` | ordnet jede Ebene in Handreihenfolge direkt unter ihre Oberaufgabe | T3a | vier Sortierungen | offen |
-| `tasks/sorting.test.ts` | sortiert nur die obersten Aufgaben nach Titel, der Unterbaum folgt unverändert | T3a | vier Sortierungen | offen |
+| `tasks/sorting.test.ts` | Handreihenfolge nach Position, Unteraufgaben direkt nach der Oberaufgabe | T3a | vier Sortierungen | daedyx-tasks-ui `tree_model_tests::handreihenfolge_ordnet_jede_ebene_direkt_unter_ihre_oberaufgabe` |
+| `tasks/sorting.test.ts` | nach Fälligkeit, ohne Datum zuletzt | T3a | vier Sortierungen | daedyx-tasks-ui `tree_model_tests::nach_faelligkeit_ohne_datum_zuletzt` |
+| `tasks/sorting.test.ts` | nach Priorität, hohe zuerst | T3a | vier Sortierungen | daedyx-tasks-ui `tree_model_tests::nach_prioritaet_hohe_zuerst` |
+| `tasks/sorting.test.ts` | nach Titel ohne Beachtung von Groß- und Kleinschreibung und mit Umlauten | T3a | vier Sortierungen | daedyx-tasks-ui `tree_model_tests::nach_titel_ohne_gross_klein_und_mit_umlauten` |
+| `tasks/sorting.test.ts` | Unteraufgabe ohne Oberaufgabe in der Ansicht zählt als oberste | T3a | vier Sortierungen | daedyx-tasks-ui `tree_model_tests::unteraufgabe_ohne_oberaufgabe_in_der_ansicht_zaehlt_als_oberste` |
+| `tasks/sorting.test.ts` | Position zwischen Nachbarn und am Rand | T3a | vier Sortierungen | daedyx-tasks-ui `model_tests::einfuegeposition_liegt_zwischen_den_nachbarn` |
+| `tasks/sorting.test.ts` | Position vor einer Aufgabe, am Anfang und am Ende | T3a | vier Sortierungen | daedyx-tasks-ui `sort_drag_tests::zeile_mit_der_maus_vor_eine_andere_ziehen`, `alt_pfeil_verschiebt_ohne_maus_und_nur_von_hand` |
+| `tasks/sorting.test.ts` | ordnet jede Ebene in Handreihenfolge direkt unter ihre Oberaufgabe | T3a | vier Sortierungen | daedyx-tasks-ui `tree_model_tests::handreihenfolge_ordnet_jede_ebene_direkt_unter_ihre_oberaufgabe` |
+| `tasks/sorting.test.ts` | sortiert nur die obersten Aufgaben nach Titel, der Unterbaum folgt unverändert | T3a | vier Sortierungen | daedyx-tasks-ui `tree_model_tests::sortiert_nur_die_obersten_der_unterbaum_folgt_unveraendert` |
 | `tasks/TaskBoard.test.tsx` | schaltet zwischen Liste und Board um und merkt die Wahl je Liste | T3b | Board | offen |
 | `tasks/TaskBoard.test.tsx` | legt Abschnitte und Karten in Abschnitten an | T3b | Board | offen |
 | `tasks/TaskBoard.test.tsx` | verschiebt Karten per Ziehen in einen Abschnitt und innerhalb der Spalte | T3b | Board | offen |
@@ -136,20 +136,20 @@ Zeile verglichen ist (offene Frage im Bericht T2).
 | `tasks/taskNotify.test.ts` | nennt, wann die Aufgabe fällig ist | T4 | Benachrichtigungstexte (T-F6, neutral) | offen |
 | `tasks/taskNotify.test.ts` | zeigt außerhalb der App nichts und wirft nicht | T4 | Benachrichtigungstexte (T-F6, neutral) | offen |
 | `tasks/TasksArea.test.tsx` | zeigt Smart-Listen mit Zahlen und startet bei „Heute“ | T3a/T3b | Liste, Leiste, Suche (T-F4) | offen |
-| `tasks/TasksArea.test.tsx` | zeigt eine Liste mit eingerückten Unteraufgaben | T3a/T3b | Liste, Leiste, Suche (T-F4) | offen |
+| `tasks/TasksArea.test.tsx` | zeigt eine Liste mit eingerückten Unteraufgaben | T3a/T3b | Liste, Leiste, Suche (T-F4) | daedyx-tasks-ui `deep_tests::eingerueckt_nach_ebene_mit_ebene_fuer_screenreader_und_zaehler_ueber_alle` |
 | `tasks/TasksArea.test.tsx` | legt per Schnelleingabe eine Aufgabe mit Priorität an | T3a/T3b | Liste, Leiste, Suche (T-F4) | offen |
 | `tasks/TasksArea.test.tsx` | legt in „Heute“ Aufgaben mit Fälligkeit heute an | T3a/T3b | Liste, Leiste, Suche (T-F4) | offen |
 | `tasks/TasksArea.test.tsx` | hakt eine Aufgabe ab und wieder auf | T3a/T3b | Liste, Leiste, Suche (T-F4) | offen |
 | `tasks/TasksArea.test.tsx` | öffnet Einzelheiten und speichert Titel und Priorität | T3a/T3b | Liste, Leiste, Suche (T-F4) | offen |
 | `tasks/TasksArea.test.tsx` | legt eine Liste an, benennt sie um und löscht sie nach Rückfrage | T3a/T3b | Liste, Leiste, Suche (T-F4) | offen |
 | `tasks/TasksArea.test.tsx` | zeigt Suchtreffer, wenn die Schnellsuche sie anfordert, und beendet die Suche | T3a/T3b | Liste, Leiste, Suche (T-F4) | offen |
-| `tasks/TasksArea.test.tsx` | legt Unteraufgaben im Detailbereich an | T3a/T3b | Liste, Leiste, Suche (T-F4) | offen |
+| `tasks/TasksArea.test.tsx` | legt Unteraufgaben im Detailbereich an | T3a/T3b | Liste, Leiste, Suche (T-F4) | daedyx-tasks-ui `deep_tests::unteraufgabe_im_detail_anlegen_und_oeffnen` |
 | `tasks/TasksArea.test.tsx` | sortiert per Ziehen um und legt Aufgaben per Ziehen in eine andere Liste | T3a/T3b | Liste, Leiste, Suche (T-F4) | offen |
-| `tasks/TasksDeep.test.tsx` | legt zwei Erinnerungen an, behält sie beim erneuten Öffnen und entfernt eine | T3a | Unteraufgaben bis Ebene 6 | offen |
-| `tasks/TasksDeep.test.tsx` | Fälligkeit entfernen löscht auch die Erinnerungen | T3a | Unteraufgaben bis Ebene 6 | offen |
-| `tasks/TasksDeep.test.tsx` | legt eine Unteraufgabe unter einer Unteraufgabe an, eingerückt nach Ebene, Zähler an der Oberaufgabe zählt alle | T3a | Unteraufgaben bis Ebene 6 | offen |
-| `tasks/TasksDeep.test.tsx` | auf der letzten Ebene gibt es keine weitere Unteraufgabe | T3a | Unteraufgaben bis Ebene 6 | offen |
-| `tasks/TasksDeep.test.tsx` | zeigt in der Unteraufgabe die Oberaufgabe und springt dorthin zurück | T3a | Unteraufgaben bis Ebene 6 | offen |
+| `tasks/TasksDeep.test.tsx` | legt zwei Erinnerungen an, behält sie beim erneuten Öffnen und entfernt eine | T3a | Unteraufgaben bis Ebene 6 | daedyx-tasks-ui `alarm_tests::legt_zwei_an_behaelt_sie_beim_erneuten_oeffnen_und_entfernt_eine` |
+| `tasks/TasksDeep.test.tsx` | Fälligkeit entfernen löscht auch die Erinnerungen | T3a | Unteraufgaben bis Ebene 6 | daedyx-tasks-ui `alarm_tests::faelligkeit_entfernen_loescht_auch_die_erinnerungen` |
+| `tasks/TasksDeep.test.tsx` | legt eine Unteraufgabe unter einer Unteraufgabe an, eingerückt nach Ebene, Zähler an der Oberaufgabe zählt alle | T3a | Unteraufgaben bis Ebene 6 | daedyx-tasks-ui `deep_tests::eingerueckt_nach_ebene_mit_ebene_fuer_screenreader_und_zaehler_ueber_alle`, `tree_model_tests::zaehler_ueber_drei_ebenen_zaehlt_alle_nachfahren` |
+| `tasks/TasksDeep.test.tsx` | auf der letzten Ebene gibt es keine weitere Unteraufgabe | T3a | Unteraufgaben bis Ebene 6 | daedyx-tasks-ui `deep_tests::ebene_6_geht_ebene_7_ergibt_hinweis_statt_absturz` |
+| `tasks/TasksDeep.test.tsx` | zeigt in der Unteraufgabe die Oberaufgabe und springt dorthin zurück | T3a | Unteraufgaben bis Ebene 6 | daedyx-tasks-ui `deep_tests::zeigt_in_der_unteraufgabe_die_oberaufgabe_und_springt_dorthin_zurueck` |
 | `tasks/useDebouncedField.test.tsx` | speichert nach der Pause nur den letzten Stand, nicht jeden Tastendruck | T3a | Felder gelten beim Verlassen | offen |
 | `tasks/useDebouncedField.test.tsx` | speichert sofort beim Verlassen des Feldes, und nur einmal | T3a | Felder gelten beim Verlassen | offen |
 | `tasks/useDebouncedField.test.tsx` | übernimmt einen neuen Wert von außen, wenn nichts getippt wird | T3a | Felder gelten beim Verlassen | offen |

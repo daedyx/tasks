@@ -19,10 +19,10 @@ path = "src/main.rs"
 produkt = []
 
 [dependencies]
-# Gerüst und Aufgaben-Oberfläche aus daedyx/ui. Per Tag ui-v0.1.3 (seit Tasks T2);
+# Gerüst und Aufgaben-Oberfläche aus daedyx/ui. Bis zum nächsten ui-Tag per rev auf Zweig paket-t3 (Tasks T3);
 # alle Teile aus daedyx/ui müssen dieselbe Fassung sein (auch daedyx-sys in der Hülle).
-daedyx-ui = { git = "https://github.com/daedyx/ui", tag = "ui-v0.1.3" }
-daedyx-tasks-ui = { git = "https://github.com/daedyx/ui", tag = "ui-v0.1.3" }
+daedyx-ui = { git = "https://github.com/daedyx/ui", rev = "696d574ad4da0a8a9671bd7af89f2e32498feed9" }
+daedyx-tasks-ui = { git = "https://github.com/daedyx/ui", rev = "696d574ad4da0a8a9671bd7af89f2e32498feed9" }
 # Fehlercodes beim Start (StartupCode); die echte Datenbank öffnet die App erst ab T5.
 daedyx-tasks-store = { path = "../tasks-store" }
 eframe = { version = "=0.37.0", default-features = false, features = ["accesskit", "default_fonts", "glow"] }
@@ -34,11 +34,11 @@ iana-time-zone = "0.1"
 rusqlite = { version = "0.37", features = ["bundled-sqlcipher-vendored-openssl"] }
 
 [build-dependencies]
-daedyx-build = { git = "https://github.com/daedyx/ui", tag = "ui-v0.1.3" }
+daedyx-build = { git = "https://github.com/daedyx/ui", rev = "696d574ad4da0a8a9671bd7af89f2e32498feed9" }
 
 [dev-dependencies]
 egui_kittest = "=0.37.0"
-daedyx-ui = { git = "https://github.com/daedyx/ui", tag = "ui-v0.1.3", features = ["lint"] }
-daedyx-tasks-ui = { git = "https://github.com/daedyx/ui", tag = "ui-v0.1.3", features = ["lint"] }
+daedyx-ui = { git = "https://github.com/daedyx/ui", rev = "696d574ad4da0a8a9671bd7af89f2e32498feed9", features = ["lint"] }
+daedyx-tasks-ui = { git = "https://github.com/daedyx/ui", rev = "696d574ad4da0a8a9671bd7af89f2e32498feed9", features = ["lint"] }
 # Startprobe des gebauten Programms mit Zeitgrenze (Prozesse nur über daedyx-sys).
-daedyx-sys = { git = "https://github.com/daedyx/ui", tag = "ui-v0.1.3" }
+daedyx-sys = { git = "https://github.com/daedyx/ui", rev = "696d574ad4da0a8a9671bd7af89f2e32498feed9" }
