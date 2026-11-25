@@ -70,8 +70,8 @@ daedyx-tasks-core = { git = "https://github.com/daedyx/core", tag = "tasks-core-
 daedyx-tasks-store = { path = "crates/tasks-store" }
 # Freier Platz vor der Sicherung (Tasks T1b): `daedyx-sys` aus daedyx/ui ersetzt die eigene `free_space.rs` mit `unsafe`
 # (A-001 entfällt). Per Tag `ui-v0.1.3` (seit Tasks T2), dieselbe Fassung wie in
-# `daedyx-tasks-app` (eine ui-Quelle im Lock).
-daedyx-sys = { git = "https://github.com/daedyx/ui", tag = "ui-v0.1.3" }
+# `daedyx-tasks-app` (eine ui-Quelle im Lock). Seit Tasks T4 per `rev` auf `paket-t4` bis zum nächsten Tag (A-027).
+daedyx-sys = { git = "https://github.com/daedyx/ui", rev = "0bea34ed73df00840417943386cefa30ca24754b" }
 
 [profile.release]
 codegen-units = 1

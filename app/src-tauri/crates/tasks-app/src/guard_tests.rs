@@ -58,6 +58,16 @@ fn echte_kennung_nur_in_ids_rs() {
             assert_eq!(endings, 2, "nur APP_ID und VAULT der Vorschau");
         } else {
             assert!(!src.contains("de.daedyx.tasks"), "{}", f.display());
+            assert!(
+                !src.contains("DaedyxTasks"),
+                "Autostart-Wert: {}",
+                f.display()
+            );
+            assert!(
+                !src.contains("tasks-vorschau"),
+                "Tresor/Pipe: {}",
+                f.display()
+            );
             assert_eq!(endings, 0, "{}", f.display());
         }
     }
@@ -67,13 +77,32 @@ fn echte_kennung_nur_in_ids_rs() {
 /// übergeben. `cfg!` statt `#[cfg(...)]`, damit es keine Ausnahme-Stelle wird.
 #[test]
 fn kennung_und_tresor_gehoeren_zur_selben_fassung() {
-    use crate::ids::{APP_ID, VAULT, consistent, vault};
-    let (id, service) = if cfg!(feature = "produkt") {
-        ("de.daedyx.tasks", "daedyx-tasks")
+    use crate::ids::{APP_ID, BACKGROUND, PIPE_PREFIX, RUN_VALUE, VAULT, consistent, vault};
+    let (id, service, run, pipe) = if cfg!(feature = "produkt") {
+        (
+            "de.daedyx.tasks",
+            "daedyx-tasks",
+            "DaedyxTasks",
+            "daedyx-tasks-instanz",
+        )
     } else {
-        ("de.daedyx.tasks.vorschau", "daedyx-tasks-vorschau")
+        (
+            "de.daedyx.tasks.vorschau",
+            "daedyx-tasks-vorschau",
+            "DaedyxTasksVorschau",
+            "daedyx-tasks-vorschau-instanz",
+        )
     };
     assert_eq!((APP_ID, VAULT), (id, service));
+    assert_eq!((RUN_VALUE, PIPE_PREFIX), (run, pipe));
+    assert_eq!(
+        (
+            BACKGROUND.aumid,
+            BACKGROUND.run_value,
+            BACKGROUND.pipe_prefix
+        ),
+        (id, run, pipe)
+    );
     assert_eq!(vault().service(), VAULT);
     assert!(consistent());
 }
@@ -90,6 +119,22 @@ fn gemischte_fassungen_sind_nicht_dieselbe() {
     assert!(!same_version(rid, pvault, true));
     assert!(!same_version(pid, pvault, false));
     assert!(!same_version(rid, rvault, true));
+    use crate::ids::same_background;
+    let (prun, ppipe) = ("DaedyxTasksVorschau", "daedyx-tasks-vorschau-instanz");
+    let (rrun, rpipe) = ("DaedyxTasks", "daedyx-tasks-instanz");
+    assert!(same_background(pvault, prun, ppipe));
+    assert!(same_background(rvault, rrun, rpipe));
+    assert!(
+        !same_background(pvault, rrun, ppipe),
+        "echter Autostart-Wert"
+    );
+    assert!(!same_background(pvault, prun, rpipe), "echte Pipe");
+    assert!(!same_background(rvault, prun, rpipe));
+    assert!(
+        !same_background(rvault, rrun, ppipe),
+        "Vorschau-Pipe im Produkt"
+    );
+    assert!(!same_background(pvault, prun, "daedyx-tasks-vorschau-"));
 }
 
 /// `Connection::open` ist im ganzen Workspace per Clippy gesperrt (Plan 4.2); der Store öffnet nur an einer Stelle mit

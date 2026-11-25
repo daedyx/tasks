@@ -24,6 +24,7 @@ fn programm_traegt_nur_die_namen_seiner_fassung() {
         preview_counts(&bytes);
         preview_id(&bytes);
         preview_vault(&bytes);
+        preview_background(&bytes);
     }
 }
 
@@ -75,6 +76,26 @@ fn preview_vault(bytes: &[u8]) {
     }
 }
 
+/// Autostart-Wert und Pipe der Vorschau (T4): `DaedyxTasks` nur als `DaedyxTasksVorschau`, gleich oft (kein loser
+/// Text dahinter, der eine echte Kennung verdecken könnte), und die Pipe beginnt mit dem Tresor-Namen der Vorschau.
+fn preview_background(bytes: &[u8]) {
+    let n = |t: &[u8]| hits(bytes, t).len();
+    assert!(
+        n(b"DaedyxTasksVorschau") > 0,
+        "Autostart-Wert fehlt im Programm"
+    );
+    assert_eq!(
+        n(b"DaedyxTasks"),
+        n(b"DaedyxTasksVorschau"),
+        "echter Autostart-Wert"
+    );
+    assert!(
+        n(b"daedyx-tasks-vorschau-instanz") > 0,
+        "Pipe der Vorschau fehlt im Programm"
+    );
+    assert_eq!(n(b"tasks-instanz"), 0, "echte Pipe");
+}
+
 fn product(bytes: &[u8]) {
     assert!(
         hits(bytes, b"de.daedyx.tasks")
@@ -83,4 +104,6 @@ fn product(bytes: &[u8]) {
     );
     assert!(hits(bytes, b"de.daedyx.tasks.vorschau").is_empty());
     assert!(hits(bytes, b"daedyx-tasks-vorschau").is_empty());
+    assert!(hits(bytes, b"DaedyxTasksVorschau").is_empty());
+    assert!(!hits(bytes, b"DaedyxTasks").is_empty());
 }
