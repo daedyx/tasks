@@ -3,7 +3,7 @@
 Letzte Änderung: 2026-11-25, T1b: Platzmessung aus `daedyx-sys` (Zweig `tasks-rust-t1b`). Davor 2026-11-24, Rust-Umbau Meilenstein **T0 „Store ohne Tauri“** im Zweig `tasks-rust-t0` (ab `mac-vorbereitung-tasks`, nicht in `main`). Plan: `plan-tasks-rust.md` (Notizordner des Master-Chats). Version 0.1.0, nichts veröffentlicht.
 
 ## T1b Platzmessung aus daedyx-sys (Zweig tasks-rust-t1b), Stand 2026-11-25
-- Die Hülle misst den freien Platz vor der Sicherung jetzt mit `daedyx_sys::available_space` aus `daedyx/ui` (Zweig `paket-t1b`, per `rev` bis zum nächsten ui-Tag; früher Desk `desk-sys`). Die eigene `free_space.rs` mit `unsafe` ist gelöscht, die Ausnahme A-001 und die `free_space`-Zeile von A-011 entfallen (A-011 gilt weiter für `startup_dialog.rs`); neu A-027 für die Git-Quelle `daedyx/ui` (Ja des Betreuers ausstehend). `startup_dialog.rs` (Meldungsfenster, `unsafe`) bleibt in der Hülle, bis die Rust-Fassung ein Startfehler-Fenster in egui hat (T2). Tests unverändert (117).
+- Die Hülle misst den freien Platz vor der Sicherung jetzt mit `daedyx_sys::available_space` aus `daedyx/ui` (per Tag `ui-v0.1.2`; früher Desk `desk-sys`). Die eigene `free_space.rs` mit `unsafe` ist gelöscht, die Ausnahme A-001 und die `free_space`-Zeile von A-011 entfallen (A-011 gilt weiter für `startup_dialog.rs`); neu A-027 für die Git-Quelle `daedyx/ui` (Ja des Betreuers ausstehend). `startup_dialog.rs` (Meldungsfenster, `unsafe`) bleibt in der Hülle, bis die Rust-Fassung ein Startfehler-Fenster in egui hat (T2). Tests unverändert (117).
 
 ## T0 Store ohne Tauri (Zweig tasks-rust-t0), Stand 2026-11-24
 - `app/src-tauri` ist ein Cargo-Workspace: Tauri-Hülle `daedyx-tasks`, neues Bibliotheks-Crate **`daedyx-tasks-store`** (`crates/tasks-store`) und das Prüfwerkzeug `xtask` (Kopie aus Desk). `default-members` = alle, ein nacktes `cargo test` prüft also alles.
@@ -48,7 +48,7 @@ Stand vor T0: 2026-11-19, Paket K4 Teil 1 und 2 „Tasks-Funktionen“ im Zweig 
 
 ## Offen für Björn (Details `docs/RELEASE.md`)
 1. Update-Schlüssel für Tasks erzeugen, Passwort selbst tippen, privat an zwei Orten sichern, öffentlichen Teil einem Bau-Chat geben.
-2. Sechs Secrets in `daedyx/tasks`: `TAURI_SIGNING_PRIVATE_KEY`, `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`, `DAEDYX_CATALOG_KEY`, `DAEDYX_KEY_PASSWORD`, `RELEASES_TOKEN`, neu `CORE_READ_TOKEN` (Fine-grained, nur `daedyx/core`, Contents Read-only).
+2. Sechs Secrets in `daedyx/tasks`: `TAURI_SIGNING_PRIVATE_KEY`, `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`, `DAEDYX_CATALOG_KEY`, `DAEDYX_KEY_PASSWORD`, `RELEASES_TOKEN`, neu `DAEDYX_READ_TOKEN` (Fine-grained, nur `daedyx/core` und `daedyx/ui`, Contents Read-only; früher `CORE_READ_TOKEN`, Review T1b M-1).
 3. Erster Release-Lauf erst auf Björns Go.
 
 ## Hinweise
