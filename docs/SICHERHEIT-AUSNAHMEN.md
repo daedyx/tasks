@@ -12,7 +12,7 @@ sind rot. Das Werkzeug ist eine Kopie des Desk-Werkzeugs (gleicher Aufbau: Works
 Einträgen, die der Betreuer für Desk am 2026-11-24 angenommen hat (in Klammern genannt). Die Tauri-Hülle steht nicht
 unter den strengen Lints (wie Desk, Entscheidung E6; Eintrag A-007) und fällt mit dem Wechsel auf die Rust-Fassung weg.
 
-**Tasks T1b (2026-11-25):** A-001 und A-011 (`free_space.rs` mit `unsafe`) sind entfallen; die Hülle misst den freien Platz
+**Tasks T1b (2026-11-25):** A-001 (`free_space.rs` mit `unsafe`) und die `free_space`-Zeile von A-011 sind entfallen; die Hülle misst den freien Platz
 jetzt mit `daedyx-sys` aus `daedyx/ui` (dort Ausnahme A-020). Neu ist A-027 für die Git-Quelle (Ja ausstehend). Die Nummern
 bleiben frei.
 
@@ -31,7 +31,7 @@ bleiben frei.
 | A-010 | app/src-tauri/src/lib.rs | cfg:desktop | wie A-010, zweite Stelle | Bau-Chat T0, Ja des Betreuers 2026-11-24 | 2026-11-24 | 2027-05-31 |
 | A-010 | app/src-tauri/src/lib.rs | cfg:desktop | wie A-010, dritte Stelle | Bau-Chat T0, Ja des Betreuers 2026-11-24 | 2026-11-24 | 2027-05-31 |
 | A-010 | app/src-tauri/src/lib.rs | cfg:desktop | wie A-010, vierte Stelle | Bau-Chat T0, Ja des Betreuers 2026-11-24 | 2026-11-24 | 2027-05-31 |
-| A-011 | app/src-tauri/src/startup_dialog.rs | cfg:not(windows) (`show_error`) | Platzhalter für Nicht-Windows: Ausgabe auf der Konsole statt Fenster; wie A-011. | Bau-Chat T0, Ja des Betreuers 2026-11-24 | 2026-11-24 | 2027-05-31 |
+| A-011 | app/src-tauri/src/startup_dialog.rs | cfg:not(windows) (`show_error`) | Platzhalter für Nicht-Windows: Ausgabe auf der Konsole statt Fenster. Clippy prüft unter Windows und sieht ihn nie (Desk A-031). Neu prüfen mit der macOS-Ausgabe. | Bau-Chat T0, Ja des Betreuers 2026-11-24 | 2026-11-24 | 2027-05-31 |
 | A-012 | app/src-tauri/deny.toml | bans.allow-wildcard-paths=true | Eigene Crates im Workspace hängen nur per Pfad voneinander ab (`publish = false`); fremde Crates bleiben von `wildcards = "deny"` erfasst (Desk A-032). | Bau-Chat T0, Ja des Betreuers 2026-11-24 | 2026-11-24 | 2027-05-31 |
 | A-013 | app/src-tauri/deny.toml | RUSTSEC-2026-0459 (libsqlite3-sys/SQLite) | Lücke nur mit präparierter DB-/WAL-Datei; SQLCipher bündelt auch in 0.39 ein betroffenes SQLite (Kern A-004, Desk A-009). Neu prüfen, sobald sqlcipher-src SQLite >= 3.54 enthält. | Bau-Chat T0, Ja des Betreuers 2026-11-24 | 2026-11-24 | 2027-03-31 |
 | A-014 | app/src-tauri/deny.toml | RUSTSEC-2026-0543 (chrono, nicht gepflegt) | keine bekannte Lücke; Ersatz ist ein eigener Auftrag (Kern A-005, Desk A-010) | Bau-Chat T0, Ja des Betreuers 2026-11-24 | 2026-11-24 | 2027-03-31 |
@@ -47,7 +47,7 @@ bleiben frei.
 | A-024 | app/src-tauri/deny.toml | RUSTSEC-2026-0372 (zvariant_derive, nur Tauri-Hülle) | wie A-022 (Launcher A-022). | Bau-Chat T0, Ja des Betreuers 2026-11-24 | 2026-11-24 | 2027-03-31 |
 | A-025 | app/src-tauri/deny.toml | RUSTSEC-2024-0429 (glib, nur Tauri-Hülle) | Unsoundness in `VariantStrIter`; `glib` kommt nur über gtk (Linux-Infobereich von Tauri, Merkmal `tray-icon`), unter Windows nicht im Bau, die Hülle ruft es nicht auf. Neu in Tasks (Desk hat kein `tray-icon`). Fällt mit der Hülle weg. | Bau-Chat T0, Ja des Betreuers 2026-11-24 | 2026-11-24 | 2027-03-31 |
 | A-026 | app/src-tauri/deny.toml | graph.targets=["x86_64-pc-windows-msvc", "aarch64-apple-darwin", "x86_64-apple-darwin"] | `cargo deny` prüft nur die Systeme, für die Tasks gebaut wird (Windows; macOS im Mac-Testbau). So braucht die Prüfung keine Quellen für Linux, Android oder iOS (Review T0, N-3: keine Downloads für die Prüfung). Folge: Meldungen, die nur Linux-Teile betreffen (A-021 bis A-025), sieht `cargo deny` nicht mehr; `cargo audit` prüft weiter den ganzen Lockfile. | Bau-Chat T0 (Auftrag Master nach Review), Ja des Betreuers 2026-11-24 | 2026-11-24 | 2027-05-31 |
-| A-027 | app/src-tauri/deny.toml | sources.allow-git=https://github.com/daedyx/ui | `daedyx-sys` (Platzmessung vor der Sicherung, einzige `unsafe`-Stelle der Daedyx-Apps) kommt aus dem eigenen privaten Repository `daedyx/ui`, wie der Kern aus `daedyx/core` und wie in Desk (A-045). Bis zum nächsten ui-Tag per `rev` auf Zweig `paket-t1b`. Ersetzt die eigene `free_space.rs` mit `unsafe` (A-001 und A-011 entfallen). Die Release-Pipeline braucht dafür noch Lesezugriff auf `daedyx/ui` (offen, wie in Desk). | Bau-Chat T1b, Ja des Betreuers ausstehend | 2026-11-25 | 2027-05-31 |
+| A-027 | app/src-tauri/deny.toml | sources.allow-git=https://github.com/daedyx/ui | `daedyx-sys` (Platzmessung vor der Sicherung, einzige `unsafe`-Stelle der Daedyx-Apps) kommt aus dem eigenen privaten Repository `daedyx/ui`, wie der Kern aus `daedyx/core` und wie in Desk (A-045). Bis zum nächsten ui-Tag per `rev` auf Zweig `paket-t1b`. Ersetzt die eigene `free_space.rs` mit `unsafe` (A-001 und die `free_space`-Zeile von A-011 entfallen). Die Release-Pipeline braucht dafür noch Lesezugriff auf `daedyx/ui` (offen, wie in Desk). | Bau-Chat T1b, Ja des Betreuers ausstehend | 2026-11-25 | 2027-05-31 |
 
 Eine Zeile mit Regel `scan:<regel>` erlaubt genau diesen Fund des Scans in genau dieser Datei bis zum Ablaufdatum; sie
 zählt nicht als Code-Stelle. Format für `cargo xtask exceptions`: Spalte 2 ist der Pfad ab der Repo-Wurzel, Spalte 3 die
