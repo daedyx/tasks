@@ -1,6 +1,6 @@
 //! Start des Programms: Startprobe, Startfehler-Fenster oder die App mit erfundenen Daten.
 use crate::app::TasksApp;
-use crate::ids::APP_ID;
+use crate::ids::{self, APP_ID};
 use crate::settings::Settings;
 use crate::{seed, startfehler};
 use daedyx_tasks_ui::Clock;
@@ -16,14 +16,19 @@ pub mod code {
     pub const STARTUP_ERROR: u8 = 9;
 }
 
-/// `--start-probe`: Programm laden und sofort mit 0 enden (belegt, dass Windows es laden kann, Bericht M7b).
+/// `--start-probe`: Programm laden und sofort mit 0 enden (belegt, dass Windows es laden kann, Bericht M7b). Gehören
+/// Kennung und Tresor nicht zur selben Fassung, endet sie mit 1.
 pub fn start_probe(args: &[String]) -> bool {
     args.iter().any(|a| a == "--start-probe")
 }
 
 pub fn run(settings: Settings, args: &[String]) -> ExitCode {
     if start_probe(args) {
-        return ExitCode::SUCCESS;
+        return if ids::consistent() {
+            ExitCode::SUCCESS
+        } else {
+            ExitCode::FAILURE
+        };
     }
     let texts = crate::texts::texts(settings.language);
     if let Some(code) = settings.startup_error {

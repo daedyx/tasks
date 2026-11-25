@@ -42,7 +42,7 @@ Zeile verglichen ist (offene Frage im Bericht T2).
 | `settings/DarkStyleSection.test.tsx` | meldet Änderungen als Zahlen je Feld | T4 | Dunkelmodus-Feinstellung (T-F3) | offen |
 | `settings/DarkStyleSection.test.tsx` | zeigt sechs Vorlagen, markiert die passende und setzt Farbton und Tönung | T4 | Dunkelmodus-Feinstellung (T-F3) | offen |
 | `settings/UpdatesSettings.test.tsx` | zeigt die Version und sucht beim Öffnen nach Updates | T4 | Updates in der App (T-F7) | offen |
-| `settings/UpdatesSettings.test.tsx` | ohne Update-Schlüssel steht \ | T4 | Updates in der App (T-F7) | offen |
+| `settings/UpdatesSettings.test.tsx` | ohne Update-Schlüssel steht "Updates sind noch nicht eingerichtet" statt eines Fehlers | T4 | Updates in der App (T-F7) | offen |
 | `settings/UpdatesSettings.test.tsx` | „Nach Updates suchen“ sucht erneut | T4 | Updates in der App (T-F7) | offen |
 | `settings/UpdatesSettings.test.tsx` | zeigt eine neue Version mit Änderungen und installiert sie mit Fortschrittsbalken | T4 | Updates in der App (T-F7) | offen |
 | `settings/UpdatesSettings.test.tsx` | zeigt Fehler als Text | T4 | Updates in der App (T-F7) | offen |
@@ -204,7 +204,7 @@ Zeile verglichen ist (offene Frage im Bericht T2).
 | `updates/useUpdater.test.ts` | ohne neue Version: aktuell | T4 | Updates (U-F1) | offen |
 | `updates/useUpdater.test.ts` | mit neuer Version: verfügbar mit Info | T4 | Updates (U-F1) | offen |
 | `updates/useUpdater.test.ts` | Fehler beim Suchen werden gemeldet, nie geworfen | T4 | Updates (U-F1) | offen |
-| `updates/useUpdater.test.ts` | ohne eingetragenen Update-Schlüssel: ehrlich \ | T4 | Updates (U-F1) | offen |
+| `updates/useUpdater.test.ts` | ohne eingetragenen Update-Schlüssel: ehrlich "nicht eingerichtet" statt Fehlertext des Plugins | T4 | Updates (U-F1) | offen |
 | `updates/useUpdater.test.ts` | Installieren meldet den Fortschritt und endet bereit | T4 | Updates (U-F1) | offen |
 | `updates/useUpdater.test.ts` | Die Rückfrage nach ungespeicherten Entwürfen kann das Installieren anhalten | T4 | Updates (U-F1) | offen |
 | `updates/useUpdater.test.ts` | Neustart nur im Zustand bereit | T4 | Updates (U-F1) | offen |

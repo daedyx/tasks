@@ -7,4 +7,6 @@ disallowed-methods = [
   { path = "std::process::Command::new", reason = "Prozesse nur über daedyx-sys (SICHERHEIT 2.7, kommt mit T1)" },
   { path = "std::net::TcpStream::connect", reason = "Netz nur über ein NetGate (2.6)" },
   { path = "std::env::temp_dir", reason = "Temp nur im eigenen Datenordner (2.8)" },
+  { path = "rusqlite::Connection::open", reason = "Datenbank nur über daedyx-tasks-store (Plan 4.2)" },
+  { path = "rusqlite::Connection::open_with_flags", reason = "Datenbank nur über daedyx-tasks-store (Plan 4.2)" },
 ]

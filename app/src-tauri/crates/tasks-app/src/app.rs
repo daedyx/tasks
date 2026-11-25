@@ -28,6 +28,8 @@ impl TasksApp {
             started: false,
             shot: None,
         };
+        // Liste und Board wechselt die Navigationsleiste; der Umschalter der Aufgaben-Oberfläche bleibt aus (T2-1).
+        app.tasks.mode_switch = false;
         app.open(settings.page);
         app
     }
@@ -60,8 +62,8 @@ impl TasksApp {
         }
     }
 
-    /// Welche Seite die Leiste als gewählt zeigt. Der Umschalter in der Aufgaben-Oberfläche ändert die Ansicht
-    /// auch; die Leiste folgt ihm.
+    /// Welche Seite die Leiste als gewählt zeigt. Wählt man links eine Smart-Liste, fällt das Board auf die Liste
+    /// zurück; die Leiste folgt.
     pub fn active(&self) -> Page {
         match self.page {
             Page::Settings => Page::Settings,

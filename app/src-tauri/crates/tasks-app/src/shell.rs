@@ -1,5 +1,6 @@
-//! Rahmen nach Stil 1: Navigationsleiste (breit 208 px mit Text, ab unter 860 px Fensterbreite schmal 56 px, unter
-//! 640 px als Leiste unten), Kopfzeile (48 px, Titel der Seite), Statusleiste, darunter die Seite.
+//! Rahmen nach Stil 1: Navigationsleiste (208 px mit Text, unter 640 px Fensterbreite als Leiste unten), Kopfzeile
+//! (48 px, Titel der Seite), Statusleiste, darunter die Seite. Die schmale Leiste (56 px) kommt erst mit einem
+//! Symbol-Set; bis dahin bleibt sie auch zwischen 640 und 860 px breit mit vollem Text (Entscheid T2-2).
 use crate::app::TasksApp;
 use crate::page::Page;
 use crate::{prefs, status};
@@ -12,8 +13,7 @@ use eframe::egui::{
     Align, FontId, Frame, Layout, Margin, Panel, RichText, Stroke, Ui, accesskit::Role, vec2,
 };
 
-/// Unter dieser Breite wird die Leiste schmal, unter `BOTTOM` wandert sie nach unten.
-pub const NARROW: f32 = 860.0;
+/// Unter dieser Fensterbreite wandert die Leiste nach unten.
 pub const BOTTOM: f32 = 640.0;
 const STATUS_HEIGHT: f32 = 48.0;
 
@@ -21,15 +21,12 @@ const STATUS_HEIGHT: f32 = 48.0;
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Rail {
     Wide,
-    Narrow,
     Bottom,
 }
 
 pub fn rail(width: f32) -> Rail {
     if width < BOTTOM {
         Rail::Bottom
-    } else if width < NARROW {
-        Rail::Narrow
     } else {
         Rail::Wide
     }
@@ -39,24 +36,24 @@ fn margin(v: u8) -> Margin {
     Margin::same(i8::try_from(v).unwrap_or(i8::MAX))
 }
 
-fn entries(ui: &mut Ui, app: &mut TasksApp, short: bool, pages: &[Page]) {
+fn entries(ui: &mut Ui, app: &mut TasksApp, pages: &[Page]) {
     for page in pages {
         let label = app.texts.t(page.key());
-        if nav_entry(ui, &label, app.active() == *page, short).clicked() {
+        if nav_entry(ui, &label, app.active() == *page, false).clicked() {
             app.open(*page);
         }
     }
 }
 
-fn side(ui: &mut Ui, app: &mut TasksApp, short: bool) {
-    app_tile(ui, &app.texts.t("app.titel"), short);
+fn side(ui: &mut Ui, app: &mut TasksApp) {
+    app_tile(ui, &app.texts.t("app.titel"), false);
     ui.add_space(f32::from(TOKENS.spacing.s4));
     let name = app.texts.t("nav.leiste");
     named_scope(ui, "bereiche", Role::TabList, &name, |ui| {
         ui.spacing_mut().item_spacing.y = f32::from(TOKENS.spacing.s1);
-        entries(ui, app, short, &Page::MAIN);
+        entries(ui, app, &Page::MAIN);
         ui.with_layout(Layout::bottom_up(Align::Min), |ui| {
-            entries(ui, app, short, &[Page::Settings]);
+            entries(ui, app, &[Page::Settings]);
         });
     });
 }
@@ -69,7 +66,7 @@ fn bottom(ui: &mut Ui, app: &mut TasksApp) {
                 .iter_mut()
                 .zip([Page::List, Page::Board, Page::Settings])
             {
-                entries(col, app, false, &[page]);
+                entries(col, app, &[page]);
             }
         });
     });
@@ -101,21 +98,15 @@ pub fn show(ui: &mut Ui, app: &mut TasksApp) {
             )
             .show(ui, |ui| bottom(ui, app));
     } else {
-        let wide = form == Rail::Wide;
-        let size = if wide {
-            TOKENS.size.sidebar_wide
-        } else {
-            TOKENS.size.sidebar_narrow
-        };
         Panel::left("bereiche")
             .resizable(false)
-            .exact_size(size)
+            .exact_size(TOKENS.size.sidebar_wide)
             .frame(
                 Frame::new()
                     .fill(p.sidebar)
                     .inner_margin(margin(TOKENS.spacing.s2)),
             )
-            .show(ui, |ui| side(ui, app, !wide));
+            .show(ui, |ui| side(ui, app));
     }
     Panel::bottom("status")
         .resizable(false)

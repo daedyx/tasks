@@ -56,3 +56,47 @@ fn echte_kennung_nur_in_ids_rs() {
         }
     }
 }
+
+/// Plan 4.2: Kennung und Tresor kommen beide aus `ids.rs` und gehören zur selben Fassung; der Store bekommt den Dienst
+/// übergeben. `cfg!` statt `#[cfg(...)]`, damit es keine Ausnahme-Stelle wird.
+#[test]
+fn kennung_und_tresor_gehoeren_zur_selben_fassung() {
+    use crate::ids::{APP_ID, VAULT, consistent, vault};
+    let (id, service) = if cfg!(feature = "produkt") {
+        ("de.daedyx.tasks", "daedyx-tasks")
+    } else {
+        ("de.daedyx.tasks.vorschau", "daedyx-tasks-vorschau")
+    };
+    assert_eq!((APP_ID, VAULT), (id, service));
+    assert_eq!(vault().service(), VAULT);
+    assert!(consistent());
+}
+
+/// `Connection::open` ist außerhalb des Stores per Clippy gesperrt (Plan 4.2). Der Store hat dafür eine eigene
+/// `clippy.toml`, die sonst wörtlich der des Workspace entspricht.
+#[test]
+fn clippy_sperrt_das_oeffnen_der_datenbank_ausserhalb_des_stores() {
+    let dir = Path::new(env!("CARGO_MANIFEST_DIR"));
+    let read = |p: &str| {
+        std::fs::read_to_string(dir.join(p))
+            .unwrap()
+            .replace("\r\n", "\n")
+    };
+    let (workspace, store) = (
+        read("../../clippy.toml"),
+        read("../tasks-store/clippy.toml"),
+    );
+    let lines: Vec<&str> = workspace
+        .lines()
+        .filter(|l| l.contains("rusqlite::Connection::open"))
+        .collect();
+    assert_eq!(lines.len(), 2, "open und open_with_flags");
+    let mut rest = workspace.clone();
+    for l in &lines {
+        rest = rest.replace(&format!("{l}\n"), "");
+    }
+    assert_eq!(
+        store.lines().skip(1).collect::<Vec<_>>(),
+        rest.lines().skip(1).collect::<Vec<_>>()
+    );
+}

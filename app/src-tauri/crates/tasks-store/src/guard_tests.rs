@@ -73,7 +73,8 @@ const ALLOWED: [&str; 93] = [
     "iana-time-zone",
     "iana-time-zone-haiku",
     "itoa",
-    // Bau-Helfer von `cc` (Merkmal „parallel“), seit T2 durch die Rust-Vorschau in `Cargo.lock`; kein Netz.
+    // Bau-Helfer von `cc`: Das Merkmal „parallel“ schaltet nur `android-activity` ein (winit, nur Android). Unter
+    // Windows und macOS wird es nicht gebaut; es steht nur im `Cargo.lock`, weil das alle Ziele vereinigt. Seit T2.
     "jobserver",
     "js-sys",
     "keyring",

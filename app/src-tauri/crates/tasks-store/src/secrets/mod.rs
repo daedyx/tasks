@@ -23,8 +23,19 @@ pub struct KeyringStore {
 }
 
 impl KeyringStore {
+    /// Dienst `SERVICE` (Tauri-Hülle).
     pub fn new() -> Self {
-        Self { service: SERVICE }
+        Self::for_service(SERVICE)
+    }
+
+    /// Dienst, den die App vorgibt. Die Rust-Vorschau übergibt ihren eigenen (`daedyx-tasks-vorschau`, Plan 4.2), damit
+    /// sie den echten Tresor-Eintrag nie liest.
+    pub fn for_service(service: &'static str) -> Self {
+        Self { service }
+    }
+
+    pub fn service(&self) -> &'static str {
+        self.service
     }
 }
 

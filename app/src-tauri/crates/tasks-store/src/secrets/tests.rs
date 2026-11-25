@@ -11,6 +11,13 @@ fn memory_store_roundtrip() {
     s.delete("a").unwrap(); // Löschen ohne Eintrag ist kein Fehler
 }
 
+#[test]
+fn keyring_store_nimmt_den_vorgegebenen_dienst() {
+    // Nur der Name, kein Zugriff auf den Tresor.
+    assert_eq!(KeyringStore::new().service(), SERVICE);
+    assert_eq!(KeyringStore::for_service("daedyx-tasks-vorschau").service(), "daedyx-tasks-vorschau");
+}
+
 // Echter Tresor: nur von Hand mit `cargo test -- --ignored`. Benutzt einen eigenen Test-Eintrag, nie `db-key`.
 #[test]
 #[ignore = "echter Windows-Tresor, nur von Hand (SICHERHEIT-AUSNAHMEN)"]

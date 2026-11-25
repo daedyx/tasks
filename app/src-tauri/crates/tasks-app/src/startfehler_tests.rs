@@ -60,3 +60,24 @@ fn fenster_zeigt_titel_und_beenden_in_jeder_sprache() {
         assert!(h.state().quit_chosen(), "{lang:?}");
     }
 }
+
+/// Anrede wie Desk (Entscheid T2-3): Deutsch und Französisch duzen, Englisch bleibt neutral.
+#[test]
+fn startfehler_texte_duzen_wie_desk() {
+    let words = |lang| {
+        let t = texts(lang);
+        CODES.map(|w| format!(" {} ", message(code(w).unwrap(), &t)))
+    };
+    for text in words(Language::De) {
+        for sie in [" Sie ", " Ihre ", " Ihr ", " Ihnen "] {
+            assert!(!text.contains(sie), "{sie}: {text}");
+        }
+    }
+    for text in words(Language::Fr) {
+        for vous in ["Veuillez", " vos ", " Vos ", " vous "] {
+            assert!(!text.contains(vous), "{vous}: {text}");
+        }
+    }
+    let de = words(Language::De).concat();
+    assert!(de.contains(" dich ") && de.contains(" deine "));
+}
