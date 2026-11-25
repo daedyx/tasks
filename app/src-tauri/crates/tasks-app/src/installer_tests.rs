@@ -53,6 +53,15 @@ fn probe_schuetzt_die_echte_app() {
     assert!(PROBE.contains(r#"Uninstall\Daedyx Tasks""#));
     assert!(PROBE.contains(r#"Software\daedyx\Daedyx Tasks""#));
     assert!(PROBE.contains("(Get-RealState) -eq $before"));
+    // Datenordner der echten App (Review T6, N6-1): vorhanden = Abbruch vor dem ersten Schreiben, am Ende unverändert.
+    let real_data = PROBE
+        .find(r#"Join-Path $env:APPDATA "de.daedyx.tasks""#)
+        .unwrap();
+    assert!(
+        real_data < first_write,
+        "Schutz der echten Daten vor dem ersten Schreiben"
+    );
+    assert!(PROBE.contains("(Get-RealDataState) -eq $realDataBefore"));
     // Datenordner der Vorschau: vorher vorhanden = Abbruch (keine fremden Daten löschen), nachher muss er fehlen
     // (`--cleanup` entfernt ihn ab T5).
     let data = PROBE.find("if (Test-Path -LiteralPath $dataDir)").unwrap();

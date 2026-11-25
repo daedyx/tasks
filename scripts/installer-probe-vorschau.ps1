@@ -25,6 +25,17 @@ function Test-RealInstalled {
     $dir = (Get-ItemProperty $realDirKey -ErrorAction SilentlyContinue).'(default)'
     return [bool]($dir -and (Test-Path -LiteralPath $dir))
 }
+# Datenordner der echten App (Review T6, N6-1): Auch wenn sie von Hand gelöscht wurde, können dort echte Aufgaben
+# liegen. Dann läuft die Probe nicht; sonst wird am Ende verglichen, dass er weiter fehlt (nur lesen, nie öffnen).
+$realData = Join-Path $env:APPDATA "de.daedyx.tasks"
+function Get-RealDataState {
+    if (Test-Path -LiteralPath $realData) { "da|" + (Get-Item -LiteralPath $realData).LastWriteTimeUtc.Ticks } else { "fehlt" }
+}
+if (Test-Path -LiteralPath $realData) {
+    'Abbruch: Der Datenordner der echten App "Daedyx Tasks" existiert. Die Probe läuft nur auf einem Rechner ohne ihn (nichts verändert).'
+    exit 2
+}
+$realDataBefore = Get-RealDataState
 if (Test-RealInstalled) {
     'Abbruch: Die echte App "Daedyx Tasks" ist installiert. Die Probe läuft nur auf einem Rechner ohne sie (nichts verändert).'
     exit 2
@@ -50,4 +61,6 @@ if (-not (Test-Path -LiteralPath $dataDir)) { 'OK      kein Datenordner der Vors
 else { 'FEHLER  Datenordner der Vorschau nach der Deinstallation noch da'; if ($code -eq 0) { $code = 1 } }
 if ((Get-RealState) -eq $before) { 'OK      echte App "Daedyx Tasks" unverändert (nur gelesen)' }
 else { 'FEHLER  echte App "Daedyx Tasks" verändert'; if ($code -eq 0) { $code = 1 } }
+if ((Get-RealDataState) -eq $realDataBefore) { 'OK      Datenordner der echten App unverändert (nur gelesen)' }
+else { 'FEHLER  Datenordner der echten App verändert'; if ($code -eq 0) { $code = 1 } }
 exit $code

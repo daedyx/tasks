@@ -48,7 +48,9 @@ jobs:
       - name: Keine weiteren Secrets in Workflows (nur DAEDYX_READ_TOKEN; release.yml bis T7 Bestand, A-016)
         shell: pwsh
         run: |
-          $treffer = Select-String -Path .github/workflows/*.yml -Pattern 'secrets\.(?!GITHUB_TOKEN\b|DAEDYX_READ_TOKEN\b)' |
+          # Auch Zugriff mit eckigen Klammern und toJSON über alle Secrets zählt (Review T6, H6-2). Groß/klein beachten:
+          # das Wort Secrets in Kommentaren ist kein Zugriff.
+          $treffer = Select-String -Path .github/workflows/*.yml -CaseSensitive -Pattern 'secrets\.(?!GITHUB_TOKEN\b|DAEDYX_READ_TOKEN\b)', 'secrets\[', 'toJSON\(\s*secrets' |
             Where-Object { $_.Filename -ne 'release.yml' }
           if ($treffer) { $treffer; throw "Unerwartetes Secret in einem Workflow" }
       - name: Rust festnageln
@@ -156,9 +158,13 @@ jobs:
           DAEDYX_READ_TOKEN: ${{ secrets.DAEDYX_READ_TOKEN }}
         run: |
           test -n "$DAEDYX_READ_TOKEN" || { echo "Secret DAEDYX_READ_TOKEN fehlt (nur Lesen, daedyx/core und daedyx/ui)"; exit 1; }
-          git config --global "url.https://x-access-token:${DAEDYX_READ_TOKEN}@github.com/daedyx/.insteadOf" https://github.com/daedyx/
-          # Kein Anmeldespeicher für das Token (ui Review T1a N2-1), wie im Windows-Schritt.
-          GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=credential.helper GIT_CONFIG_VALUE_0= CARGO_NET_GIT_FETCH_WITH_CLI=true cargo fetch --locked
-          git config --global --unset-all "url.https://x-access-token:${DAEDYX_READ_TOKEN}@github.com/daedyx/.insteadOf"
+          # Umleitung und leerer Anmeldespeicher nur in der Umgebung dieses Schritts, nie in ~/.gitconfig (Review T6,
+          # N6-2); so wie im Windows-Job.
+          export GIT_CONFIG_COUNT=2
+          export GIT_CONFIG_KEY_0="url.https://x-access-token:${DAEDYX_READ_TOKEN}@github.com/daedyx/.insteadOf"
+          export GIT_CONFIG_VALUE_0="https://github.com/daedyx/"
+          export GIT_CONFIG_KEY_1=credential.helper
+          export GIT_CONFIG_VALUE_1=
+          CARGO_NET_GIT_FETCH_WITH_CLI=true cargo fetch --locked
       - run: cargo deny --locked --offline check advisories bans licenses sources
       - run: cargo audit --deny warnings
