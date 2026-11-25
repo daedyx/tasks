@@ -58,3 +58,28 @@ fn the_clock_is_after_2020() {
     assert!(unix_now() > 1_577_836_800);
     assert!(!local_zone().is_empty());
 }
+
+fn fired_count(db: &Mutex<Connection>) -> i64 {
+    db.lock().unwrap().query_row("SELECT COUNT(*) FROM task_alarms_fired", [], |r| r.get(0)).unwrap()
+}
+
+#[test]
+fn a_clock_jumping_far_ahead_and_back_does_not_repeat_a_reminder() {
+    // Review T4, N4-2: Die Uhr springt drei Tage vor und wieder zurück; der Merker der noch gültigen Erinnerung bleibt.
+    let db = db_with_due_task();
+    assert_eq!(tick_once(&db, NINE, "Europe/Berlin", |_| {}), 1);
+    assert_eq!(tick_once(&db, NINE + 3 * 86_400, "Europe/Berlin", |_| {}), 0);
+    assert_eq!(fired_count(&db), 1, "Merker einer gültigen Erinnerung bleibt");
+    assert_eq!(tick_once(&db, NINE + 60, "Europe/Berlin", |_| {}), 0, "nicht ein zweites Mal");
+}
+
+#[test]
+fn markers_of_finished_or_changed_reminders_are_pruned_after_two_days() {
+    let db = db_with_due_task();
+    assert_eq!(tick_once(&db, NINE, "Europe/Berlin", |_| {}), 1);
+    assert_eq!(tick_once(&db, NINE + 86_400, "Europe/Berlin", |_| {}), 0);
+    assert_eq!(fired_count(&db), 1, "jünger als zwei Tage bleibt immer");
+    db.lock().unwrap().execute("UPDATE tasks SET done_at = 1", []).unwrap();
+    assert_eq!(tick_once(&db, NINE + 3 * 86_400, "Europe/Berlin", |_| {}), 0);
+    assert_eq!(fired_count(&db), 0, "erledigt und älter als zwei Tage: weg");
+}
