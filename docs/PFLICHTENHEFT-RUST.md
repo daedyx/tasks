@@ -76,7 +76,7 @@ Zeile verglichen ist (offene Frage im Bericht T2).
 | `tasks/boardModel.test.ts` | legt Karten eines unbekannten (gelöschten) Abschnitts nach „Ohne Abschnitt“ | T3b | Board-Modell | daedyx-tasks-ui `model_tests::karte_eines_unbekannten_abschnitts_steht_in_ohne_abschnitt_und_erledigte_unten` |
 | `tasks/boardModel.test.ts` | lässt Unteraufgaben aus den Spalten und zählt sie an der Oberaufgabe | T3b | Board-Modell | daedyx-tasks-ui `model_tests::spalten_beginnen_mit_ohne_abschnitt_und_karten_sind_sortiert`, `tree_model_tests::zaehler_ueber_drei_ebenen_zaehlt_alle_nachfahren` |
 | `tasks/boardModel.test.ts` | setzt einen Abschnitt vor einen anderen | T3b | Board-Modell | daedyx-tasks-ui `model_tests::abschnitte_verschieben_und_ablegen` |
-| `tasks/boardModel.test.ts` | ans Ende bei fehlendem Ziel und unverändert bei sich selbst | T3b | Board-Modell | offen |
+| `tasks/boardModel.test.ts` | ans Ende bei fehlendem Ziel und unverändert bei sich selbst | T3b | Board-Modell | daedyx-tasks-ui `model_tests::abschnitte_verschieben_und_ablegen` (Entscheid T3-1) |
 | `tasks/boardModel.test.ts` | zählt an jeder Oberaufgabe alle Nachfahren | T3b | Board-Modell | daedyx-tasks-ui `tree_model_tests::zaehler_ueber_drei_ebenen_zaehlt_alle_nachfahren` |
 | `tasks/boardModel.test.ts` | gibt die Ebene je Aufgabe an (0 = oberste); fehlende Oberaufgabe zählt als oberste | T3b | Board-Modell | daedyx-tasks-ui `tree_model_tests::handreihenfolge_ordnet_jede_ebene_direkt_unter_ihre_oberaufgabe`, `unteraufgabe_ohne_oberaufgabe_in_der_ansicht_zaehlt_als_oberste` |
 | `tasks/dateEntry.test.ts` | Zahnarzt morgen 15 Uhr | T3a | Datumseingabe (Kern quick_when, T1a) | daedyx-tasks-core `quick_tests::tag_mit_uhrzeit_macht_eine_faelligkeit_in_utc_sekunden` |
@@ -86,21 +86,21 @@ Zeile verglichen ist (offene Frage im Bericht T2).
 | `tasks/dateEntry.test.ts` | Ort nach 'bei' und 'in' | T3a | Datumseingabe (Kern quick_when, T1a) | – entfällt: Termin-Angabe des Desk-Kalenders (die alte Datei war geteilt); Tasks nimmt Tag, Uhrzeit, Wiederholung und Priorität |
 | `tasks/dateEntry.test.ts` | Monatsname, Uhrzeit und Dauer | T3a | Datumseingabe (Kern quick_when, T1a) | daedyx-tasks-core `quick_tests::datum_mit_monatsnamen_und_jahr` (Dauer: Termin-Angabe des Desk-Kalenders (die alte Datei war geteilt); Tasks nimmt Tag, Uhrzeit, Wiederholung und Priorität) |
 | `tasks/dateEntry.test.ts` | Wochentage: der nächste, nie heute | T3a | Datumseingabe (Kern quick_when, T1a) | daedyx-tasks-core `quick_tests::wochentage_meinen_das_naechste_mal_nie_heute` |
-| `tasks/dateEntry.test.ts` | Datum ohne Jahr, das schon vorbei ist, gilt fürs nächste Jahr | T3a | Datumseingabe (Kern quick_when, T1a) | offen |
+| `tasks/dateEntry.test.ts` | Datum ohne Jahr, das schon vorbei ist, gilt fürs nächste Jahr | T3a | Datumseingabe (Kern quick_when, T1a) | daedyx-tasks-ui `due_tests::datum_ohne_jahr_das_vorbei_ist_gilt_fuers_naechste_jahr_und_zeitpunkt_wird_gemerkt` (gegen die Kern-API) |
 | `tasks/dateEntry.test.ts` | Wiederholungen: täglich, wöchentlich, monatlich, jährlich | T3a | Datumseingabe (Kern quick_when, T1a) | daedyx-tasks-core `quick_tests::wiederholungen` |
 | `tasks/dateEntry.test.ts` | nur ein Titel wird ein ganztägiger Termin heute; Ganztägig lässt die Uhrzeit weg | T3a | Datumseingabe (Kern quick_when, T1a) | – entfällt: Termin-Angabe des Desk-Kalenders (die alte Datei war geteilt); Tasks nimmt Tag, Uhrzeit, Wiederholung und Priorität; in Tasks bleibt ein Titel ein Titel: daedyx-tasks-core `quick_tests::nur_ein_titel_bleibt_ein_titel` |
-| `tasks/dateEntry.test.ts` | merkt, ob der Text einen Zeitpunkt nannte | T3a | Datumseingabe (Kern quick_when, T1a) | offen |
+| `tasks/dateEntry.test.ts` | merkt, ob der Text einen Zeitpunkt nannte | T3a | Datumseingabe (Kern quick_when, T1a) | daedyx-tasks-ui `due_tests::datum_ohne_jahr_das_vorbei_ist_gilt_fuers_naechste_jahr_und_zeitpunkt_wird_gemerkt` (gegen die Kern-API) |
 | `tasks/dateEntry.test.ts` | liefert null bei leerer Eingabe, fehlendem Titel und ungültigen Daten | T3a | Datumseingabe (Kern quick_when, T1a) | daedyx-tasks-core `quick_tests::leere_eingabe_ergibt_nichts`, `nur_ein_datum_ohne_titel_ergibt_nichts`, `unmoegliche_angaben_bleiben_text` |
-| `tasks/dueDay.test.ts` | ohne Fälligkeit gibt es keinen Tag | T3a | Fälligkeit (Kern due_time) | offen |
-| `tasks/dueDay.test.ts` | ein Datum bleibt, ohne Uhrzeit | T3a | Fälligkeit (Kern due_time) | offen |
-| `tasks/dueDay.test.ts` | Tag und Uhrzeit lassen sich in Ortszeit hin und zurück rechnen | T3a | Fälligkeit (Kern due_time) | offen |
-| `tasks/dueDay.test.ts` | leerer Tag löscht, Tag ohne Uhrzeit ist ganztägig | T3a | Fälligkeit (Kern due_time) | offen |
-| `tasks/dueDay.test.ts` | unlesbare Sekunden ergeben keinen Tag | T3a | Fälligkeit (Kern due_time) | offen |
-| `tasks/dueLabel.test.ts` | ohne Fälligkeit nichts | T3a | Fälligkeitsmarke | offen |
-| `tasks/dueLabel.test.ts` | heute, morgen, gestern | T3a | Fälligkeitsmarke | offen |
-| `tasks/dueLabel.test.ts` | andere Tage mit Wochentag, in fremden Jahren mit Jahr | T3a | Fälligkeitsmarke | offen |
-| `tasks/dueLabel.test.ts` | mit Uhrzeit hängt sie dran | T3a | Fälligkeitsmarke | offen |
-| `tasks/dueLabel.test.ts` | erledigte Aufgaben sind nie überfällig | T3a | Fälligkeitsmarke | offen |
+| `tasks/dueDay.test.ts` | ohne Fälligkeit gibt es keinen Tag | T3a | Fälligkeit (Kern due_time) | daedyx-tasks-ui `due_tests::ohne_faelligkeit_gibt_es_keinen_tag_und_keine_marke` |
+| `tasks/dueDay.test.ts` | ein Datum bleibt, ohne Uhrzeit | T3a | Fälligkeit (Kern due_time) | daedyx-tasks-ui `due_tests::ein_datum_bleibt_ohne_uhrzeit` |
+| `tasks/dueDay.test.ts` | Tag und Uhrzeit lassen sich in Ortszeit hin und zurück rechnen | T3a | Fälligkeit (Kern due_time) | daedyx-tasks-ui `due_tests::tag_und_uhrzeit_hin_und_zurueck_in_ortszeit` |
+| `tasks/dueDay.test.ts` | leerer Tag löscht, Tag ohne Uhrzeit ist ganztägig | T3a | Fälligkeit (Kern due_time) | daedyx-tasks-ui `due_tests::leerer_tag_loescht_tag_ohne_uhrzeit_ist_ganztaegig` |
+| `tasks/dueDay.test.ts` | unlesbare Sekunden ergeben keinen Tag | T3a | Fälligkeit (Kern due_time) | daedyx-tasks-ui `due_tests::unlesbare_sekunden_ergeben_keinen_tag` |
+| `tasks/dueLabel.test.ts` | ohne Fälligkeit nichts | T3a | Fälligkeitsmarke | daedyx-tasks-ui `due_tests::ohne_faelligkeit_gibt_es_keinen_tag_und_keine_marke` |
+| `tasks/dueLabel.test.ts` | heute, morgen, gestern | T3a | Fälligkeitsmarke | daedyx-tasks-ui `due_tests::heute_morgen_gestern_mit_toenung` |
+| `tasks/dueLabel.test.ts` | andere Tage mit Wochentag, in fremden Jahren mit Jahr | T3a | Fälligkeitsmarke | daedyx-tasks-ui `due_tests::andere_tage_mit_wochentag_in_fremden_jahren_mit_jahr` |
+| `tasks/dueLabel.test.ts` | mit Uhrzeit hängt sie dran | T3a | Fälligkeitsmarke | daedyx-tasks-ui `due_tests::mit_uhrzeit_haengt_sie_dran` |
+| `tasks/dueLabel.test.ts` | erledigte Aufgaben sind nie überfällig | T3a | Fälligkeitsmarke | daedyx-tasks-ui `due_tests::erledigte_aufgaben_sind_nie_ueberfaellig` |
 | `tasks/quickEntry.test.ts` | nur ein Titel bleibt ein Titel | T3a | Schnelleingabe (Kern quick, T1a) | daedyx-tasks-core `quick_tests::nur_ein_titel_bleibt_ein_titel` |
 | `tasks/quickEntry.test.ts` | leere Eingabe ergibt nichts | T3a | Schnelleingabe (Kern quick, T1a) | daedyx-tasks-core `quick_tests::leere_eingabe_ergibt_nichts` |
 | `tasks/quickEntry.test.ts` | Ausrufezeichen setzen die Priorität und gehören nicht zum Titel | T3a | Schnelleingabe (Kern quick, T1a) | daedyx-tasks-core `quick_tests::ausrufezeichen_setzen_die_prioritaet` |
