@@ -69,9 +69,9 @@ daedyx-tasks-core = { git = "https://github.com/daedyx/core", tag = "tasks-core-
 # Datenbank, Tresor, Sicherung, Startfehler, Erinnerungstakt (ohne Tauri); diese App ist die Tauri-Hülle darum.
 daedyx-tasks-store = { path = "crates/tasks-store" }
 # Freier Platz vor der Sicherung (Tasks T1b): `daedyx-sys` aus daedyx/ui ersetzt die eigene `free_space.rs` mit `unsafe`
-# (A-001 entfällt). Bis zum nächsten ui-Tag per `rev` auf Zweig `paket-t3` (Tasks T3), dieselbe Fassung wie in
-# `daedyx-tasks-app` (eine ui-Quelle im Lock).
-daedyx-sys = { git = "https://github.com/daedyx/ui", rev = "cf978ce71e04e3e22e19a6c8c02c9bdfbc42bb5b" }
+# (A-001 entfällt). Per Tag `ui-v0.1.3` (seit Tasks T2), dieselbe Fassung wie in
+# `daedyx-tasks-app` (eine ui-Quelle im Lock). Seit Tasks T3/T4 per `rev` auf `paket-t34` bis zum nächsten Tag (A-027).
+daedyx-sys = { git = "https://github.com/daedyx/ui", rev = "042a6929c4ae869eb5c81906fa8f6ab45621ae28" }
 
 [profile.release]
 codegen-units = 1

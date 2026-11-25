@@ -3,7 +3,7 @@
 # oder eine Zeile zu löschen ist eine Lockerung und braucht das Ja des Betreuers (wie eine Ausnahme).
 1 tests/kennung.rs (kennung)
 3 tests/start_probe.rs (start_probe)
-18 unittests src/lib.rs (daedyx_tasks_app)
+36 unittests src/lib.rs (daedyx_tasks_app)
 11 unittests src/lib.rs (daedyx_tasks_lib)
-43 unittests src/lib.rs (daedyx_tasks_store)
+45 unittests src/lib.rs (daedyx_tasks_store)
 64 unittests src/main.rs (xtask)

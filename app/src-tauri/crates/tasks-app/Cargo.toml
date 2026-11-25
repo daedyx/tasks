@@ -1,7 +1,7 @@
 [package]
 name = "daedyx-tasks-app"
 version = "0.2.0"
-description = "Daedyx Tasks in reinem Rust (egui): Gerüst mit Navigationsleiste, Kopf- und Statusleiste, Vorschau mit erfundenen Daten (T2)"
+description = "Daedyx Tasks in reinem Rust (egui): Gerüst, Hintergrund und Einstellungen, Vorschau mit erfundenen Daten (T2, T4)"
 edition = "2024"
 license = "MIT"
 publish = false
@@ -19,10 +19,14 @@ path = "src/main.rs"
 produkt = []
 
 [dependencies]
-# Gerüst und Aufgaben-Oberfläche aus daedyx/ui. Bis zum nächsten ui-Tag per rev auf Zweig paket-t3 (Tasks T3);
+# Gerüst, Aufgaben-Oberfläche und Hintergrund aus daedyx/ui. Per `rev` auf `paket-t34` (Tasks T3 + T4) bis zum nächsten Tag;
 # alle Teile aus daedyx/ui müssen dieselbe Fassung sein (auch daedyx-sys in der Hülle).
-daedyx-ui = { git = "https://github.com/daedyx/ui", rev = "cf978ce71e04e3e22e19a6c8c02c9bdfbc42bb5b" }
-daedyx-tasks-ui = { git = "https://github.com/daedyx/ui", rev = "cf978ce71e04e3e22e19a6c8c02c9bdfbc42bb5b" }
+daedyx-ui = { git = "https://github.com/daedyx/ui", rev = "042a6929c4ae869eb5c81906fa8f6ab45621ae28" }
+daedyx-tasks-ui = { git = "https://github.com/daedyx/ui", rev = "042a6929c4ae869eb5c81906fa8f6ab45621ae28" }
+# Hintergrund (T4): Schließen versteckt, Takt, Benachrichtigung, Infobereich, Autostart, Einzelinstanz.
+daedyx-background = { git = "https://github.com/daedyx/ui", rev = "042a6929c4ae869eb5c81906fa8f6ab45621ae28" }
+# Kern-Schema für die Speicher-Datenbank der Vorschau, die Oberfläche und Takt teilen (T4).
+daedyx-tasks-core = { git = "https://github.com/daedyx/core", tag = "tasks-core-v0.2.3" }
 # Fehlercodes beim Start (StartupCode); die echte Datenbank öffnet die App erst ab T5.
 daedyx-tasks-store = { path = "../tasks-store" }
 eframe = { version = "=0.37.0", default-features = false, features = ["accesskit", "default_fonts", "glow"] }
@@ -34,11 +38,15 @@ iana-time-zone = "0.1"
 rusqlite = { version = "0.37", features = ["bundled-sqlcipher-vendored-openssl"] }
 
 [build-dependencies]
-daedyx-build = { git = "https://github.com/daedyx/ui", rev = "cf978ce71e04e3e22e19a6c8c02c9bdfbc42bb5b" }
+daedyx-build = { git = "https://github.com/daedyx/ui", rev = "042a6929c4ae869eb5c81906fa8f6ab45621ae28" }
 
 [dev-dependencies]
 egui_kittest = "=0.37.0"
-daedyx-ui = { git = "https://github.com/daedyx/ui", rev = "cf978ce71e04e3e22e19a6c8c02c9bdfbc42bb5b", features = ["lint"] }
-daedyx-tasks-ui = { git = "https://github.com/daedyx/ui", rev = "cf978ce71e04e3e22e19a6c8c02c9bdfbc42bb5b", features = ["lint"] }
+daedyx-ui = { git = "https://github.com/daedyx/ui", rev = "042a6929c4ae869eb5c81906fa8f6ab45621ae28", features = ["lint"] }
+daedyx-tasks-ui = { git = "https://github.com/daedyx/ui", rev = "042a6929c4ae869eb5c81906fa8f6ab45621ae28", features = ["lint"] }
 # Startprobe des gebauten Programms mit Zeitgrenze (Prozesse nur über daedyx-sys).
-daedyx-sys = { git = "https://github.com/daedyx/ui", rev = "cf978ce71e04e3e22e19a6c8c02c9bdfbc42bb5b" }
+daedyx-sys = { git = "https://github.com/daedyx/ui", rev = "042a6929c4ae869eb5c81906fa8f6ab45621ae28" }
+
+[target.'cfg(windows)'.dev-dependencies]
+# Autostart-Test unter einem eigenen Testschlüssel (T4); dieselbe Fassung wie in daedyx-background.
+winreg = "=0.56.0"

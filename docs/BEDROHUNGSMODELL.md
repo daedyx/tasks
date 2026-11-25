@@ -50,3 +50,31 @@ Platz, Meldungsfenster) bleiben bis T1 in der Hülle.
 **Offen/ungeprüft:** Schlüssel liegt als `String` im Speicher, ohne `zeroize` (SICHERHEIT 2.10, kommt mit dem
 `Secret`-Typ); `Connection::open` außerhalb des Store-Crates ist noch nicht per Clippy gesperrt (Plan 4.2, T5); die
 Kennungen der Vorschau (Plan 4.2) kommen mit T2/T5.
+
+## T4 Hintergrund und Einstellungen (2026-11-25)
+
+Neue Grenzen der Rust-Vorschau: andere Prozesse desselben Benutzers (Pipe, Befehlszeile) und Windows (Benachrichtigung,
+Infobereich, Autostart in HKCU). Weiter kein Netz, keine Datei, kein Tresor.
+
+| Nr. | Bedrohung | Gegenmaßnahme | Test |
+|---|---|---|---|
+| T4-1 | G9: Aufgabentitel im Info-Center und auf dem Sperrbildschirm | Benachrichtigung neutral als Standard, Titel nur per Schalter | `benachrichtigung_ohne_titel_standard`, `schalter_standard_infobereich_an_titel_aus` |
+| T4-2 | Anderer Prozess schickt Unsinn über die Pipe | nur `SHOW`/`QUIT`, höchstens 16 Byte, 2 s Zeitgrenze, keine Fernverbindungen (daedyx-background) | `zweiter_start_holt_das_fenster_und_unsinn_wirkt_nicht` |
+| T4-3 | Vorschau schreibt unter den Kennungen der echten App (Autostart, App-Kennung, Pipe) | alle Namen aus `ids.rs` hinter der Weiche `produkt`; Startprobe und Programmtest | `kennung_und_tresor_gehoeren_zur_selben_fassung`, `tests/kennung.rs` |
+| T4-4 | Test hinterlässt Autostart-Werte | Registry-Test nur unter `HKCU\Software\DaedyxTasksVorschauTest\<pid>`, danach gelöscht | `autostart_ein_aus_und_blockiert_unter_testschluessel` |
+| T4-5 | Schließen ohne Infobereich verliert getippten Text | Entwurf wird vor dem Beenden übernommen, sonst bleibt die App offen | `schalter_aus_schliessen_beendet_nach_dem_entwurf` |
+| T4-6 | Unsinnige Uhrzeit oder Fälligkeit bringt den Takt zum Absturz | geprüfter Durchgang des Stores, Uhr nur 1970–9999 | `uhr_ausserhalb_des_bereichs_meldet_nichts` |
+| T4-7 | Feinstellung macht Schrift unlesbar | Regler begrenzt, Farben aus den Tokens, Kontrast-Test für jede Stellung | `jede_stellung_erfuellt_die_kontrastregeln` (daedyx/ui) |
+
+| T4-8 | Pipe-Dienst endet nach einem Fehler, der nächste Start läuft als zweite Instanz | Anlegen der nächsten Pipe-Instanz wird mit wachsender Pause wiederholt (daedyx-background, Review T4 H4-1) | `pipe_dienst_versucht_mit_pause_erneut` (daedyx/ui) |
+| T4-9 | Uhr springt weit vor und zurück, eine Erinnerung kommt doppelt | Merker gültiger Erinnerungen bleiben, aufgeräumt wird nur Veraltetes (Review T4 N4-2) | `a_clock_jumping_far_ahead_and_back_does_not_repeat_a_reminder` |
+
+**Nicht geschützt:**
+- **Prozesse desselben Benutzers** können `SHOW` oder `QUIT` schicken. Dagegen helfen keine Pipe-Rechte, denn sie
+  laufen als derselbe Benutzer; das gilt für jedes Programm dieses Benutzers.
+- **Andere Konten auf demselben PC** (gemeinsamer Schul-PC, Terminalserver) können heute lesend verbinden und
+  Instanzen kurz belegen, und sie könnten die Pipe mit dem vorhersagbaren Namen vorher anlegen, sodass die App nicht
+  startet. Rechte „nur dieser Benutzer“ schließen nur das Erste, gegen das Zweite hilft nur eine Eigentümerprüfung
+  beim zweiten Start. Beides zusammen ist für T7 vorgemerkt (STAND); bis dahin offen wie in Desk.
+- Was Windows mit gezeigten Benachrichtigungen macht (Info-Center), liegt außerhalb der App; `--cleanup` entfernt
+  die eigenen.
