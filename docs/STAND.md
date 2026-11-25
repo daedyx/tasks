@@ -1,6 +1,16 @@
 # Stand — Daedyx Tasks
 
-Letzte Änderung: 2026-11-25, T1b: Platzmessung aus `daedyx-sys` (Zweig `tasks-rust-t1b`). Davor 2026-11-24, Rust-Umbau Meilenstein **T0 „Store ohne Tauri“** im Zweig `tasks-rust-t0` (ab `mac-vorbereitung-tasks`, nicht in `main`). Plan: `plan-tasks-rust.md` (Notizordner des Master-Chats). Version 0.1.0, nichts veröffentlicht.
+Letzte Änderung: 2026-11-25, T2: Gerüst der Rust-Fassung `daedyx-tasks-app` (Zweig `tasks-rust-t2`). Davor T1b: Platzmessung aus `daedyx-sys` (Zweig `tasks-rust-t1b`). Davor 2026-11-24, Rust-Umbau Meilenstein **T0 „Store ohne Tauri“** im Zweig `tasks-rust-t0` (ab `mac-vorbereitung-tasks`, nicht in `main`). Plan: `plan-tasks-rust.md` (Notizordner des Master-Chats). Version 0.1.0, nichts veröffentlicht.
+
+## T2 Gerüst der Rust-Fassung (Zweig tasks-rust-t2), Stand 2026-11-25
+- **Neues Crate `daedyx-tasks-app`** (Version 0.2.0, Entscheid T-F8) mit dem Programm `daedyx-tasks-vorschau`: Rahmen nach Stil 1 mit Navigationsleiste (Liste, Board, Einstellungen; keine Seite „Erinnerungen“, Entscheid T-F5), breit 208 px, unter 860 px schmal 56 px, unter 640 px unten; Kopfzeile mit dem Titel der Seite; Statusleiste mit Hinweis „Vorschau mit erfundenen Daten“ und Hell/Dunkel. Die Aufgaben-Oberfläche ist `daedyx-tasks-ui` (Leiste, Liste, Board, Detail, Schnelleingabe, Suchfeld) auf einer **Speicher-Datenbank mit erfundenen Aufgaben** (Entscheid T-F2); nichts wird gespeichert.
+- **Einstellungen:** Sprache de/en/fr und Hell/Dunkel, Über mit Version. Start und Hintergrund, Updates und Dunkelmodus-Feinstellung kommen in T4.
+- **Texte:** eigene Schlüssel in `crates/tasks-app/lang/{de,en,fr}.json`, die `aufgaben.*` kommen zur Laufzeit aus `daedyx-tasks-ui` (keine Abschrift).
+- **Startfehler-Fenster in egui** (`daedyx_ui::startup`, neu im ui-Repo, Zweig `paket-t2`) mit den fünf Fehlercodes des Stores in drei Sprachen; zum Ansehen `DAEDYX_STARTFEHLER=schluessel|zu_neu|platz|sicherung|anderes`. Die Tauri-Hülle behält ihr Meldungsfenster bis T7 (Entscheid des Masters, Feature-Stopp); A-002 und A-011 bleiben bis dahin.
+- **Kennungen der Vorschau als Kompilier-Merkmal** (Plan 4.2): ohne Merkmal `produkt` gilt `de.daedyx.tasks.vorschau`, die echte Kennung ist nicht im Programm (Test am gebauten Programm).
+- **Bau und Prüfung:** Manifest und Symbol über `daedyx-build`; Startprobe `--start-probe` mit Zeitgrenze, Bildschirmfoto-Modus `DAEDYX_SCREENSHOT` (nur das App-Fenster). Tests: 11 im Crate (kittest), 1 Kennung, 3 Startprobe.
+- **Pflichtenheft-Matrix:** `docs/PFLICHTENHEFT-RUST.md` (194 Verhalten aus den Tests der heutigen Oberfläche, je mit Meilenstein; wird bis T7 abgehakt).
+- `daedyx/ui` (auch `daedyx-sys` der Hülle) bis zum nächsten ui-Tag per `rev` auf Zweig `paket-t2`. Neue Ausnahmen A-028 (Bauskript) und A-029 (Kennungsweiche), Ja ausstehend.
 
 ## T1b Platzmessung aus daedyx-sys (Zweig tasks-rust-t1b), Stand 2026-11-25
 - Die Hülle misst den freien Platz vor der Sicherung jetzt mit `daedyx_sys::available_space` aus `daedyx/ui` (per Tag `ui-v0.1.2`; früher Desk `desk-sys`). Die eigene `free_space.rs` mit `unsafe` ist gelöscht, die Ausnahme A-001 und die `free_space`-Zeile von A-011 entfallen (A-011 gilt weiter für `startup_dialog.rs`); neu A-027 für die Git-Quelle `daedyx/ui` (Ja des Betreuers ausstehend). `startup_dialog.rs` (Meldungsfenster, `unsafe`) bleibt in der Hülle, bis die Rust-Fassung ein Startfehler-Fenster in egui hat (T2). Tests unverändert (117).

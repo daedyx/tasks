@@ -42,7 +42,7 @@ fn closure(root: &str) -> BTreeSet<String> {
 /// `Cargo.lock` (alle Zielsysteme, Bau- und Test-Abhängigkeiten eingeschlossen). Kein Netz, keine Oberfläche. Jede neue
 /// Abhängigkeit, auch eine mittelbare, macht den Test rot und braucht einen Eintrag hier (und in der Prüfung nach
 /// SICHERHEIT 4.1); eine weggefallene ebenso, damit die Liste wahr bleibt.
-const ALLOWED: [&str; 92] = [
+const ALLOWED: [&str; 93] = [
     "android_system_properties",
     "autocfg",
     "bitflags",
@@ -73,6 +73,8 @@ const ALLOWED: [&str; 92] = [
     "iana-time-zone",
     "iana-time-zone-haiku",
     "itoa",
+    // Bau-Helfer von `cc` (Merkmal „parallel“), seit T2 durch die Rust-Vorschau in `Cargo.lock`; kein Netz.
+    "jobserver",
     "js-sys",
     "keyring",
     "libc",

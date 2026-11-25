@@ -1,0 +1,44 @@
+[package]
+name = "daedyx-tasks-app"
+version = "0.2.0"
+description = "Daedyx Tasks in reinem Rust (egui): Gerüst mit Navigationsleiste, Kopf- und Statusleiste, Vorschau mit erfundenen Daten (T2)"
+edition = "2024"
+license = "MIT"
+publish = false
+
+[lints]
+workspace = true
+
+[[bin]]
+name = "daedyx-tasks-vorschau"
+path = "src/main.rs"
+
+[features]
+# Kennungen der echten App (de.daedyx.tasks, Plan 4.2). Ohne dieses Merkmal steht die echte Kennung nicht im Programm;
+# ein Test prüft das am gebauten Vorschau-Programm. Kein Bau-Auftrag schaltet es vor T7 ein.
+produkt = []
+
+[dependencies]
+# Gerüst und Aufgaben-Oberfläche aus daedyx/ui. Bis zum nächsten ui-Tag der Stand von Zweig paket-t2 (Tasks T2);
+# alle Teile aus daedyx/ui müssen dieselbe Fassung sein (auch daedyx-sys in der Hülle).
+daedyx-ui = { git = "https://github.com/daedyx/ui", rev = "52c3009f79efa123a51d32ac02b269c1a461cd30" }
+daedyx-tasks-ui = { git = "https://github.com/daedyx/ui", rev = "52c3009f79efa123a51d32ac02b269c1a461cd30" }
+# Fehlercodes beim Start (StartupCode); die echte Datenbank öffnet die App erst ab T5.
+daedyx-tasks-store = { path = "../tasks-store" }
+eframe = { version = "=0.37.0", default-features = false, features = ["accesskit", "default_fonts", "glow"] }
+serde_json = "1"
+chrono = { version = "0.4", default-features = false, features = ["std", "clock"] }
+chrono-tz = "0.10"
+iana-time-zone = "0.1"
+# Gleiche Funktionen wie im Store: nur eine SQLite-Fassung im Baum (Speicher-Datenbank der Vorschau).
+rusqlite = { version = "0.37", features = ["bundled-sqlcipher-vendored-openssl"] }
+
+[build-dependencies]
+daedyx-build = { git = "https://github.com/daedyx/ui", rev = "52c3009f79efa123a51d32ac02b269c1a461cd30" }
+
+[dev-dependencies]
+egui_kittest = "=0.37.0"
+daedyx-ui = { git = "https://github.com/daedyx/ui", rev = "52c3009f79efa123a51d32ac02b269c1a461cd30", features = ["lint"] }
+daedyx-tasks-ui = { git = "https://github.com/daedyx/ui", rev = "52c3009f79efa123a51d32ac02b269c1a461cd30", features = ["lint"] }
+# Startprobe des gebauten Programms mit Zeitgrenze (Prozesse nur über daedyx-sys).
+daedyx-sys = { git = "https://github.com/daedyx/ui", rev = "52c3009f79efa123a51d32ac02b269c1a461cd30" }
