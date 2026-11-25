@@ -23,7 +23,7 @@ GitHub → Repository `daedyx/tasks` → Settings → Secrets and variables → 
 | `DAEDYX_CATALOG_KEY` | Katalog-Schlüssel, **derselbe Wert wie bei Desk** |
 | `DAEDYX_KEY_PASSWORD` | Passwort des Katalog-Schlüssels (wie bei Desk) |
 | `RELEASES_TOKEN` | Token mit Schreibrecht nur auf `daedyx/releases` (wie bei Desk) |
-| `CORE_READ_TOKEN` | **neu:** Fine-grained Token, nur Repository `daedyx/core`, Berechtigung Contents: Read-only. Der Workflow braucht ihn, weil der Aufgaben-Kern aus dem privaten Repository kommt. |
+| `DAEDYX_READ_TOKEN` | **neu (früher `CORE_READ_TOKEN`, seit T1b):** Fine-grained Token, nur die Repositories `daedyx/core` und `daedyx/ui`, Berechtigung Contents: Read-only. Der Workflow braucht ihn, weil der Aufgaben-Kern und `daedyx-sys` aus privaten Repositories kommen. Dasselbe Token gilt für Desk und für `daedyx/ui`. |
 
 Der Workflow prüft vor dem Bau, ob alle sechs da sind, und bricht sonst mit einer klaren Meldung ab.
 

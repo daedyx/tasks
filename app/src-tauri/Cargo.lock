@@ -755,7 +755,7 @@ dependencies = [
 [[package]]
 name = "daedyx-sys"
 version = "0.1.0"
-source = "git+https://github.com/daedyx/ui?rev=474d47aa2e70b22476a0ff1cb1373acf1b1f74b2#474d47aa2e70b22476a0ff1cb1373acf1b1f74b2"
+source = "git+https://github.com/daedyx/ui?rev=3fda0b874e2688f46a6b47ea885b6b4d51a854f0#3fda0b874e2688f46a6b47ea885b6b4d51a854f0"
 
 [[package]]
 name = "daedyx-tasks"

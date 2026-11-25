@@ -64,13 +64,13 @@ rusqlite = { version = "0.37", features = ["bundled-sqlcipher-vendored-openssl"]
 chrono = { version = "0.4", default-features = false, features = ["std", "clock"] }
 chrono-tz = "0.10"
 tokio = { version = "1", features = ["time"] }
-# Aufgaben-Kern (eigenes privates Repository). Die Release-Pipeline braucht dafür das Secret CORE_READ_TOKEN.
+# Aufgaben-Kern (eigenes privates Repository). Die Pipelines brauchen dafür das Secret DAEDYX_READ_TOKEN (nur Lesen, daedyx/core und daedyx/ui).
 daedyx-tasks-core = { git = "https://github.com/daedyx/core", tag = "tasks-core-v0.2.3" }
 # Datenbank, Tresor, Sicherung, Startfehler, Erinnerungstakt (ohne Tauri); diese App ist die Tauri-Hülle darum.
 daedyx-tasks-store = { path = "crates/tasks-store" }
 # Freier Platz vor der Sicherung (Tasks T1b): `daedyx-sys` aus daedyx/ui ersetzt die eigene `free_space.rs` mit `unsafe`
 # (A-001 entfällt). Bis zum nächsten ui-Tag der Stand von Zweig `paket-t1b`.
-daedyx-sys = { git = "https://github.com/daedyx/ui", rev = "474d47aa2e70b22476a0ff1cb1373acf1b1f74b2" }
+daedyx-sys = { git = "https://github.com/daedyx/ui", rev = "3fda0b874e2688f46a6b47ea885b6b4d51a854f0" }
 
 [profile.release]
 codegen-units = 1

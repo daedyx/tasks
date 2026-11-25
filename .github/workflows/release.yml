@@ -2,7 +2,7 @@
 # Starten: Actions -> Release -> "Run workflow" auf dem Zweig main (Version, Änderungsnotiz und Bestätigung eintragen)
 #   oder einen Tag v<x.y.z> pushen, dessen Commit auf main liegt. Von jedem anderen Zweig geht nur der Trockenlauf.
 # Trockenlauf: Haken "Trockenlauf" setzen: es wird gebaut, getestet und signiert, aber nichts in daedyx/releases geschrieben
-#   und keine Version zurückgeschrieben; das Setup hängt 3 Tage als Download am Lauf. Nötig sind dann nur die Update-Schlüssel und CORE_READ_TOKEN.
+#   und keine Version zurückgeschrieben; das Setup hängt 3 Tage als Download am Lauf. Nötig sind dann nur die Update-Schlüssel und DAEDYX_READ_TOKEN.
 # Geheimnisse (Repository-Secrets, trägt Björn selbst ein, Anleitung: docs/RELEASE.md):
 #   TAURI_SIGNING_PRIVATE_KEY, TAURI_SIGNING_PRIVATE_KEY_PASSWORD  Update-Schlüssel der App
 #   DAEDYX_CATALOG_KEY, DAEDYX_KEY_PASSWORD                        Katalog-Schlüssel (Inhalt der Datei) und Passwort
@@ -132,16 +132,19 @@ jobs:
         with:
           workspaces: app/src-tauri
 
-      - name: Privaten Kern abrufen (Token nur für diesen Schritt)
+      - name: Private Abhängigkeiten abrufen (daedyx/core, daedyx/ui; Token nur für diesen Schritt)
         env:
-          CORE_READ_TOKEN: ${{ secrets.CORE_READ_TOKEN }}
+          DAEDYX_READ_TOKEN: ${{ secrets.DAEDYX_READ_TOKEN }}
         run: |
-          if (-not $env:CORE_READ_TOKEN) { throw "Secret CORE_READ_TOKEN fehlt (Lesezugriff auf daedyx/core)" }
+          if (-not $env:DAEDYX_READ_TOKEN) { throw "Secret DAEDYX_READ_TOKEN fehlt (nur Lesen, daedyx/core und daedyx/ui)" }
           # Die Umleitung gilt nur für Prozesse dieses Schritts (kein "git config --global"): spätere Schritte mit
           # Fremdbibliotheken (npm ci, Build-Skripte) sehen das Token nicht. Danach baut cargo aus dem Zwischenspeicher.
-          $env:GIT_CONFIG_COUNT = '1'
-          $env:GIT_CONFIG_KEY_0 = 'url.https://x-access-token:' + $env:CORE_READ_TOKEN + '@github.com/daedyx/core.insteadOf'
-          $env:GIT_CONFIG_VALUE_0 = 'https://github.com/daedyx/core'
+          # Kein Anmeldespeicher: der Windows-Runner legte das Token sonst im Credential-Manager ab (wie Desk, T1a N2-1).
+          $env:GIT_CONFIG_COUNT = '2'
+          $env:GIT_CONFIG_KEY_0 = 'url.https://x-access-token:' + $env:DAEDYX_READ_TOKEN + '@github.com/daedyx/.insteadOf'
+          $env:GIT_CONFIG_VALUE_0 = 'https://github.com/daedyx/'
+          $env:GIT_CONFIG_KEY_1 = 'credential.helper'
+          $env:GIT_CONFIG_VALUE_1 = ''
           $env:CARGO_NET_GIT_FETCH_WITH_CLI = 'true'
           cargo fetch --locked --manifest-path app/src-tauri/Cargo.toml
           if ($LASTEXITCODE -ne 0) { throw "Abruf der Abhängigkeiten fehlgeschlagen" }
