@@ -753,11 +753,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "daedyx-sys"
+version = "0.1.0"
+source = "git+https://github.com/daedyx/ui?rev=474d47aa2e70b22476a0ff1cb1373acf1b1f74b2#474d47aa2e70b22476a0ff1cb1373acf1b1f74b2"
+
+[[package]]
 name = "daedyx-tasks"
 version = "0.1.0"
 dependencies = [
  "chrono",
  "chrono-tz",
+ "daedyx-sys",
  "daedyx-tasks-core",
  "daedyx-tasks-store",
  "rusqlite",

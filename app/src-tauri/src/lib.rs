@@ -3,7 +3,6 @@ mod commands;
 mod commands_tasks;
 #[cfg(test)]
 mod config_tests;
-mod free_space;
 mod startup;
 mod startup_dialog;
 #[cfg(test)]
@@ -63,7 +62,7 @@ pub fn run() {
             std::fs::create_dir_all(&dir)?;
             let secrets = KeyringStore::new();
             // Ohne gelungene Sicherung wird nicht migriert; bei jedem Fehler erklärt ein Fenster, was zu tun ist.
-            let opened = daedyx_tasks_store::startup::open_and_migrate(&dir.join(db::DB_FILE), &secrets, &free_space::available);
+            let opened = daedyx_tasks_store::startup::open_and_migrate(&dir.join(db::DB_FILE), &secrets, &daedyx_sys::available_space);
             let conn = match opened {
                 Ok(conn) => conn,
                 Err(e) => {

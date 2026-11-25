@@ -48,4 +48,5 @@ deny = [
 unknown-registry = "deny"
 unknown-git = "deny"
 allow-registry = ["https://github.com/rust-lang/crates.io-index"]
-allow-git = ["https://github.com/daedyx/core"]
+# Eigener Kern und eigene Bausteine (daedyx/ui seit Tasks T1b, Ausnahme A-027).
+allow-git = ["https://github.com/daedyx/core", "https://github.com/daedyx/ui"]
