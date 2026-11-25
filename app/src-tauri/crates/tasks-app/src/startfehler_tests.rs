@@ -81,3 +81,35 @@ fn startfehler_texte_duzen_wie_desk() {
     let de = words(Language::De).concat();
     assert!(de.contains(" dich ") && de.contains(" deine "));
 }
+
+/// Das Startfehler-Fenster nimmt das Farbschema der Einstellungen (`DAEDYX_THEME`), ohne Einstellung das System.
+#[test]
+fn startfehler_fenster_nimmt_das_farbschema_der_einstellungen() {
+    use crate::settings::Settings;
+    use daedyx_ui::startup::prepare;
+    use eframe::egui::Theme;
+    for (dark, want) in [
+        (Some(true), Some(Theme::Dark)),
+        (Some(false), Some(Theme::Light)),
+        (None, None),
+    ] {
+        let settings = Settings {
+            dark,
+            ..Settings::default()
+        };
+        assert_eq!(settings.theme(), want);
+    }
+    let theme = Settings {
+        dark: Some(true),
+        ..Settings::default()
+    }
+    .theme();
+    let h = Harness::builder()
+        .with_size((480.0, 320.0))
+        .with_context_setup(move |ctx| prepare(ctx, AppAccent::Tasks, theme))
+        .build_ui_state(
+            |ui, w: &mut StartupError| w.show(ui),
+            window(StartupCode::Other, &texts(Language::De)),
+        );
+    assert_eq!(h.ctx.theme(), Theme::Dark);
+}

@@ -72,31 +72,24 @@ fn kennung_und_tresor_gehoeren_zur_selben_fassung() {
     assert!(consistent());
 }
 
-/// `Connection::open` ist außerhalb des Stores per Clippy gesperrt (Plan 4.2). Der Store hat dafür eine eigene
-/// `clippy.toml`, die sonst wörtlich der des Workspace entspricht.
+/// `Connection::open` ist im ganzen Workspace per Clippy gesperrt (Plan 4.2); der Store öffnet nur an einer Stelle mit
+/// eingetragener Ausnahme (A-030). Eine zweite `clippy.toml` ist nach der Regel des Prüfwerkzeugs nicht erlaubt.
 #[test]
 fn clippy_sperrt_das_oeffnen_der_datenbank_ausserhalb_des_stores() {
     let dir = Path::new(env!("CARGO_MANIFEST_DIR"));
-    let read = |p: &str| {
-        std::fs::read_to_string(dir.join(p))
-            .unwrap()
-            .replace("\r\n", "\n")
-    };
-    let (workspace, store) = (
-        read("../../clippy.toml"),
-        read("../tasks-store/clippy.toml"),
-    );
-    let lines: Vec<&str> = workspace
-        .lines()
-        .filter(|l| l.contains("rusqlite::Connection::open"))
-        .collect();
-    assert_eq!(lines.len(), 2, "open und open_with_flags");
-    let mut rest = workspace.clone();
-    for l in &lines {
-        rest = rest.replace(&format!("{l}\n"), "");
+    let clippy = std::fs::read_to_string(dir.join("../../clippy.toml")).unwrap();
+    for method in [
+        "rusqlite::Connection::open\"",
+        "rusqlite::Connection::open_with_flags\"",
+    ] {
+        assert!(clippy.contains(method), "{method}");
     }
+    let store = dir.join("../tasks-store/src/db/mod.rs");
+    let src = std::fs::read_to_string(store).unwrap();
     assert_eq!(
-        store.lines().skip(1).collect::<Vec<_>>(),
-        rest.lines().skip(1).collect::<Vec<_>>()
+        src.matches("Connection::open(").count(),
+        1,
+        "eine Öffnungsstelle"
     );
+    assert!(src.contains("A-030"));
 }

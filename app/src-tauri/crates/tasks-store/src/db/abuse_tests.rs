@@ -37,7 +37,7 @@ fn real_db(path: &Path, store: &MemoryStore) {
 fn a_plain_sqlite_file_is_not_sqlcipher_and_stays_unchanged() {
     let path = db_path("plain");
     {
-        let plain = rusqlite::Connection::open(&path).unwrap();
+        let plain = crate::db::connect(&path).unwrap();
         plain.execute_batch("CREATE TABLE t (x TEXT); INSERT INTO t VALUES ('erfunden');").unwrap();
     }
     assert!(std::fs::read(&path).unwrap().starts_with(b"SQLite format 3"));

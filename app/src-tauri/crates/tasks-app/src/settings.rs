@@ -4,6 +4,7 @@
 use crate::page::Page;
 use daedyx_tasks_store::startup::StartupCode;
 use daedyx_ui::i18n::Language;
+use eframe::egui::Theme;
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct Settings {
@@ -54,5 +55,10 @@ impl Settings {
             },
             startup_error: var("DAEDYX_STARTFEHLER").as_deref().and_then(code),
         }
+    }
+    /// Farbschema für egui: `None` folgt dem System.
+    pub fn theme(&self) -> Option<Theme> {
+        self.dark
+            .map(|dark| if dark { Theme::Dark } else { Theme::Light })
     }
 }

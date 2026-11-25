@@ -33,7 +33,13 @@ pub fn run(settings: Settings, args: &[String]) -> ExitCode {
     let texts = crate::texts::texts(settings.language);
     if let Some(code) = settings.startup_error {
         let window = startfehler::window(code, &texts);
-        let _ = daedyx_ui::startup::run(APP_ID, &texts.t("app.titel"), AppAccent::Tasks, window);
+        let _ = daedyx_ui::startup::run(
+            APP_ID,
+            &texts.t("app.titel"),
+            AppAccent::Tasks,
+            settings.theme(),
+            window,
+        );
         return ExitCode::from(code::STARTUP_ERROR);
     }
     let options = eframe::NativeOptions {

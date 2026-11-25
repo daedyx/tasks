@@ -31,7 +31,7 @@ fn stored_key_opens_file_with_raw_pragma() {
     let store = MemoryStore::default();
     write_marker(&path, &store);
     let hex = store.get("db-key").unwrap().unwrap();
-    let raw = Connection::open(&path).unwrap();
+    let raw = connect(&path).unwrap();
     raw.pragma_update(None, "key", format!("x'{hex}'")).unwrap();
     let v: String = raw.query_row("SELECT x FROM t", [], |r| r.get(0)).unwrap();
     assert_eq!(v, MARKER);
@@ -61,7 +61,7 @@ fn malformed_stored_key_is_rejected_and_kept() {
 fn file_unreadable_without_key() {
     let path = temp_db("nokey");
     write_marker(&path, &MemoryStore::default());
-    let raw = Connection::open(&path).unwrap();
+    let raw = connect(&path).unwrap();
     let res: Result<i64, _> = raw.query_row("SELECT count(*) FROM sqlite_master", [], |r| r.get(0));
     assert!(res.is_err());
 }

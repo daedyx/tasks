@@ -39,6 +39,12 @@ pub enum DbError {
     EmptyFile,
 }
 
+/// Einzige Stelle im Workspace, die eine Datenbankdatei öffnet (außerhalb des Stores sperrt Clippy das, Plan 4.2).
+#[allow(clippy::disallowed_methods, reason = "SICHERHEIT-AUSNAHMEN A-030: einzige Öffnungsstelle, im Store")]
+pub(crate) fn connect(path: &Path) -> rusqlite::Result<Connection> {
+    Connection::open(path)
+}
+
 /// Öffnet (oder erstellt) die verschlüsselte Datenbank. Der Schlüssel kommt aus dem Tresor.
 /// `WrongKey` nie zum Löschen der DB verwenden; andere Fehler kommen als `Sqlite` durch.
 /// Eine vorhandene, leere Datei wird nicht angefasst (`EmptyFile`).
@@ -47,7 +53,7 @@ pub fn open(path: &Path, secrets: &dyn SecretStore) -> Result<Connection, DbErro
         return Err(DbError::EmptyFile);
     }
     let hex = key::get_or_create(secrets)?;
-    let conn = Connection::open(path)?;
+    let conn = connect(path)?;
     conn.pragma_update(None, "key", format!("x'{hex}'"))?;
     // Erst die Prüfabfrage zeigt, ob der Schlüssel zur Datei passt.
     conn.query_row("SELECT count(*) FROM sqlite_master", [], |r| r.get::<_, i64>(0)).map_err(|e| match e {
