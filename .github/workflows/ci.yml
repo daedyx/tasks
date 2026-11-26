@@ -2,7 +2,7 @@
 # Nur Lesen, Actions per voller Commit-ID, kein pull_request_target. Der Cargo-Workspace liegt in app/src-tauri.
 # Einziges Secret: DAEDYX_READ_TOKEN, ein Token mit nur Lesezugriff auf die privaten Repositories daedyx/core und
 # daedyx/ui (dasselbe wie im Mac-Testbau, A-017; hier A-031). Nur in den Schritten, die abrufen; entfällt, sobald beide
-# öffentlich sind. Der Release-Ablauf (release.yml) bleibt unverändert bis T7.
+# öffentlich sind. Der Release-Ablauf (release.yml, Entwurf T7-Vorbereitung) braucht gar kein Secret.
 name: ci
 
 on:
@@ -45,14 +45,15 @@ jobs:
           if (git ls-files 'app/src-tauri/xtask/build.rs') { throw "xtask/build.rs ist nicht erlaubt" }
           $xtask = @(Get-Content app/src-tauri/xtask/Cargo.toml | ForEach-Object { $_.Trim() } | Where-Object { $_ -and -not $_.StartsWith('#') })
           if ($xtask | Where-Object { $_ -match '^\[.*dependencies' -or $_ -match '^build\s*=' -or $_ -match 'proc-macro' }) { throw "xtask/Cargo.toml darf keine Abhängigkeiten und kein Build-Skript haben" }
-      - name: Keine weiteren Secrets in Workflows (nur DAEDYX_READ_TOKEN; release.yml bis T7 Bestand, A-016)
+      - name: Keine weiteren Secrets in Workflows (nur DAEDYX_READ_TOKEN; release.yml ohne jedes Secret)
         shell: pwsh
         run: |
           # Auch Zugriff mit eckigen Klammern und toJSON über alle Secrets zählt (Review T6, H6-2). Groß/klein beachten:
           # das Wort Secrets in Kommentaren ist kein Zugriff.
-          $treffer = Select-String -Path .github/workflows/*.yml -CaseSensitive -Pattern 'secrets\.(?!GITHUB_TOKEN\b|DAEDYX_READ_TOKEN\b)', 'secrets\[', 'toJSON\(\s*secrets' |
-            Where-Object { $_.Filename -ne 'release.yml' }
+          $treffer = Select-String -Path .github/workflows/*.yml -CaseSensitive -Pattern 'secrets\.(?!GITHUB_TOKEN\b|DAEDYX_READ_TOKEN\b)', 'secrets\[', 'toJSON\(\s*secrets'
           if ($treffer) { $treffer; throw "Unerwartetes Secret in einem Workflow" }
+          # Der Release-Weg kommt ganz ohne Secret aus (plan-ohne-secrets; Test release_tests.rs prüft dasselbe).
+          if (Select-String -Path .github/workflows/release.yml -CaseSensitive -Pattern 'secrets') { throw "release.yml darf kein Secret lesen" }
       - name: Rust festnageln
         shell: pwsh
         run: |

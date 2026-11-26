@@ -1,216 +1,177 @@
-# Release von Daedyx Tasks: bauen, signieren, in das öffentliche Repository daedyx/releases veröffentlichen.
-# Starten: Actions -> Release -> "Run workflow" auf dem Zweig main (Version, Änderungsnotiz und Bestätigung eintragen)
-#   oder einen Tag v<x.y.z> pushen, dessen Commit auf main liegt. Von jedem anderen Zweig geht nur der Trockenlauf.
-# Trockenlauf: Haken "Trockenlauf" setzen: es wird gebaut, getestet und signiert, aber nichts in daedyx/releases geschrieben
-#   und keine Version zurückgeschrieben; das Setup hängt 3 Tage als Download am Lauf. Nötig sind dann nur die Update-Schlüssel und DAEDYX_READ_TOKEN.
-# Geheimnisse (Repository-Secrets, trägt Björn selbst ein, Anleitung: docs/RELEASE.md):
-#   TAURI_SIGNING_PRIVATE_KEY, TAURI_SIGNING_PRIVATE_KEY_PASSWORD  Update-Schlüssel der App
-#   DAEDYX_CATALOG_KEY, DAEDYX_KEY_PASSWORD                        Katalog-Schlüssel (Inhalt der Datei) und Passwort
-#   RELEASES_TOKEN                                                 Zugriffstoken mit Schreibrecht nur auf daedyx/releases
+# Release von Daedyx Tasks ohne gespeicherte Geheimnisse (plan-ohne-secrets Schritt 6, Review U2 F-U2-2).
+# ENTWURF aus der T7-Vorbereitung: noch nie gelaufen. Vor dem ersten Lauf die Lücken in docs/RELEASE.md schließen.
+#
+# Ablauf: Björn startet ihn von Hand (Actions -> Release -> Run workflow, Zweig main) und gibt die Freigabe im
+# Environment "release". Der Lauf prüft die Eingaben, testet, baut die Produkt-Fassung (Merkmal produkt), baut das
+# Setup, schreibt entry.json, lässt GitHub beides bezeugen (Sigstore, kein Schlüssel) und legt das Release v<Version>
+# in diesem Repository an. Kein Secret, kein Zwischenspeicher, kein Zurückschreiben in den Quellcode.
+# Die App prüft genau diesen Nachweis: Workflow .github/workflows/release.yml, Zweig refs/heads/main, Repo daedyx/tasks
+# mit festen Kennungen (crates/tasks-app/src/update.rs; Test release_tests.rs hält beide Seiten zusammen).
+# Voraussetzungen: dieses Repository sowie daedyx/core und daedyx/ui sind öffentlich (Nachweise gibt es nur für
+# öffentliche Repositories; ohne Lese-Token muss cargo die Abhängigkeiten frei abrufen können).
 name: Release
 
 on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Version, zum Beispiel 0.1.0 (muss höher sein als die letzte veröffentlichte)"
+        description: "Version, zum Beispiel 0.3.0 (muss der Version in tasks-app/Cargo.toml entsprechen)"
         required: true
         type: string
       notes:
-        description: "Änderungsnotiz: was ist neu?"
+        description: "Änderungsnotiz: was ist neu? (eine Zeile, ohne Links)"
         required: true
         type: string
-      skip_tests:
-        description: "Tests überspringen (nur im Notfall)"
-        required: false
-        type: boolean
-        default: false
       confirm:
-        description: "Bestätigung für die echte Veröffentlichung: die Version noch einmal eintippen (beim Trockenlauf leer lassen)"
-        required: false
+        description: "Bestätigung: die Version noch einmal eintippen"
+        required: true
         type: string
-        default: ""
-      dry_run:
-        description: "Trockenlauf: bauen, testen, signieren, aber NICHT veröffentlichen (das Setup hängt als Download am Lauf)"
-        required: false
-        type: boolean
-        default: false
-  push:
-    tags:
-      - "v[0-9]+.[0-9]+.[0-9]+"
 
-# Das Token des Workflows darf nur den Quellcode-Stand zurückschreiben (Versionsdateien); veröffentlicht wird mit RELEASES_TOKEN.
-permissions:
-  contents: write
+permissions: {}
 
-# Nie zwei Veröffentlichungen gleichzeitig: beide würden denselben Katalog ändern.
+# Nie zwei Veröffentlichungen gleichzeitig.
 concurrency:
   group: release
   cancel-in-progress: false
 
 env:
-  RELEASES_REPO: daedyx/releases
+  RUST_VERSION: "1.99.1"
+  CARGO_TERM_COLOR: never
 
 jobs:
   release:
+    name: Bauen, bezeugen, veröffentlichen
+    # Nur auf main im eigenen Repository; ein Fork oder ein anderer Zweig startet den Job gar nicht.
+    if: github.ref == 'refs/heads/main' && github.repository == 'daedyx/tasks'
     runs-on: windows-latest
-    timeout-minutes: 90
+    timeout-minutes: 120
+    # Freigabe-Klick: Das Environment "release" verlangt Björns Genehmigung (docs/RELEASE.md, Schritt 3).
+    environment: release
+    permissions:
+      contents: write # Release anlegen (eingebautes Token, gilt nur für diesen Lauf)
+      id-token: write # Identität des Workflows für den Nachweis
+      attestations: write # Nachweis bei GitHub ablegen
     defaults:
       run:
         shell: pwsh
     steps:
-      - name: Quellcode holen
-        uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          fetch-depth: 0
-          # Das Token bleibt nicht in .git/config liegen: npm ci und Build-Skripte können es so nicht lesen.
           persist-credentials: false
 
       - name: Eingaben prüfen
-        id: input
+        id: eingaben
         env:
-          EVENT: ${{ github.event_name }}
-          REF: ${{ github.ref }}
-          SHA: ${{ github.sha }}
-          INPUT_VERSION: ${{ github.event.inputs.version }}
-          INPUT_NOTES: ${{ github.event.inputs.notes }}
-          INPUT_SKIP_TESTS: ${{ github.event.inputs.skip_tests }}
-          INPUT_DRY_RUN: ${{ github.event.inputs.dry_run }}
-          INPUT_CONFIRM: ${{ github.event.inputs.confirm }}
+          INPUT_VERSION: ${{ inputs.version }}
+          INPUT_NOTES: ${{ inputs.notes }}
+          INPUT_CONFIRM: ${{ inputs.confirm }}
         run: |
-          # Eingaben nur über Umgebungsvariablen lesen (nie in den Skripttext einsetzen).
-          # Regeln (scripts/ci/check-release-inputs.ps1, Probe: test-check-release-inputs.ps1):
-          # echte Veröffentlichung nur von main oder von einem Tag auf main, Tests überspringen nur im Trockenlauf, Bestätigung nötig.
-          $onMain = 'false'
-          if ($env:EVENT -eq 'push') {
-            git merge-base --is-ancestor $env:SHA origin/main
-            if ($LASTEXITCODE -eq 0) { $onMain = 'true' }
-          }
-          $r = ./scripts/ci/check-release-inputs.ps1 -EventName $env:EVENT -Ref $env:REF `
-            -InputVersion $env:INPUT_VERSION -InputNotes $env:INPUT_NOTES -InputSkipTests $env:INPUT_SKIP_TESTS `
-            -InputDryRun $env:INPUT_DRY_RUN -InputConfirm $env:INPUT_CONFIRM -TagOnMain $onMain -Product Tasks
-          $file = Join-Path $env:RUNNER_TEMP 'release-notes.txt'
-          [System.IO.File]::WriteAllText($file, $r.Notes, (New-Object System.Text.UTF8Encoding $false))
-          "version=$($r.Version)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          # Eingaben nur über Umgebungsvariablen lesen, nie in den Skripttext einsetzen.
+          $v = $env:INPUT_VERSION.Trim()
+          if ($v -notmatch '^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$') { throw "Version muss x.y.z sein" }
+          if ($env:INPUT_CONFIRM.Trim() -ne $v) { throw "Bestätigung stimmt nicht mit der Version überein" }
+          $line = Select-String -Path app/src-tauri/crates/tasks-app/Cargo.toml -Pattern '^version\s*=\s*"([^"]+)"' | Select-Object -First 1
+          if (-not $line -or $line.Matches[0].Groups[1].Value -ne $v) { throw "Version $v steht nicht in tasks-app/Cargo.toml (erst dort anheben)" }
+          $notes = $env:INPUT_NOTES.Trim()
+          if (-not $notes) { throw "Änderungsnotiz fehlt" }
+          $file = Join-Path $env:RUNNER_TEMP 'notiz.txt'
+          [IO.File]::WriteAllText($file, $notes, (New-Object System.Text.UTF8Encoding $false))
+          "version=$v" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
           "notes_file=$file" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
-          "skip_tests=$($r.SkipTests)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
-          "dry_run=$($r.DryRun)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
-          if (-not (Test-Path 'release/catalog.pub')) { throw "release/catalog.pub fehlt (öffentlicher Katalog-Schlüssel, siehe docs/RELEASE.md)." }
 
-      - name: Secrets prüfen
+      - name: Release darf es noch nicht geben (Releases nie ersetzen)
         env:
-          S1: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          S2: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-          S3: ${{ secrets.DAEDYX_CATALOG_KEY }}
-          S4: ${{ secrets.DAEDYX_KEY_PASSWORD }}
-          S5: ${{ secrets.RELEASES_TOKEN }}
-          DRY: ${{ steps.input.outputs.dry_run }}
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.eingaben.outputs.version }}
         run: |
-          $missing = @()
-          if (-not $env:S1) { $missing += 'TAURI_SIGNING_PRIVATE_KEY' }
-          if (-not $env:S2) { $missing += 'TAURI_SIGNING_PRIVATE_KEY_PASSWORD' }
-          # Katalog-Schlüssel und Release-Token braucht nur die echte Veröffentlichung, nicht der Trockenlauf
-          if ($env:DRY -ne 'True' -and $env:DRY -ne 'true') {
-            if (-not $env:S3) { $missing += 'DAEDYX_CATALOG_KEY' }
-            if (-not $env:S4) { $missing += 'DAEDYX_KEY_PASSWORD' }
-            if (-not $env:S5) { $missing += 'RELEASES_TOKEN' }
-          }
-          if ($missing) { throw "Diese Secrets fehlen im Repository: $($missing -join ', ') (Anleitung: docs/RELEASE.md)" }
+          gh release view "v$env:VERSION" --repo $env:GITHUB_REPOSITORY *> $null
+          if ($LASTEXITCODE -eq 0) { throw "Release v$env:VERSION gibt es schon" }
+          git ls-remote --exit-code --tags origin "refs/tags/v$env:VERSION" *> $null
+          if ($LASTEXITCODE -eq 0) { throw "Tag v$env:VERSION gibt es schon" }
+          exit 0
 
-      - name: Node einrichten
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-          cache-dependency-path: app/package-lock.json
-
-      - name: Rust einrichten
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Rust-Zwischenspeicher
-        uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: app/src-tauri
-
-      - name: Private Abhängigkeiten abrufen (daedyx/core, daedyx/ui; Token nur für diesen Schritt)
-        env:
-          DAEDYX_READ_TOKEN: ${{ secrets.DAEDYX_READ_TOKEN }}
+      - name: Rust festnageln
         run: |
-          if (-not $env:DAEDYX_READ_TOKEN) { throw "Secret DAEDYX_READ_TOKEN fehlt (nur Lesen, daedyx/core und daedyx/ui)" }
-          # Die Umleitung gilt nur für Prozesse dieses Schritts (kein "git config --global"): spätere Schritte mit
-          # Fremdbibliotheken (npm ci, Build-Skripte) sehen das Token nicht. Danach baut cargo aus dem Zwischenspeicher.
-          # Kein Anmeldespeicher: der Windows-Runner legte das Token sonst im Credential-Manager ab (wie Desk, T1a N2-1).
-          $env:GIT_CONFIG_COUNT = '2'
-          $env:GIT_CONFIG_KEY_0 = 'url.https://x-access-token:' + $env:DAEDYX_READ_TOKEN + '@github.com/daedyx/.insteadOf'
-          $env:GIT_CONFIG_VALUE_0 = 'https://github.com/daedyx/'
-          $env:GIT_CONFIG_KEY_1 = 'credential.helper'
-          $env:GIT_CONFIG_VALUE_1 = ''
-          $env:CARGO_NET_GIT_FETCH_WITH_CLI = 'true'
-          cargo fetch --locked --manifest-path app/src-tauri/Cargo.toml
+          rustup toolchain install $env:RUST_VERSION --profile minimal
+          rustup default $env:RUST_VERSION
+
+      - name: Abhängigkeiten abrufen (öffentliche Quellen, nach Cargo.lock)
+        working-directory: app/src-tauri
+        run: |
+          cargo fetch --locked
           if ($LASTEXITCODE -ne 0) { throw "Abruf der Abhängigkeiten fehlgeschlagen" }
 
-      - name: Abhängigkeiten installieren
-        working-directory: app
-        run: npm ci
-
-      - name: Katalog-Werkzeug laden
-        run: scripts/ci/fetch-catalog-tool.ps1 -Destination "$env:RUNNER_TEMP/daedyx-catalog.exe"
-
-      - name: Bauen, prüfen, Setup und Update-Signatur erzeugen
-        env:
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-          VERSION: ${{ steps.input.outputs.version }}
-          NOTES_FILE: ${{ steps.input.outputs.notes_file }}
-          SKIP_TESTS: ${{ steps.input.outputs.skip_tests }}
+      - name: Tests (Vorschau und Produkt-Fassung)
+        working-directory: app/src-tauri
         run: |
-          $notes = Get-Content $env:NOTES_FILE -Raw
-          $base = "https://github.com/$env:RELEASES_REPO/releases/download/tasks-v$env:VERSION/"
-          $out = Join-Path $env:RUNNER_TEMP 'tasks-out'
-          $params = @{ Version = $env:VERSION; Notes = $notes; BaseUrl = $base; OutDir = $out; NoCatalog = $true }
-          if ($env:SKIP_TESTS -eq 'True' -or $env:SKIP_TESTS -eq 'true') { $params.SkipTests = $true }
-          ./scripts/release.ps1 @params
+          cargo test --workspace --locked --offline --no-fail-fast
+          if ($LASTEXITCODE -ne 0) { throw "Tests rot" }
+          cargo test -p daedyx-tasks-app --features produkt --locked --offline --no-fail-fast
+          if ($LASTEXITCODE -ne 0) { throw "Tests der Produkt-Fassung rot" }
 
-      - name: Trockenlauf – Setup als Download am Lauf bereitstellen
-        if: steps.input.outputs.dry_run == 'True' || steps.input.outputs.dry_run == 'true'
-        uses: actions/upload-artifact@v4
+      - name: Produkt-Fassung bauen
+        working-directory: app/src-tauri
+        run: |
+          cargo build --release --locked --offline -p daedyx-tasks-app --features produkt
+          if ($LASTEXITCODE -ne 0) { throw "Bau fehlgeschlagen" }
+
+      - name: Setup bauen
+        env:
+          VERSION: ${{ steps.eingaben.outputs.version }}
+        run: |
+          # Produkt-Setup und Programmname der Produkt-Fassung entstehen in T7 (Lücken L2 und L3 in docs/RELEASE.md).
+          $nsi = 'installer/tasks.nsi'
+          if (-not (Test-Path $nsi)) { throw "$nsi fehlt (Produkt-Setup kommt in T7)" }
+          . ./scripts/lib/vorlage-installer.ps1
+          $vorlage = Get-InstallerVorlage (Resolve-Path app/src-tauri) -Offline
+          $out = Join-Path $env:RUNNER_TEMP 'setup'
+          & (Join-Path $vorlage 'installer-bauen.ps1') -Workspace (Resolve-Path app/src-tauri) -Package daedyx-tasks-app `
+            -Exe daedyx-tasks.exe -Nsi (Resolve-Path $nsi) -Icon (Resolve-Path app/src-tauri/icons/icon.ico) `
+            -Version $env:VERSION -OutDir $out -SkipBuild -Offline
+          $setups = @(Get-ChildItem $out -Filter '*-setup.exe')
+          if ($setups.Count -ne 1) { throw "Genau ein Setup erwartet, gefunden: $($setups.Count)" }
+          New-Item -ItemType Directory -Force release-dateien | Out-Null
+          Copy-Item $setups[0].FullName "release-dateien/daedyx-tasks-$env:VERSION-setup.exe"
+
+      - name: entry.json schreiben
+        env:
+          VERSION: ${{ steps.eingaben.outputs.version }}
+          NOTES_FILE: ${{ steps.eingaben.outputs.notes_file }}
+        run: |
+          ./scripts/ci/make-entry.ps1 -App daedyx-tasks -Repo $env:GITHUB_REPOSITORY -Version $env:VERSION `
+            -Date (Get-Date).ToUniversalTime().ToString('yyyy-MM-dd') -NotesFile $env:NOTES_FILE `
+            -Setup "release-dateien/daedyx-tasks-$env:VERSION-setup.exe" -Out release-dateien/entry.json
+
+      - name: Nachweis erzeugen (Sigstore, ohne Schlüssel)
+        id: nachweis
+        # LÜCKE L1: volle Commit-ID der gewünschten Fassung eintragen (lag in der T7-Vorbereitung nicht vor). Mit lauter
+        # Nullen findet GitHub die Aktion nicht und bricht den Job vor dem ersten Schritt ab.
+        uses: actions/attest-build-provenance@0000000000000000000000000000000000000000 # LÜCKE L1
         with:
-          name: tasks-trockenlauf-${{ steps.input.outputs.version }}
-          path: ${{ runner.temp }}/tasks-out
-          retention-days: 3
+          subject-path: |
+            release-dateien/entry.json
+            release-dateien/daedyx-tasks-${{ steps.eingaben.outputs.version }}-setup.exe
 
-      - name: In daedyx/releases veröffentlichen
-        if: steps.input.outputs.dry_run != 'True' && steps.input.outputs.dry_run != 'true'
+      - name: Nachweis selbst prüfen und beilegen
         env:
-          RELEASES_TOKEN: ${{ secrets.RELEASES_TOKEN }}
-          DAEDYX_CATALOG_KEY: ${{ secrets.DAEDYX_CATALOG_KEY }}
-          DAEDYX_KEY_PASSWORD: ${{ secrets.DAEDYX_KEY_PASSWORD }}
-          VERSION: ${{ steps.input.outputs.version }}
-          NOTES_FILE: ${{ steps.input.outputs.notes_file }}
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.eingaben.outputs.version }}
+          BUNDLE: ${{ steps.nachweis.outputs.bundle-path }}
         run: |
-          ./scripts/ci/publish.ps1 -Version $env:VERSION `
-            -OutDir (Join-Path $env:RUNNER_TEMP 'tasks-out') `
-            -NotesFile $env:NOTES_FILE `
-            -PublicKey release/catalog.pub `
-            -CatalogTool (Join-Path $env:RUNNER_TEMP 'daedyx-catalog.exe') `
-            -ReleasesRepo $env:RELEASES_REPO
-
-      - name: Versionsdateien zurück in den Quellcode schreiben
-        if: github.event_name == 'workflow_dispatch' && steps.input.outputs.dry_run != 'True' && steps.input.outputs.dry_run != 'true'
-        env:
-          VERSION: ${{ steps.input.outputs.version }}
-          # Das Token gilt nur in diesem Schritt (nur Umgebungsvariablen, nichts wird gespeichert).
-          PUSH_TOKEN: ${{ github.token }}
-        run: |
-          git config user.name "daedyx release bot"
-          git config user.email "release-bot@users.noreply.github.com"
-          git add app/package.json app/src-tauri/Cargo.toml app/src-tauri/Cargo.lock app/src-tauri/tauri.conf.json
-          git diff --cached --quiet
-          if ($LASTEXITCODE -ne 0) {
-            git commit -m "chore: Version $env:VERSION"
-            $basic = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes("x-access-token:$env:PUSH_TOKEN"))
-            $env:GIT_CONFIG_COUNT = '1'
-            $env:GIT_CONFIG_KEY_0 = 'http.https://github.com/.extraheader'
-            $env:GIT_CONFIG_VALUE_0 = "AUTHORIZATION: basic $basic"
-            git push origin HEAD
+          Copy-Item $env:BUNDLE release-dateien/provenance.sigstore.json
+          foreach ($f in @('release-dateien/entry.json', "release-dateien/daedyx-tasks-$env:VERSION-setup.exe")) {
+            gh attestation verify $f --bundle release-dateien/provenance.sigstore.json --repo $env:GITHUB_REPOSITORY `
+              --signer-workflow "$env:GITHUB_REPOSITORY/.github/workflows/release.yml" --source-ref refs/heads/main `
+              --deny-self-hosted-runners
+            if ($LASTEXITCODE -ne 0) { throw "Nachweis für $f nicht gültig" }
           }
+
+      - name: Release anlegen (Setup, entry.json, Nachweis)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.eingaben.outputs.version }}
+          NOTES_FILE: ${{ steps.eingaben.outputs.notes_file }}
+        run: |
+          # Alle Dateien beim Anlegen, damit auch unveränderliche Releases gehen. --latest: die App holt latest/download.
+          gh release create "v$env:VERSION" "release-dateien/daedyx-tasks-$env:VERSION-setup.exe" release-dateien/entry.json release-dateien/provenance.sigstore.json --repo $env:GITHUB_REPOSITORY --target $env:GITHUB_SHA --title "Daedyx Tasks $env:VERSION" --notes-file $env:NOTES_FILE --latest
+          if ($LASTEXITCODE -ne 0) { throw "Release konnte nicht angelegt werden" }
