@@ -145,9 +145,10 @@ pub fn run(settings: Settings, args: Args) -> ExitCode {
             // Installationsprobe nur in der Vorschau (`probe.rs`); dann ohne Netz, sonst echte Update-Suche (U2).
             #[cfg(not(feature = "produkt"))]
             {
+                app.update_quiet = crate::probe::active();
                 app.update_probe = crate::probe::setup();
             }
-            if app.update_probe.is_none()
+            if !app.update_quiet
                 && let Some(dir) = paths::data_dir()
             {
                 app.updater = crate::update::start(&cc.egui_ctx, &dir);

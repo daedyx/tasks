@@ -78,3 +78,26 @@ Infobereich, Autostart in HKCU). Weiter kein Netz, keine Datei, kein Tresor.
   beim zweiten Start. Beides zusammen ist für T7 vorgemerkt (STAND); bis dahin offen wie in Desk.
 - Was Windows mit gezeigten Benachrichtigungen macht (Info-Center), liegt außerhalb der App; `--cleanup` entfernt
   die eigenen.
+
+## U2 Update in der App (2026-11-26)
+
+Neue Grenze: **Netz** zu GitHub (nur die Update-Suche, nur `https`, nur `github.com`, `objects.githubusercontent.com`,
+`release-assets.githubusercontent.com`), und die App startet ein **heruntergeladenes** Setup. Die Prüfung selbst
+(Nachweis, Eintrag, Version, Größe, SHA-256) gehört dem Kern `daedyx-update` (Review U1-R); hier geht es um den Weg in
+der App.
+
+| Nr. | Bedrohung | Gegenmaßnahme | Test |
+|---|---|---|---|
+| U2-1 | Setup startet ohne Zutun | Download und Start nur nach Klick auf „Jetzt aktualisieren“; automatisch wird nur gesucht (höchstens einmal am Tag, abschaltbar) | `neuere_version_wird_angeboten_aber_erst_nach_klick_geladen`, `automatische_suche_nur_wenn_an_und_faellig` (daedyx/ui) |
+| U2-2 | Weiterleitung auf einen fremden Rechner | Der Transport folgt keiner Weiterleitung selbst; der Kern prüft jeden Schritt gegen die Liste | `der_transport_folgt_keiner_weiterleitung_selbst` (daedyx/ui), Kern `fetch_tests` |
+| U2-3 | Datei wird zwischen Prüfung und Start getauscht | zweite Prüfsumme über einen Griff, der Schreiben, Umbenennen und Löschen bis zum Start sperrt | `a_held_setup_cannot_be_written_renamed_or_deleted`, `a_setup_that_changed_after_the_check_is_not_started` (daedyx/ui) |
+| U2-4 | Update verliert getippten Text | Entwurf wird vorher übernommen, sonst kein Update und die App bleibt offen | `ohne_gesicherten_entwurf_kein_update` |
+| U2-5 | App und Launcher aktualisieren gleichzeitig | gemeinsame Sperre `%LOCALAPPDATA%\daedyx\locks\<app>.lock` von der Suche bis zum Start des Setups | `belegte_sperre_meldet_update_laeuft_bereits`, `neuere_version…` (Sperre bis zum Start) |
+| U2-6 | Setup überschreibt ein laufendes Programm halb | Setup ruft `--quit-running` und wartet bis zu 10 s, bis die Datei frei ist, sonst Abbruch mit Meldung | `setup_wartet_auf_das_programmende_und_bricht_sonst_ab` (daedyx/ui), Installationsprobe |
+| U2-7 | Vorschau installiert ein Produkt-Release (oder umgekehrt) | App-Kennung im Eintrag ist der Tresor-Name der Fassung; ein fremder Eintrag wird abgelehnt | `quelle_und_kennung_stehen_fest` |
+| U2-8 | Prüfweg der Installationsprobe gerät in die Produkt-Fassung | Modul `probe` nur ohne Merkmal `produkt` (A-034, A-035); Programmtest am gebauten Produkt | `tests/kennung.rs` |
+| U2-9 | `--cleanup` der Vorschau lässt Update-Dateien liegen oder folgt einer Junction | nur `updates.json`, dessen Nebendateien und Setups/`.part`; Verknüpfungen werden nie betreten | `vorschau_entfernt_auch_update_zustand_und_setups` |
+
+**Nicht geschützt:** Ein Programm unter demselben Benutzer kann `updates.json` beschädigen (setzt `highest_seen`
+zurück) oder die Sperre belegen (dann kein Update). Wer so weit ist, hat ohnehin Benutzerrechte.
+**Ungeprüft:** der Weg mit einem echten Nachweis bis zur Installation (erst T7 mit der ersten Veröffentlichung).

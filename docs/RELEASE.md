@@ -2,6 +2,15 @@
 
 Stand: 2026-11-19, Paket K3. Der Workflow `.github/workflows/release.yml` ist **nur als Datei vorbereitet**. Er ist nie gelaufen, es gibt keine Secrets, nichts ist veröffentlicht. Schlüssel und Passwörter tippt Björn selbst; sie gehören nie in den Chat oder in Git.
 
+> **Update in der App (U2, 2026-11-26) – Regeln für T7:** Die App prüft Releases über den GitHub-Nachweis von
+> `.github/workflows/release.yml` auf `refs/heads/main` im Repo `daedyx/tasks` (feste Kennungen in
+> `crates/tasks-app/src/update.rs`). Der Workflow unten ist noch der alte Tauri-Ablauf (Tag-Auslöser, Schlüssel) und muss
+> in T7 ersetzt werden: nur `workflow_dispatch` bzw. `push` auf `main`, nur GitHub-Läufer, Freigabe im Environment,
+> `entry.json` und Setup im selben Nachweis (Review U1-R, N-U1-1). **Releases nie löschen, nur durch ein neueres
+> ersetzen:** Wer ein Release gesehen hat, bekommt sonst dauerhaft „Quelle liefert ältere Version, bitte melden“
+> (Review U1-R, H-U1-3). Die App-Kennung im Eintrag (`app`) ist `daedyx-tasks`; die Vorschau erwartet
+> `daedyx-tasks-vorschau` und lehnt Produkt-Einträge ab.
+
 ## 1. Update-Schlüssel für Tasks erzeugen (einmalig)
 PowerShell im Ordner `app` dieses Repositorys:
 

@@ -29,6 +29,8 @@ pub struct TasksApp {
     /// Installationsprobe der Vorschau (`probe.rs`): Setup, das beim nächsten Bild startet. Bleibt in der
     /// Produkt-Fassung immer leer.
     pub(crate) update_probe: Option<std::path::PathBuf>,
+    /// Umgebung einer Installationsprobe: keine echte Update-Suche (in der Produkt-Fassung immer `false`).
+    pub(crate) update_quiet: bool,
 }
 
 impl TasksApp {
@@ -46,6 +48,7 @@ impl TasksApp {
             shot: None,
             updater: daedyx_updater::Updater::disabled(),
             update_probe: None,
+            update_quiet: false,
         };
         // Liste und Board wechselt die Navigationsleiste; der Umschalter der Aufgaben-Oberfläche bleibt aus (T2-1).
         app.tasks.mode_switch = false;

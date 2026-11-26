@@ -17,6 +17,12 @@ pub fn setup_for(exe_dir: &Path, setup: Option<String>, from: Option<String>) ->
     (value.get("version")?.as_str()? == from).then(|| PathBuf::from(setup))
 }
 
+/// Läuft die App in der Umgebung einer Probe? Dann startet keine echte Update-Suche (kein Netz), auch nicht in der
+/// nach dem Update neu gestarteten App, für die [`setup`] nichts mehr liefert.
+pub fn active() -> bool {
+    std::env::var_os(SETUP_VAR).is_some_and(|v| !v.is_empty())
+}
+
 /// Setup der Probe aus der Umgebung und dem Ordner des laufenden Programms.
 pub fn setup() -> Option<PathBuf> {
     let exe = std::env::current_exe().ok()?;
