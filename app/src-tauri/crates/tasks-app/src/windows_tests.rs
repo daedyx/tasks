@@ -1,7 +1,7 @@
 //! Windows (T4, wie Desk M7b): Autostart nur unter einem Testschlüssel `HKCU\Software\DaedyxTasksVorschauTest\<pid>`
-//! (nie unter `...\Run`, danach gelöscht); Einzelinstanz über die Pipe mit dem Namensanfang der Vorschau und einem
-//! Test-Bereich je Prozess (stört keine laufende Vorschau). Nachrichten: nur `SHOW`/`QUIT` wirken.
-use crate::ids::{PIPE_PREFIX, RUN_VALUE};
+//! (nie unter `...\Run`, danach gelöscht); Einzelinstanz über die Pipe mit dem Namensanfang der Fassung und einem
+//! Test-Bereich je Prozess (stört keine laufende App). Nachrichten: nur `SHOW`/`QUIT` wirken.
+use crate::ids::{PIPE_PREFIX, PREVIEW, RUN_VALUE};
 use daedyx_background::autostart::{AutostartStore, RegistryStore, State};
 use daedyx_background::ids::pipe_name;
 use daedyx_background::instance::{self, Role};
@@ -60,7 +60,13 @@ fn events(rx: &std::sync::mpsc::Receiver<Event>, wait: Duration) -> Vec<Event> {
 fn zweiter_start_holt_das_fenster_und_unsinn_wirkt_nicht() {
     let rt = daedyx_background::start::runtime().unwrap();
     let name = pipe_name(PIPE_PREFIX, &format!("test-{}", std::process::id()));
-    assert!(name.contains("daedyx-tasks-vorschau-instanz-"));
+    // Name der übersetzten Fassung; der Test-Bereich je Prozess hält ihn fern von einer laufenden App.
+    let want = if PREVIEW {
+        "daedyx-tasks-vorschau-instanz-"
+    } else {
+        "daedyx-tasks-instanz-"
+    };
+    assert!(name.contains(want), "{name}");
     let Role::Primary(listener) = rt.block_on(async { instance::acquire(&name) }).unwrap() else {
         panic!("erster Start muss die Pipe bekommen");
     };

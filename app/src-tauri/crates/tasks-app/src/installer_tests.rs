@@ -1,6 +1,6 @@
 //! Setup der Vorschau (Tasks T6): Installer und Probe tragen dieselben Kennungen wie das Programm (`ids.rs`), nur die
 //! der Vorschau, und binden die gemeinsame Vorlage aus daedyx-build ein. Ein echter Lauf ist die Installationsprobe.
-use crate::ids::{APP_ID, RUN_VALUE};
+use crate::ids::{APP_ID, PREVIEW, RUN_VALUE};
 
 const NSI: &str = include_str!("../../../../../installer/tasks-vorschau.nsi");
 const BAUEN: &str = include_str!("../../../../../scripts/installer-vorschau.ps1");
@@ -33,6 +33,7 @@ fn installer_traegt_die_kennungen_der_vorschau() {
 }
 
 /// Der Ordner-Merkschlüssel der Vorlage folgt aus dem Produktnamen: `HKCU\Software\daedyx\Daedyx Tasks Vorschau`.
+/// Das Setup ist immer das der Vorschau; die Kennung prüft der Test für die Fassung, die gerade übersetzt ist.
 #[test]
 fn merkschluessel_der_vorschau_aus_der_vorlage() {
     let v = daedyx_build::installer::NSI;
@@ -41,7 +42,13 @@ fn merkschluessel_der_vorschau_aus_der_vorlage() {
         v.contains("RequestExecutionLevel user"),
         "nur pro Benutzer, keine Adminrechte"
     );
-    assert!(PRODUCT.ends_with(" Vorschau") && APP_ID.ends_with(".vorschau"));
+    assert!(PRODUCT.ends_with(" Vorschau"));
+    let want = if PREVIEW {
+        "de.daedyx.tasks.vorschau"
+    } else {
+        "de.daedyx.tasks"
+    };
+    assert_eq!(APP_ID, want);
 }
 
 /// Die Probe bricht vor jedem Schreiben ab, wenn die echte App installiert ist, und prüft sie danach unverändert.
