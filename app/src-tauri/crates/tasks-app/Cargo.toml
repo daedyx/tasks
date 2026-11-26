@@ -22,15 +22,15 @@ produkt = []
 # Gerüst, Aufgaben-Oberfläche und Hintergrund aus daedyx/ui. Bis zum nächsten ui-Tag per rev auf Zweig paket-u2
 # (Update U2, vorher Tag `ui-v0.1.5`); alle Teile aus daedyx/ui müssen dieselbe Fassung sein (auch daedyx-sys in der
 # Hülle).
-daedyx-ui = { git = "https://github.com/daedyx/ui", rev = "77b9a9eb861165f2b8b9bffd444a47cedb936d85" }
-daedyx-tasks-ui = { git = "https://github.com/daedyx/ui", rev = "77b9a9eb861165f2b8b9bffd444a47cedb936d85" }
+daedyx-ui = { git = "https://github.com/daedyx/ui", rev = "041c76868df3fb098991ff473f0296d79a9ab43d" }
+daedyx-tasks-ui = { git = "https://github.com/daedyx/ui", rev = "041c76868df3fb098991ff473f0296d79a9ab43d" }
 # Hintergrund (T4): Schließen versteckt, Takt, Benachrichtigung, Infobereich, Autostart, Einzelinstanz.
-daedyx-background = { git = "https://github.com/daedyx/ui", rev = "77b9a9eb861165f2b8b9bffd444a47cedb936d85" }
+daedyx-background = { git = "https://github.com/daedyx/ui", rev = "041c76868df3fb098991ff473f0296d79a9ab43d" }
 # Freier Platz vor der Sicherung (T5) und Startprobe mit Zeitgrenze in den Tests (Prozesse nur über daedyx-sys).
-daedyx-sys = { git = "https://github.com/daedyx/ui", rev = "77b9a9eb861165f2b8b9bffd444a47cedb936d85" }
+daedyx-sys = { git = "https://github.com/daedyx/ui", rev = "041c76868df3fb098991ff473f0296d79a9ab43d" }
 # Update in der App (U2): Suche, Download nach Klick, Setup-Start, Bauteil „Updates“; bringt den Kern `daedyx-update`
 # (Tag `daedyx-update-v0.1.0`) mit und gibt ihn als `daedyx_updater::daedyx_update` weiter.
-daedyx-updater = { git = "https://github.com/daedyx/ui", rev = "77b9a9eb861165f2b8b9bffd444a47cedb936d85" }
+daedyx-updater = { git = "https://github.com/daedyx/ui", rev = "041c76868df3fb098991ff473f0296d79a9ab43d" }
 # Kern-Schema für die Speicher-Datenbank der Vorschau, die Oberfläche und Takt teilen (T4).
 daedyx-tasks-core = { git = "https://github.com/daedyx/core", tag = "tasks-core-v0.2.3" }
 # Fehlercodes beim Start (StartupCode); die echte Datenbank öffnet die App erst ab T5.
@@ -44,17 +44,17 @@ iana-time-zone = "0.1"
 rusqlite = { version = "0.37", features = ["bundled-sqlcipher-vendored-openssl"] }
 
 [build-dependencies]
-daedyx-build = { git = "https://github.com/daedyx/ui", rev = "77b9a9eb861165f2b8b9bffd444a47cedb936d85" }
+daedyx-build = { git = "https://github.com/daedyx/ui", rev = "041c76868df3fb098991ff473f0296d79a9ab43d" }
 
 [dev-dependencies]
 egui_kittest = "=0.37.0"
 # MemoryStore und Wegwerf-Ordner für die Daten-Tests (T5); nie im Programm.
 daedyx-tasks-store = { path = "../tasks-store", features = ["test-support"] }
 # Installer-Vorlage als Text für die Tests der Setup-Kennungen (T6); dieselbe Fassung wie die Bau-Abhängigkeit.
-daedyx-build = { git = "https://github.com/daedyx/ui", rev = "77b9a9eb861165f2b8b9bffd444a47cedb936d85" }
-daedyx-ui = { git = "https://github.com/daedyx/ui", rev = "77b9a9eb861165f2b8b9bffd444a47cedb936d85", features = ["lint"] }
-daedyx-tasks-ui = { git = "https://github.com/daedyx/ui", rev = "77b9a9eb861165f2b8b9bffd444a47cedb936d85", features = ["lint"] }
-daedyx-updater = { git = "https://github.com/daedyx/ui", rev = "77b9a9eb861165f2b8b9bffd444a47cedb936d85", features = ["lint"] }
+daedyx-build = { git = "https://github.com/daedyx/ui", rev = "041c76868df3fb098991ff473f0296d79a9ab43d" }
+daedyx-ui = { git = "https://github.com/daedyx/ui", rev = "041c76868df3fb098991ff473f0296d79a9ab43d", features = ["lint"] }
+daedyx-tasks-ui = { git = "https://github.com/daedyx/ui", rev = "041c76868df3fb098991ff473f0296d79a9ab43d", features = ["lint"] }
+daedyx-updater = { git = "https://github.com/daedyx/ui", rev = "041c76868df3fb098991ff473f0296d79a9ab43d", features = ["lint"] }
 
 [target.'cfg(windows)'.dev-dependencies]
 # Autostart-Test unter einem eigenen Testschlüssel (T4); dieselbe Fassung wie in daedyx-background.
