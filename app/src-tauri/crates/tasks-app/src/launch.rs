@@ -142,6 +142,16 @@ pub fn run(settings: Settings, args: Args) -> ExitCode {
             let db = Some(Arc::clone(&opened.db));
             let mut app = TasksApp::new(&settings, Some(store)).with_shot(Shot::from_env());
             app.load_prefs(&cc.egui_ctx, Arc::clone(&opened.db), &settings);
+            // Installationsprobe nur in der Vorschau (`probe.rs`); dann ohne Netz, sonst echte Update-Suche (U2).
+            #[cfg(not(feature = "produkt"))]
+            {
+                app.update_probe = crate::probe::setup();
+            }
+            if app.update_probe.is_none()
+                && let Some(dir) = paths::data_dir()
+            {
+                app.updater = crate::update::start(&cc.egui_ctx, &dir);
+            }
             let sink = app.bg.sink.clone();
             sink.attach(&cc.egui_ctx);
             app.bg.notifier = Arc::new(WinToast {

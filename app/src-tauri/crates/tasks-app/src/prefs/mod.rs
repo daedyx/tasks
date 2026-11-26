@@ -1,5 +1,5 @@
-//! Einstellungen: Darstellung (mit Feinstellung des Dunkelmodus), Start und Hintergrund, Über (Version und
-//! Lizenzen; Updates kommen mit der gemeinsamen Update-Bibliothek U1, nicht in T4). Schmale Spalte (höchstens 620 px),
+//! Einstellungen: Darstellung (mit Feinstellung des Dunkelmodus), Start und Hintergrund, Updates (U2, Bauteil aus
+//! `daedyx-updater`), Über (Version und Lizenzen). Schmale Spalte (höchstens 620 px),
 //! Zeilen „Titel links, Bedienelement rechts“ (Stil 1).
 mod about;
 mod background;
@@ -7,6 +7,7 @@ mod dark;
 pub(crate) mod license_texts;
 pub(crate) mod licenses;
 mod look;
+mod updates;
 
 use crate::app::TasksApp;
 use daedyx_ui::a11y::{mark_heading, named_scope};
@@ -70,6 +71,8 @@ pub fn show(ui: &mut Ui, app: &mut TasksApp) {
                     dark::show(ui, app);
                     ui.add_space(gap);
                     background::show(ui, app);
+                    ui.add_space(gap);
+                    updates::show(ui, app);
                     ui.add_space(gap);
                     about::show(ui, app);
                 });

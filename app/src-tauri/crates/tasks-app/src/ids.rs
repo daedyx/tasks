@@ -28,6 +28,10 @@ pub const VAULT: &str = names::VAULT;
 /// Vorschau-Fassung? Nur dann entfernt `--cleanup` auch Daten und Tresor-Eintrag (Master-Entscheid T5-1).
 pub const PREVIEW: bool = names::PREVIEW;
 
+/// Kennung der App im Update-Eintrag (`entry.json`, Feld `app`) und in Datei- und Sperrnamen des Updates (U2):
+/// der Tresor-Name, also `daedyx-tasks-vorschau` bzw. `daedyx-tasks`. Ein Eintrag der anderen Fassung wird abgelehnt.
+pub const UPDATE_APP: &str = VAULT;
+
 /// Name des Autostart-Werts unter `HKCU\...\Run` (T4).
 pub const RUN_VALUE: &str = names::RUN_VALUE;
 /// Anfang des Pipe-Namens der Einzelinstanz (dahinter ein Hash des Benutzers, T4).

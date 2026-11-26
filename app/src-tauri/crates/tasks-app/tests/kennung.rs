@@ -25,6 +25,8 @@ fn programm_traegt_nur_die_namen_seiner_fassung() {
         preview_id(&bytes);
         preview_vault(&bytes);
         preview_background(&bytes);
+        // Installationsprobe des Updates (U2): Gegenprobe zur Produkt-Fassung, die sie nicht enthält.
+        assert!(!hits(&bytes, b"DAEDYX_UPDATE_PROBE").is_empty());
     }
 }
 
@@ -135,4 +137,6 @@ fn product(bytes: &[u8]) {
     // Pipe der Produkt-Fassung (Review T4, H4-3), keine der Vorschau.
     assert!(!hits(bytes, b"daedyx-tasks-instanz").is_empty());
     assert!(hits(bytes, b"daedyx-tasks-vorschau-instanz").is_empty());
+    // Installationsprobe des Updates (U2, ohne Nachweis) gibt es nur in der Vorschau.
+    assert!(hits(bytes, b"DAEDYX_UPDATE_PROBE").is_empty());
 }

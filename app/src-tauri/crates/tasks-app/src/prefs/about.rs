@@ -1,6 +1,7 @@
 //! Über: Version, eigene Lizenz und die Liste aller mitgebauten Bibliotheken mit Filter; ein gewählter Eintrag zeigt
 //! Urheber und vollständigen Lizenztext (wie Desk, Tasks T6). Dieselben Texte liefert der Installer als `Lizenzen.txt`.
-//! Updates kommen mit der gemeinsamen Update-Bibliothek (U1). Filter und Auswahl liegen nur im Speicher der Oberfläche.
+//! Updates stehen im eigenen Abschnitt darüber (`updates.rs`, U2). Filter und Auswahl liegen nur im Speicher der
+//! Oberfläche.
 use super::license_texts::{TEXTS, full_text};
 use super::licenses::{licenses, matches};
 use super::{heading, hint};

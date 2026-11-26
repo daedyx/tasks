@@ -35,6 +35,16 @@ pub fn data_dir() -> Option<DataDir> {
     data_dir_in(&data_base()?)
 }
 
+/// Lokaler Datenordner des Benutzers für die gemeinsame Update-Sperre mit dem Launcher (`%LOCALAPPDATA%`; macOS wie
+/// `data_base`). Hier wird nichts angelegt; die Sperre liegt darunter in `daedyx\locks`.
+pub fn local_base() -> Option<PathBuf> {
+    if cfg!(target_os = "macos") {
+        data_base()
+    } else {
+        std::env::var_os("LOCALAPPDATA").map(PathBuf::from)
+    }
+}
+
 /// Basisordner der Datenordner (`%APPDATA%`, macOS `~/Library/Application Support`), ohne etwas anzulegen.
 pub fn data_base() -> Option<PathBuf> {
     if cfg!(target_os = "macos") {

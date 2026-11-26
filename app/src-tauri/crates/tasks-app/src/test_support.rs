@@ -47,7 +47,8 @@ pub fn checksum(path: &std::path::Path) -> u64 {
         })
 }
 
-/// Plan 4.5: Im Datenordner liegen nur `daedyx-tasks.db`, `-wal`, `-shm` und `backups\` mit Sicherungen.
+/// Plan 4.5: Im Datenordner liegen nur `daedyx-tasks.db`, `-wal`, `-shm` und `backups\` mit Sicherungen, seit U2 dazu
+/// `updates.json` und `updates\`.
 pub fn allowed_files_only(dir: &crate::paths::DataDir) {
     for entry in std::fs::read_dir(dir.path()).unwrap() {
         let entry = entry.unwrap();
@@ -57,6 +58,9 @@ pub fn allowed_files_only(dir: &crate::paths::DataDir) {
                 entry.path().is_file()
             }
             "backups" => entry.path().is_dir(),
+            // Update U2: Zustand und Ordner für geladene Setups (`daedyx-updater`).
+            "updates.json" => entry.path().is_file(),
+            "updates" => entry.path().is_dir(),
             _ => false,
         };
         assert!(ok, "{name}");

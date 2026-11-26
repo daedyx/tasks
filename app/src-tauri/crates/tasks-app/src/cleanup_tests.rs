@@ -64,6 +64,47 @@ fn fremde_datei_bleibt_und_meldet_unvollstaendig() {
     );
 }
 
+/// Update U2: Zustand `updates.json`, eine liegen gebliebene Nebendatei und geladene Setups gehören zur Vorschau und
+/// gehen mit; eine fremde Datei im Update-Ordner bleibt (dann bleibt auch der Ordner).
+#[test]
+fn vorschau_entfernt_auch_update_zustand_und_setups() {
+    let (base, vault) = filled("u2-cleanup");
+    let dir = data_dir_path(&base);
+    let updates = dir.join(crate::update::UPDATE_DIR);
+    std::fs::create_dir_all(&updates).unwrap();
+    std::fs::write(dir.join("updates.json"), b"{}").unwrap();
+    std::fs::write(dir.join("updates.json.4711.tmp"), b"{}").unwrap();
+    std::fs::write(updates.join("daedyx-tasks-vorschau-0.2.1-setup.exe"), b"x").unwrap();
+    std::fs::write(
+        updates.join("daedyx-tasks-vorschau-0.2.2-setup.exe.part"),
+        b"x",
+    )
+    .unwrap();
+    assert!(remove_data(&base, &vault, true));
+    assert!(!dir.exists());
+
+    let (base, vault) = filled("u2-cleanup-fremd");
+    let updates = data_dir_path(&base).join(crate::update::UPDATE_DIR);
+    std::fs::create_dir_all(&updates).unwrap();
+    std::fs::write(updates.join("notiz.txt"), b"bleibt").unwrap();
+    assert!(!remove_data(&base, &vault, true));
+    assert_eq!(std::fs::read(updates.join("notiz.txt")).unwrap(), b"bleibt");
+}
+
+/// Der Update-Ordner im Code von `daedyx-updater` und hier sind derselbe.
+#[test]
+fn update_ordner_wie_im_updater() {
+    let base = tmp("u2-ordner");
+    let dir = data_dir_in(&base).unwrap();
+    let c = crate::update::config(&dir, &base).unwrap();
+    assert_eq!(c.update_dir, dir.path().join(crate::update::UPDATE_DIR));
+    assert_eq!(c.data_dir, dir.path());
+    assert!(
+        c.lock_dir.starts_with(&*base),
+        "Sperre im lokalen Ordner, nicht im Datenordner"
+    );
+}
+
 #[test]
 fn ohne_daten_ist_nichts_zu_tun() {
     let base = tmp("t5-cleanup-leer");

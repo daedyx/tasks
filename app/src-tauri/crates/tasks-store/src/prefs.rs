@@ -9,11 +9,10 @@ pub const LANGUAGE: &str = "app.language";
 pub const KEEP_RUNNING: &str = "app.keep_running";
 pub const NOTIFY_TITLES: &str = "app.notify_titles";
 pub const DARK_TUNING: &str = "app.dark_tuning";
-pub const UPDATES_AUTO: &str = "app.updates_auto";
-pub const UPDATES_LAST: &str = "app.updates_last";
 
-/// Feste Schlüssel (Plan 4.4). `app.updates_*` lässt erst U1 nutzen, die Schlüssel sind aber schon erlaubt.
-pub const KEYS: [&str; 7] = [THEME, LANGUAGE, KEEP_RUNNING, NOTIFY_TITLES, DARK_TUNING, UPDATES_AUTO, UPDATES_LAST];
+/// Feste Schlüssel (Plan 4.4). Den Update-Zustand (Schalter, letzte Suche) führt seit U2 `updates.json` im
+/// Datenordner (`daedyx-update`, gemeinsam mit dem Launcher), nicht `task_meta`.
+pub const KEYS: [&str; 5] = [THEME, LANGUAGE, KEEP_RUNNING, NOTIFY_TITLES, DARK_TUNING];
 /// Board-Modus je Liste: `app.board_mode.<Listen-Kennung>`.
 pub const BOARD_MODE: &str = "app.board_mode.";
 /// Längster erlaubter Wert in Zeichen; mehr ist kein gültiger Wert dieser Einstellungen.

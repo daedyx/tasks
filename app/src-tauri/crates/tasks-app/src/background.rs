@@ -11,6 +11,14 @@ impl TasksApp {
     /// Läuft vor jedem Bild und bei verstecktem Fenster allein (`eframe::App::logic`).
     pub fn logic(&mut self, ctx: &Context) {
         self.save_prefs(ctx);
+        // Update (U2): Meldungen holen; ein geprüftes Setup startet und beendet die App wie „Beenden“.
+        self.updater.poll();
+        if let Some(prepared) = self.updater.take_ready() {
+            self.install_update(prepared);
+        }
+        if let Some(setup) = self.update_probe.take() {
+            self.run_update_probe(setup);
+        }
         // Bildschirmfoto-Modus: Das Foto schließt das Fenster; das soll wirklich beenden, nicht verstecken.
         if self.has_shot() {
             self.bg.window.quitting = true;

@@ -24,6 +24,18 @@ fn erlaubte_schluessel_lassen_sich_schreiben_lesen_und_entfernen() {
     assert_eq!(board_modes(&c), [("0123abcd".to_string(), "board".to_string())]);
 }
 
+/// Update U2: Schalter und letzte Suche liegen in `updates.json` des Datenordners (gemeinsam mit dem Launcher, unter
+/// dessen Sperre), nicht in `task_meta`. Die vorbereiteten Schlüssel `app.updates_*` sind deshalb nicht mehr erlaubt.
+#[test]
+fn update_zustand_liegt_nicht_in_task_meta() {
+    let c = conn();
+    assert_eq!(KEYS.len(), 5);
+    for key in ["app.updates_auto", "app.updates_last"] {
+        assert!(!KEYS.contains(&key));
+        assert_eq!(set(&c, key, "1"), Err(PrefsError::Key), "{key}");
+    }
+}
+
 #[test]
 fn schluessel_des_kerns_und_fremde_bleiben_unerreichbar() {
     let c = conn();

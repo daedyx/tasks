@@ -11,6 +11,8 @@ pub mod launch;
 pub mod page;
 pub mod paths;
 mod prefs;
+#[cfg(not(feature = "produkt"))]
+pub mod probe;
 pub mod reminders;
 pub mod seed;
 pub mod settings;
@@ -19,6 +21,7 @@ pub mod startfehler;
 mod status;
 pub mod stored;
 pub mod texts;
+pub mod update;
 
 #[cfg(test)]
 mod app_tests;
@@ -46,5 +49,9 @@ mod stored_tests;
 mod t4_ui_tests;
 #[cfg(test)]
 mod test_support;
+#[cfg(test)]
+mod update_tests;
+#[cfg(test)]
+mod update_ui_tests;
 #[cfg(all(test, windows))]
 mod windows_tests;
