@@ -77,8 +77,10 @@ pub fn run(settings: Settings, args: Args) -> ExitCode {
     if args.cleanup {
         // Vorschau: auch Datenordner und Tresor-Eintrag; Produkt: Nutzerdaten bleiben immer (T5-1).
         let data = !ids::PREVIEW
-            || paths::data_base()
-                .is_none_or(|b| cleanup::remove_data(&b, &ids::vault(), ids::PREVIEW));
+            || paths::data_base().is_none_or(|b| {
+                let local = paths::local_base();
+                cleanup::remove_data(&b, local.as_deref(), &ids::vault(), ids::PREVIEW)
+            });
         let background = bg::cleanup(&BACKGROUND);
         return if data {
             background
@@ -145,10 +147,9 @@ pub fn run(settings: Settings, args: Args) -> ExitCode {
             // Installationsprobe nur in der Vorschau (`probe.rs`); dann ohne Netz, sonst echte Update-Suche (U2).
             #[cfg(not(feature = "produkt"))]
             {
-                app.update_quiet = crate::probe::active();
-                app.update_probe = crate::probe::setup();
+                app.probe = crate::probe::Probe::from_env();
             }
-            if !app.update_quiet
+            if !app.probe.quiet()
                 && let Some(dir) = paths::data_dir()
             {
                 app.updater = crate::update::start(&cc.egui_ctx, &dir);

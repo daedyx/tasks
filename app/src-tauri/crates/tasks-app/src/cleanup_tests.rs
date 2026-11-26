@@ -32,7 +32,7 @@ fn filled(name: &str) -> (daedyx_tasks_store::test_support::TestDir, MemoryStore
 fn vorschau_entfernt_ordner_und_schluessel() {
     let (base, vault) = filled("t5-cleanup");
     assert!(vault.get(KEY_NAME).unwrap().is_some());
-    assert!(remove_data(&base, &vault, true));
+    assert!(remove_data(&base, None, &vault, true));
     assert!(!data_dir_path(&base).exists());
     assert_eq!(vault.get(KEY_NAME).unwrap(), None);
     assert!(base.exists(), "nur der eigene Ordner, nicht die Basis");
@@ -43,7 +43,7 @@ fn produkt_laesst_nutzerdaten_immer_stehen() {
     let (base, vault) = filled("t5-cleanup-produkt");
     let db = data_dir_path(&base).join(daedyx_tasks_store::db::DB_FILE);
     let before = std::fs::read(&db).unwrap();
-    assert!(remove_data(&base, &vault, false));
+    assert!(remove_data(&base, None, &vault, false));
     assert_eq!(std::fs::read(&db).unwrap(), before);
     assert!(vault.get(KEY_NAME).unwrap().is_some());
 }
@@ -52,7 +52,7 @@ fn produkt_laesst_nutzerdaten_immer_stehen() {
 fn fremde_datei_bleibt_und_meldet_unvollstaendig() {
     let (base, vault) = filled("t5-cleanup-fremd");
     std::fs::write(data_dir_path(&base).join("notiz.txt"), b"bleibt").unwrap();
-    assert!(!remove_data(&base, &vault, true));
+    assert!(!remove_data(&base, None, &vault, true));
     assert_eq!(
         std::fs::read(data_dir_path(&base).join("notiz.txt")).unwrap(),
         b"bleibt"
@@ -64,13 +64,14 @@ fn fremde_datei_bleibt_und_meldet_unvollstaendig() {
     );
 }
 
-/// Update U2: Zustand `updates.json`, eine liegen gebliebene Nebendatei und geladene Setups gehören zur Vorschau und
-/// gehen mit; eine fremde Datei im Update-Ordner bleibt (dann bleibt auch der Ordner).
+/// Update U2: Zustand `updates.json`, eine liegen gebliebene Nebendatei und geladene Setups (lokal, Review U2-R
+/// N-U2-4) gehören zur Vorschau und gehen mit; eine fremde Datei im Update-Ordner bleibt (dann bleibt auch der Ordner).
 #[test]
 fn vorschau_entfernt_auch_update_zustand_und_setups() {
     let (base, vault) = filled("u2-cleanup");
+    let local = base.join("lokal");
     let dir = data_dir_path(&base);
-    let updates = dir.join(crate::update::UPDATE_DIR);
+    let updates = local_updates(&local);
     std::fs::create_dir_all(&updates).unwrap();
     std::fs::write(dir.join("updates.json"), b"{}").unwrap();
     std::fs::write(dir.join("updates.json.4711.tmp"), b"{}").unwrap();
@@ -80,27 +81,36 @@ fn vorschau_entfernt_auch_update_zustand_und_setups() {
         b"x",
     )
     .unwrap();
-    assert!(remove_data(&base, &vault, true));
+    assert!(remove_data(&base, Some(&local), &vault, true));
     assert!(!dir.exists());
+    assert!(
+        !data_dir_path(&local).exists(),
+        "lokaler Ordner der Vorschau weg"
+    );
+    assert!(local.exists(), "der lokale Basisordner selbst bleibt");
 
     let (base, vault) = filled("u2-cleanup-fremd");
-    let updates = data_dir_path(&base).join(crate::update::UPDATE_DIR);
+    let local = base.join("lokal");
+    let updates = local_updates(&local);
     std::fs::create_dir_all(&updates).unwrap();
     std::fs::write(updates.join("notiz.txt"), b"bleibt").unwrap();
-    assert!(!remove_data(&base, &vault, true));
+    assert!(!remove_data(&base, Some(&local), &vault, true));
     assert_eq!(std::fs::read(updates.join("notiz.txt")).unwrap(), b"bleibt");
 }
 
-/// Der Update-Ordner im Code von `daedyx-updater` und hier sind derselbe.
+/// Der Update-Ordner im Code von `daedyx-updater` und hier sind derselbe: lokal (`%LOCALAPPDATA%\<Kennung>\updates`),
+/// nicht im mitwandernden Datenordner (Review U2-R N-U2-4).
 #[test]
 fn update_ordner_wie_im_updater() {
     let base = tmp("u2-ordner");
-    let dir = data_dir_in(&base).unwrap();
-    let c = crate::update::config(&dir, &base).unwrap();
-    assert_eq!(c.update_dir, dir.path().join(crate::update::UPDATE_DIR));
+    let local = base.join("lokal");
+    let dir = data_dir_in(&base.join("roaming")).unwrap();
+    let c = crate::update::config(&dir, &local).unwrap();
+    assert_eq!(c.update_dir, local_updates(&local));
+    assert!(!c.update_dir.starts_with(dir.path()));
     assert_eq!(c.data_dir, dir.path());
     assert!(
-        c.lock_dir.starts_with(&*base),
+        c.lock_dir.starts_with(&local),
         "Sperre im lokalen Ordner, nicht im Datenordner"
     );
 }
@@ -108,7 +118,7 @@ fn update_ordner_wie_im_updater() {
 #[test]
 fn ohne_daten_ist_nichts_zu_tun() {
     let base = tmp("t5-cleanup-leer");
-    assert!(remove_data(&base, &MemoryStore::default(), true));
+    assert!(remove_data(&base, None, &MemoryStore::default(), true));
     assert!(!data_dir_path(&base).exists());
 }
 
@@ -136,7 +146,7 @@ fn junction_als_datenordner_wird_nie_betreten() {
     assert_eq!(made, RunEnd::Exited(Some(0)));
     let vault = MemoryStore::default();
     vault.set(KEY_NAME, "schluessel-bleibt").unwrap();
-    assert!(!remove_data(&base, &vault, true));
+    assert!(!remove_data(&base, None, &vault, true));
     assert_eq!(
         std::fs::read(target.join(daedyx_tasks_store::db::DB_FILE)).unwrap(),
         b"bleibt"
@@ -148,4 +158,8 @@ fn junction_als_datenordner_wird_nie_betreten() {
 
 fn data_dir_path(base: &Path) -> std::path::PathBuf {
     base.join(crate::ids::APP_ID)
+}
+
+fn local_updates(local: &Path) -> std::path::PathBuf {
+    data_dir_path(local).join(crate::update::UPDATE_DIR)
 }

@@ -1,7 +1,7 @@
 //! `--cleanup` für Daten und Tresor (Master-Entscheid T5-1). Nur die **Vorschau** entfernt ihren Datenordner
 //! (`<Basis>\<Kennung aus ids.rs>`) und ihren Tresor-Eintrag `db-key`; die Produkt-Fassung lässt Nutzerdaten immer
 //! stehen. Gelöscht werden nur bekannte Dateien (`daedyx_tasks_store::db::remove_files`, dazu seit U2 der
-//! Update-Zustand `updates.json` und geladene Setups in `updates\`), nie über eine Junction. Der Schlüssel geht erst,
+//! Update-Zustand `updates.json` und geladene Setups in `<lokal>\<Kennung>\updates\`), nie über eine Junction. Der Schlüssel geht erst,
 //! wenn die Datenbank-Datei weg ist, damit nie eine Datei ohne ihren Schlüssel übrig bleibt.
 use crate::ids::APP_ID;
 use crate::update::UPDATE_DIR;
@@ -34,22 +34,46 @@ fn remove_update_files(dir: &Path) {
             }
         }
     }
-    let updates = dir.join(UPDATE_DIR);
-    if !is_link(&updates) {
-        let _ = clean_leftovers(&updates);
-        let _ = std::fs::remove_dir(&updates);
+    remove_setups(&dir.join(UPDATE_DIR));
+}
+
+/// Geladene Setups und ihr Ordner (nur bekannte Dateien, keine Verknüpfung).
+fn remove_setups(updates: &Path) {
+    if !is_link(updates) {
+        let _ = clean_leftovers(updates);
+        let _ = std::fs::remove_dir(updates);
     }
 }
 
+/// Lokaler Ordner der Vorschau (`<lokal>\<Kennung>`, Review U2-R N-U2-4): nur die Setups, dann der leere Ordner.
+/// `true`, wenn nichts davon übrig ist.
+fn remove_local(local: &Path) -> bool {
+    let dir = local.join(APP_ID);
+    if is_link(&dir) {
+        return false;
+    }
+    remove_setups(&dir.join(UPDATE_DIR));
+    let _ = std::fs::remove_dir(&dir);
+    !dir.exists()
+}
+
 /// `true`, wenn nichts von den Daten übrig ist (oder es eine Produkt-Fassung ist, die nichts entfernt).
-pub fn remove_data(base: &Path, secrets: &dyn SecretStore, preview: bool) -> bool {
+/// `local` ist der lokale Basisordner (`%LOCALAPPDATA%`) mit den geladenen Setups.
+pub fn remove_data(
+    base: &Path,
+    local: Option<&Path>,
+    secrets: &dyn SecretStore,
+    preview: bool,
+) -> bool {
     if !preview {
         return true;
     }
     let dir = base.join(APP_ID);
     remove_update_files(&dir);
+    let local_ok = local.is_none_or(remove_local);
     if !remove_files(&dir) {
         return false;
     }
-    secrets.delete(KEY_NAME).is_ok() && !dir.exists()
+    let key = secrets.delete(KEY_NAME).is_ok();
+    local_ok && key && !dir.exists()
 }

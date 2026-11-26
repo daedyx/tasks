@@ -16,9 +16,7 @@ impl TasksApp {
         if let Some(prepared) = self.updater.take_ready() {
             self.install_update(prepared);
         }
-        if let Some(setup) = self.update_probe.take() {
-            self.run_update_probe(setup);
-        }
+        self.run_update_probe();
         // Bildschirmfoto-Modus: Das Foto schließt das Fenster; das soll wirklich beenden, nicht verstecken.
         if self.has_shot() {
             self.bg.window.quitting = true;

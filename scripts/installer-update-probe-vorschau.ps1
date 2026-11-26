@@ -23,6 +23,8 @@ $aumidKey = "HKCU:\Software\Classes\AppUserModelId\de.daedyx.tasks.vorschau"
 $runKey = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run"
 $lnk = Join-Path ([Environment]::GetFolderPath("Programs")) "$product.lnk"
 $dataDir = Join-Path $env:APPDATA "de.daedyx.tasks.vorschau"
+# Lokaler Ordner der Vorschau: geladene Setups (Review U2-R N-U2-4).
+$localDir = Join-Path $env:LOCALAPPDATA "de.daedyx.tasks.vorschau"
 $realData = Join-Path $env:APPDATA "de.daedyx.tasks"
 $realUninst = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\Daedyx Tasks"
 $realDirKey = "HKCU:\Software\daedyx\Daedyx Tasks"
@@ -75,7 +77,8 @@ if ((Test-Path $realUninst) -or ($realDir -and (Test-Path -LiteralPath $realDir)
     'Abbruch: Die echte App "Daedyx Tasks" ist installiert oder hat einen Datenordner (nichts verändert).'; exit 2
 }
 if ((Test-Path $uninstKey) -or (Test-Path $dirKey) -or (Test-Path $aumidKey) -or (Test-Path $lnk) -or
-    ($null -ne (Get-ItemProperty $runKey -Name "DaedyxTasksVorschau" -ErrorAction SilentlyContinue)) -or (Test-Path $dataDir)) {
+    ($null -ne (Get-ItemProperty $runKey -Name "DaedyxTasksVorschau" -ErrorAction SilentlyContinue)) -or (Test-Path $dataDir) -or
+    (Test-Path $localDir)) {
     'Abbruch: Die Vorschau ist schon installiert oder hat Daten. Die Probe fasst sie nicht an (nichts verändert).'; exit 2
 }
 if (-not (Test-Path $Setup1) -or -not (Test-Path $Setup2) -or $From -eq $To) { "Abbruch: Setups fehlen oder gleiche Version."; exit 2 }
@@ -123,6 +126,7 @@ Start-Sleep -Seconds 3
 Check "C Ordner entfernt" (-not (Test-Path $Dir))
 Check "C Uninstall-Eintrag, Merkschlüssel, App-Kennung, Verknüpfung entfernt" (-not ((Test-Path $uninstKey) -or (Test-Path $dirKey) -or (Test-Path $aumidKey) -or (Test-Path $lnk)))
 Check "C Datenordner der Vorschau entfernt (--cleanup)" (-not (Test-Path $dataDir))
+Check "C lokaler Ordner der Vorschau (Setups) fehlt" (-not (Test-Path $localDir))
 Check "C Tresor-Eintrag der Vorschau entfernt (nur Name geprüft)" (-not ((cmdkey /list) -match "db-key\.daedyx-tasks-vorschau"))
 Check "C keine Prozesse" ((Procs).Count -eq 0)
 Check "C echte App unverändert (nur gelesen)" ((RealState) -eq $realBefore)

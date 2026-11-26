@@ -13,6 +13,9 @@ pub mod paths;
 mod prefs;
 #[cfg(not(feature = "produkt"))]
 pub mod probe;
+#[cfg(feature = "produkt")]
+#[path = "probe_off.rs"]
+pub mod probe;
 pub mod reminders;
 pub mod seed;
 pub mod settings;
@@ -49,6 +52,8 @@ mod stored_tests;
 mod t4_ui_tests;
 #[cfg(test)]
 mod test_support;
+#[cfg(test)]
+mod update_net_tests;
 #[cfg(test)]
 mod update_tests;
 #[cfg(test)]

@@ -101,3 +101,13 @@ fn scan_rows_allow_one_rule_in_one_file_until_they_expire() {
     let p = check(&[], &e, "2026-11-24");
     assert_eq!(p.len(), 1, "{p:?}");
 }
+
+#[test]
+fn register_rows_need_no_code_site_but_a_valid_date() {
+    // Ausnahme vom Plan ohne eigene Code-Stelle (U-A4: Tasks hat Netz für die Update-Suche, Review U2-R N-U2-5).
+    let ok =
+        entry("app/src-tauri/crates/tasks-app/Cargo.toml", "register:netz-update (U-A4)", "2026-11-26", "2027-05-31");
+    assert!(check(&[], &[ok], "2026-11-26").is_empty());
+    let old = entry("app/src-tauri/crates/tasks-app/Cargo.toml", "register:netz-update", "2025-11-23", "2026-01-01");
+    assert!(check(&[], &[old], "2026-11-26").iter().any(|m| m.contains("abgelaufen")));
+}

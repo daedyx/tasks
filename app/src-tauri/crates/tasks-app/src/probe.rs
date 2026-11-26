@@ -3,7 +3,12 @@
 //! dann dieses Setup wie ein geprüftes Update (`/P /UPDATE /R`, versteckt mit `/ARGS --hidden`) und beendet sich. Den
 //! Nachweis braucht die Probe nicht, sie prüft nur Start, Ende und Installer. Damit die neu gestartete App (gleiche
 //! Umgebung) nicht noch einmal startet, gilt es nur, solange `app.json` neben dem Programm genau die Ausgangsversion
-//! nennt. Die Produkt-Fassung enthält diese Datei nicht (Ausnahme in `docs/SICHERHEIT-AUSNAHMEN.md`).
+//! nennt. Die Produkt-Fassung enthält diese Datei nicht, dort steht `probe_off.rs` (Ausnahme A-034 in
+//! `docs/SICHERHEIT-AUSNAHMEN.md`).
+use crate::app::TasksApp;
+use daedyx_sys::StartError;
+use daedyx_updater::Status;
+use daedyx_updater::install::{Starter, setup_args};
 use std::path::{Path, PathBuf};
 
 pub const SETUP_VAR: &str = "DAEDYX_UPDATE_PROBE";
@@ -31,6 +36,58 @@ pub fn setup() -> Option<PathBuf> {
         std::env::var(SETUP_VAR).ok(),
         std::env::var(FROM_VAR).ok(),
     )
+}
+
+/// Lage der Probe in der laufenden App.
+#[derive(Debug, Default)]
+pub struct Probe {
+    /// Setup, das beim nächsten Bild startet (einmal).
+    setup: Option<PathBuf>,
+    /// Umgebung einer Probe: keine echte Update-Suche.
+    quiet: bool,
+}
+
+impl Probe {
+    /// Aus der Umgebung; gesetzt nur an der einen Stelle in `launch.rs` (A-035).
+    pub fn from_env() -> Probe {
+        Probe {
+            setup: setup(),
+            quiet: active(),
+        }
+    }
+
+    pub fn quiet(&self) -> bool {
+        self.quiet
+    }
+}
+
+impl TasksApp {
+    /// Startet das Setup der Probe, falls eines ansteht (jedes Bild aus `logic`).
+    pub(crate) fn run_update_probe(&mut self) {
+        if let Some(setup) = self.probe.setup.take() {
+            self.run_update_probe_with(setup, &daedyx_sys::start_verified);
+        }
+    }
+
+    /// Wie ein Update, nur ohne Nachweis: erst den Entwurf sichern (sonst nichts starten), dann das Setup über einen
+    /// gesperrten Griff mit seiner Prüfsumme starten und schließen wie „Beenden“ (Review U2-R N-U2-1).
+    pub(crate) fn run_update_probe_with(&mut self, setup: PathBuf, starter: Starter<'_>) {
+        if !self.tasks.commit_draft(&self.texts) {
+            self.updater.set_status(Status::NotSaved);
+            return;
+        }
+        let args = setup_args(self.bg.window.hidden);
+        let started = daedyx_sys::file_sha256(&setup)
+            .ok_or(StartError::Missing)
+            .and_then(|sha| starter(&setup, &sha, &args));
+        match started {
+            Ok(()) => {
+                self.updater.set_status(Status::Installing);
+                self.bg.window.quit_wanted = true;
+            }
+            Err(_) => self.updater.set_status(Status::StartFailed),
+        }
+    }
 }
 
 #[cfg(test)]
@@ -66,3 +123,7 @@ mod tests {
         assert_eq!(setup_for(&dir, setup, some("0.0.1")), None);
     }
 }
+
+#[cfg(test)]
+#[path = "probe_tests.rs"]
+mod probe_tests;

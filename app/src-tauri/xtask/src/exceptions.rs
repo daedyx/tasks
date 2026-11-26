@@ -7,6 +7,8 @@ pub const TABLE: &str = "docs/SICHERHEIT-AUSNAHMEN.md";
 
 /// Ein Eintrag der Tabelle: Datei, Regel und Ablaufdatum `JJJJ-MM-TT`. Regeln `scan:<regel>` erlauben einen
 /// Scan-Fund in genau dieser Datei (z. B. eine Altlast, deren Ablösung beschlossen ist) und zählen nicht als Code-Stelle.
+/// Regeln `register:<name>` halten eine Ausnahme vom Plan ohne eigene Code-Stelle fest (z. B. U-A4: Netz für die
+/// Update-Suche); sie zählen ebenfalls nicht als Code-Stelle, ihr Datum wird geprüft.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Entry {
     pub path: String,
@@ -133,7 +135,7 @@ pub fn check(sites: &[(String, String)], entries: &[Entry], today: &str) -> Vec<
     }
     let mut problems = Vec::new();
     for e in entries {
-        if !e.rule.starts_with("scan:") {
+        if !e.rule.starts_with("scan:") && !e.rule.starts_with("register:") {
             let n = balance.entry((e.path.clone(), normalize_rule(&e.rule))).or_insert(0);
             *n = n.saturating_sub(1);
         }

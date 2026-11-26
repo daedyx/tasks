@@ -11,7 +11,6 @@ use daedyx_updater::daedyx_update::version::Version;
 use daedyx_updater::install::Starter;
 use daedyx_updater::{Backend, Config, Prepared, Status, Updater};
 use eframe::egui::Context;
-use std::path::PathBuf;
 
 /// Besitzer und Repo der Releases (`github.com/daedyx/tasks`).
 pub const OWNER: &str = "daedyx";
@@ -20,7 +19,7 @@ pub const REPO: &str = "tasks";
 /// (nur lesen). Sie schützen davor, dass jemand den Namen nach Löschen oder Umbenennen neu anlegt (Spike P4).
 pub const OWNER_ID: u64 = 356_409_479;
 pub const REPO_ID: u64 = 1_464_583_596;
-/// Unterordner des Datenordners für geladene Setups (wie `daedyx_updater::Config::new`).
+/// Name des Ordners für geladene Setups unter `%LOCALAPPDATA%\<Kennung>` (wie `daedyx_updater::config::update_dir`).
 pub const UPDATE_DIR: &str = "updates";
 
 /// Regel der Update-Quelle für diese Fassung und Plattform (`None` auf nicht unterstützten Systemen).
@@ -41,9 +40,13 @@ pub fn installed() -> Version {
     Version::parse(env!("CARGO_PKG_VERSION")).unwrap_or(Version::new(0, 0, 0))
 }
 
-/// Angaben für den Ablauf: Datenordner dieser Fassung, gemeinsame Sperre mit dem Launcher unter `local`.
+/// Angaben für den Ablauf: Datenordner dieser Fassung (`updates.json`), Setups und gemeinsame Sperre mit dem
+/// Launcher unter `local`. Die Vorschau sucht nicht von selbst, bis jemand „Beim Start suchen“ einschaltet
+/// (Entscheid F-U2-1): Sie hätte sonst ab T7 die Einträge der Produkt-Fassung abgelehnt.
 pub fn config(data: &DataDir, local: &std::path::Path) -> Option<Config> {
-    Some(Config::new(policy()?, installed(), data.path(), local))
+    let mut c = Config::new(policy()?, installed(), data.path(), local);
+    c.auto_check_default = !ids::PREVIEW;
+    Some(c)
 }
 
 /// Startet den Ablauf mit echtem Netz und echtem Nachweis.
@@ -79,18 +82,6 @@ impl TasksApp {
                 self.bg.window.quit_wanted = true;
             }
             Err(_) => self.updater.set_status(Status::StartFailed),
-        }
-    }
-
-    /// Installationsprobe der Vorschau (`probe.rs`): lokales Setup ohne Nachweis, sonst wie ein Update.
-    pub(crate) fn run_update_probe(&mut self, setup: PathBuf) {
-        let args = daedyx_updater::install::setup_args(self.bg.window.hidden);
-        let started = daedyx_sys::file_sha256(&setup)
-            .ok_or(StartError::Missing)
-            .and_then(|sha| daedyx_sys::start_verified(&setup, &sha, &args));
-        if started.is_ok() && self.tasks.commit_draft(&self.texts) {
-            self.updater.set_status(Status::Installing);
-            self.bg.window.quit_wanted = true;
         }
     }
 }
