@@ -1112,7 +1112,7 @@ checksum = "f27ae1dd37df86211c42e150270f82743308803d90a6f6e6651cd730d5e1732f"
 [[package]]
 name = "daedyx-background"
 version = "0.1.0"
-source = "git+https://github.com/daedyx/ui?rev=041c76868df3fb098991ff473f0296d79a9ab43d#041c76868df3fb098991ff473f0296d79a9ab43d"
+source = "git+https://github.com/daedyx/ui?tag=ui-v0.1.8#f709513093e11cc23f8e20640d52df625f50fb55"
 dependencies = [
  "daedyx-sys",
  "daedyx-ui",
@@ -1127,12 +1127,12 @@ dependencies = [
 [[package]]
 name = "daedyx-build"
 version = "0.1.0"
-source = "git+https://github.com/daedyx/ui?rev=041c76868df3fb098991ff473f0296d79a9ab43d#041c76868df3fb098991ff473f0296d79a9ab43d"
+source = "git+https://github.com/daedyx/ui?tag=ui-v0.1.8#f709513093e11cc23f8e20640d52df625f50fb55"
 
 [[package]]
 name = "daedyx-sys"
 version = "0.1.0"
-source = "git+https://github.com/daedyx/ui?rev=041c76868df3fb098991ff473f0296d79a9ab43d#041c76868df3fb098991ff473f0296d79a9ab43d"
+source = "git+https://github.com/daedyx/ui?tag=ui-v0.1.8#f709513093e11cc23f8e20640d52df625f50fb55"
 dependencies = [
  "sha2 0.11.1",
  "tokio",
@@ -1216,7 +1216,7 @@ dependencies = [
 [[package]]
 name = "daedyx-tasks-ui"
 version = "0.1.0"
-source = "git+https://github.com/daedyx/ui?rev=041c76868df3fb098991ff473f0296d79a9ab43d#041c76868df3fb098991ff473f0296d79a9ab43d"
+source = "git+https://github.com/daedyx/ui?tag=ui-v0.1.8#f709513093e11cc23f8e20640d52df625f50fb55"
 dependencies = [
  "chrono",
  "chrono-tz",
@@ -1231,7 +1231,7 @@ dependencies = [
 [[package]]
 name = "daedyx-ui"
 version = "0.1.0"
-source = "git+https://github.com/daedyx/ui?rev=041c76868df3fb098991ff473f0296d79a9ab43d#041c76868df3fb098991ff473f0296d79a9ab43d"
+source = "git+https://github.com/daedyx/ui?tag=ui-v0.1.8#f709513093e11cc23f8e20640d52df625f50fb55"
 dependencies = [
  "eframe",
  "png",
@@ -1243,7 +1243,7 @@ dependencies = [
 [[package]]
 name = "daedyx-update"
 version = "0.2.3"
-source = "git+https://github.com/daedyx/core?tag=daedyx-update-v0.1.0#65252ba0f7f0f91ce3b23b80f96000a15eeda406"
+source = "git+https://github.com/daedyx/core?rev=5bcb3d18d6b73a480a9db5a8ff2ee4b8ee3483fd#5bcb3d18d6b73a480a9db5a8ff2ee4b8ee3483fd"
 dependencies = [
  "attestation-verify",
  "hex",
@@ -1252,18 +1252,18 @@ dependencies = [
  "serde_json",
  "sha2 0.11.1",
  "thiserror 2.0.21",
+ "ureq",
 ]
 
 [[package]]
 name = "daedyx-updater"
 version = "0.1.0"
-source = "git+https://github.com/daedyx/ui?rev=041c76868df3fb098991ff473f0296d79a9ab43d#041c76868df3fb098991ff473f0296d79a9ab43d"
+source = "git+https://github.com/daedyx/ui?tag=ui-v0.1.8#f709513093e11cc23f8e20640d52df625f50fb55"
 dependencies = [
  "daedyx-sys",
  "daedyx-ui",
  "daedyx-update",
  "eframe",
- "ureq",
 ]
 
 [[package]]

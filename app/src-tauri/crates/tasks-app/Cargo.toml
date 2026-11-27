@@ -13,24 +13,29 @@ workspace = true
 name = "daedyx-tasks-vorschau"
 path = "src/main.rs"
 
+# Programm der Produkt-Fassung (T7, L3): nur mit `produkt`. Der Release-Lauf baut genau dieses (`--bin daedyx-tasks`).
+[[bin]]
+name = "daedyx-tasks"
+path = "src/main_produkt.rs"
+required-features = ["produkt"]
+
 [features]
 # Kennungen der echten App (de.daedyx.tasks, Plan 4.2). Ohne dieses Merkmal steht die echte Kennung nicht im Programm;
 # ein Test prüft das am gebauten Vorschau-Programm. Kein Bau-Auftrag schaltet es vor T7 ein.
 produkt = []
 
 [dependencies]
-# Gerüst, Aufgaben-Oberfläche und Hintergrund aus daedyx/ui. Bis zum nächsten ui-Tag per rev auf Zweig paket-u2
-# (Update U2, vorher Tag `ui-v0.1.5`); alle Teile aus daedyx/ui müssen dieselbe Fassung sein (auch daedyx-sys in der
-# Hülle).
-daedyx-ui = { git = "https://github.com/daedyx/ui", rev = "041c76868df3fb098991ff473f0296d79a9ab43d" }
-daedyx-tasks-ui = { git = "https://github.com/daedyx/ui", rev = "041c76868df3fb098991ff473f0296d79a9ab43d" }
+# Gerüst, Aufgaben-Oberfläche und Hintergrund aus daedyx/ui, Tag `ui-v0.1.8` (T7); alle Teile aus daedyx/ui müssen
+# dieselbe Fassung sein (auch daedyx-sys in der Hülle).
+daedyx-ui = { git = "https://github.com/daedyx/ui", tag = "ui-v0.1.8" }
+daedyx-tasks-ui = { git = "https://github.com/daedyx/ui", tag = "ui-v0.1.8" }
 # Hintergrund (T4): Schließen versteckt, Takt, Benachrichtigung, Infobereich, Autostart, Einzelinstanz.
-daedyx-background = { git = "https://github.com/daedyx/ui", rev = "041c76868df3fb098991ff473f0296d79a9ab43d" }
+daedyx-background = { git = "https://github.com/daedyx/ui", tag = "ui-v0.1.8" }
 # Freier Platz vor der Sicherung (T5) und Startprobe mit Zeitgrenze in den Tests (Prozesse nur über daedyx-sys).
-daedyx-sys = { git = "https://github.com/daedyx/ui", rev = "041c76868df3fb098991ff473f0296d79a9ab43d" }
+daedyx-sys = { git = "https://github.com/daedyx/ui", tag = "ui-v0.1.8" }
 # Update in der App (U2): Suche, Download nach Klick, Setup-Start, Bauteil „Updates“; bringt den Kern `daedyx-update`
-# (Tag `daedyx-update-v0.1.0`) mit und gibt ihn als `daedyx_updater::daedyx_update` weiter.
-daedyx-updater = { git = "https://github.com/daedyx/ui", rev = "041c76868df3fb098991ff473f0296d79a9ab43d" }
+# (ui-v0.1.8: rev `5dd4b98`, inhaltsgleich mit Tag `daedyx-update-v0.2.0`, Netz im Kern) mit und gibt ihn als `daedyx_updater::daedyx_update` weiter.
+daedyx-updater = { git = "https://github.com/daedyx/ui", tag = "ui-v0.1.8" }
 # Kern-Schema für die Speicher-Datenbank der Vorschau, die Oberfläche und Takt teilen (T4).
 daedyx-tasks-core = { git = "https://github.com/daedyx/core", tag = "tasks-core-v0.2.3" }
 # Fehlercodes beim Start (StartupCode); die echte Datenbank öffnet die App erst ab T5.
@@ -44,17 +49,17 @@ iana-time-zone = "0.1"
 rusqlite = { version = "0.37", features = ["bundled-sqlcipher-vendored-openssl"] }
 
 [build-dependencies]
-daedyx-build = { git = "https://github.com/daedyx/ui", rev = "041c76868df3fb098991ff473f0296d79a9ab43d" }
+daedyx-build = { git = "https://github.com/daedyx/ui", tag = "ui-v0.1.8" }
 
 [dev-dependencies]
 egui_kittest = "=0.37.0"
 # MemoryStore und Wegwerf-Ordner für die Daten-Tests (T5); nie im Programm.
 daedyx-tasks-store = { path = "../tasks-store", features = ["test-support"] }
 # Installer-Vorlage als Text für die Tests der Setup-Kennungen (T6); dieselbe Fassung wie die Bau-Abhängigkeit.
-daedyx-build = { git = "https://github.com/daedyx/ui", rev = "041c76868df3fb098991ff473f0296d79a9ab43d" }
-daedyx-ui = { git = "https://github.com/daedyx/ui", rev = "041c76868df3fb098991ff473f0296d79a9ab43d", features = ["lint"] }
-daedyx-tasks-ui = { git = "https://github.com/daedyx/ui", rev = "041c76868df3fb098991ff473f0296d79a9ab43d", features = ["lint"] }
-daedyx-updater = { git = "https://github.com/daedyx/ui", rev = "041c76868df3fb098991ff473f0296d79a9ab43d", features = ["lint"] }
+daedyx-build = { git = "https://github.com/daedyx/ui", tag = "ui-v0.1.8" }
+daedyx-ui = { git = "https://github.com/daedyx/ui", tag = "ui-v0.1.8", features = ["lint"] }
+daedyx-tasks-ui = { git = "https://github.com/daedyx/ui", tag = "ui-v0.1.8", features = ["lint"] }
+daedyx-updater = { git = "https://github.com/daedyx/ui", tag = "ui-v0.1.8", features = ["lint"] }
 
 [target.'cfg(windows)'.dev-dependencies]
 # Autostart-Test unter einem eigenen Testschlüssel (T4); dieselbe Fassung wie in daedyx-background.

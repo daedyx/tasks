@@ -11,7 +11,7 @@ const PRODUCT: &str = "Daedyx Tasks Vorschau";
 #[test]
 fn installer_traegt_die_kennungen_der_vorschau() {
     if cfg!(feature = "produkt") {
-        return; // Produkt-Setup kommt erst mit T7.
+        return; // Das Produkt-Setup prüft setup_produkt_tests.rs.
     }
     assert!(NSI.contains(&format!("!define PRODUCT \"{PRODUCT}\"")));
     assert!(NSI.contains(&format!("!define AUMID \"{APP_ID}\"")));

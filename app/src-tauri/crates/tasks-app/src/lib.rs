@@ -48,6 +48,8 @@ mod release_tests;
 #[cfg(test)]
 mod reminder_tests;
 #[cfg(test)]
+mod setup_produkt_tests;
+#[cfg(test)]
 mod startfehler_tests;
 #[cfg(test)]
 mod stored_tests;

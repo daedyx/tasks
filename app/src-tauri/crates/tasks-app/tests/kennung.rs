@@ -1,7 +1,16 @@
 //! Plan 4.2: Im Vorschau-Programm (ohne Merkmal `produkt`) stehen die echte Kennung `de.daedyx.tasks` und der echte
 //! Tresor-Dienst `daedyx-tasks` nirgends, nur die der Vorschau. Geprüft an den Bytes des gebauten Programms.
 //! Mit `produkt` (erst T7, auch bei `--all-features`) gilt das Gegenstück: echte Namen, keine der Vorschau.
-const EXE: &str = env!("CARGO_BIN_EXE_daedyx-tasks-vorschau");
+
+/// Das ausgelieferte Programm der Fassung: mit `produkt` `daedyx-tasks.exe` (T7, L3), sonst das der Vorschau.
+/// `option_env!`, weil es das Produkt-Programm nur mit dem Merkmal gibt (`cfg!` statt `#[cfg]`, siehe unten).
+fn exe() -> Option<&'static str> {
+    if cfg!(feature = "produkt") {
+        option_env!("CARGO_BIN_EXE_daedyx-tasks")
+    } else {
+        Some(env!("CARGO_BIN_EXE_daedyx-tasks-vorschau"))
+    }
+}
 
 /// Stellen, an denen `needle` im Programm steht, je mit dem Rest dahinter.
 fn hits<'a>(bytes: &'a [u8], needle: &[u8]) -> Vec<&'a [u8]> {
@@ -17,7 +26,7 @@ fn hits<'a>(bytes: &'a [u8], needle: &[u8]) -> Vec<&'a [u8]> {
 /// Ausnahme-Stelle) und `--all-features` nicht unerklärt rot ist.
 #[test]
 fn programm_traegt_nur_die_namen_seiner_fassung() {
-    let bytes = std::fs::read(EXE).unwrap();
+    let bytes = std::fs::read(exe().unwrap()).unwrap();
     if cfg!(feature = "produkt") {
         product(&bytes);
     } else {

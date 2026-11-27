@@ -1,5 +1,5 @@
 # Release von Daedyx Tasks ohne gespeicherte Geheimnisse (plan-ohne-secrets Schritt 6, Review U2 F-U2-2).
-# ENTWURF aus der T7-Vorbereitung: noch nie gelaufen. Vor dem ersten Lauf die Lücken in docs/RELEASE.md schließen.
+# Noch nie gelaufen. Offene Punkte für den ersten Lauf (L4, L5, L5b) stehen in docs/RELEASE.md.
 #
 # Ablauf: Björn startet ihn von Hand (Actions -> Release -> Run workflow, Zweig main). Vier Jobs, jeder nur mit den
 # Rechten für seine Aufgabe (Review T7v, N-T7v-4 und M-T7v-3):
@@ -23,7 +23,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Version, zum Beispiel 0.3.0 (muss der Version in tasks-app/Cargo.toml entsprechen)"
+        description: "Version, zum Beispiel 0.2.0 (muss der Version in tasks-app/Cargo.toml entsprechen)"
         required: true
         type: string
       notes:
@@ -126,7 +126,8 @@ jobs:
       - name: Produkt-Fassung und Prüfprogramm bauen
         working-directory: app/src-tauri
         run: |
-          cargo build --release --locked --offline -p daedyx-tasks-app --features produkt
+          # Programmziel daedyx-tasks (daedyx-tasks.exe), nur mit produkt (L3).
+          cargo build --release --locked --offline -p daedyx-tasks-app --features produkt --bin daedyx-tasks
           if ($LASTEXITCODE -ne 0) { throw "Bau fehlgeschlagen" }
           # Selbstprüfung für den Job "pruefen" (Review T7v, M-T7v-2): der Prüfweg der App mit dem echten GitHub-Prüfer.
           cargo build --release --locked --offline -p daedyx-tasks-app --features produkt --example release_selbstpruefung
@@ -137,9 +138,9 @@ jobs:
         env:
           VERSION: ${{ steps.eingaben.outputs.version }}
         run: |
-          # Produkt-Setup und Programmname der Produkt-Fassung entstehen in T7 (Lücken L2 und L3 in docs/RELEASE.md).
+          # Produkt-Setup installer/tasks.nsi und Programm daedyx-tasks.exe (L2, L3; Test setup_produkt_tests.rs).
           $nsi = 'installer/tasks.nsi'
-          if (-not (Test-Path $nsi)) { throw "$nsi fehlt (Produkt-Setup kommt in T7)" }
+          if (-not (Test-Path $nsi)) { throw "$nsi fehlt" }
           . ./scripts/lib/vorlage-installer.ps1
           $vorlage = Get-InstallerVorlage (Resolve-Path app/src-tauri) -Offline
           $out = Join-Path $env:RUNNER_TEMP 'setup'
