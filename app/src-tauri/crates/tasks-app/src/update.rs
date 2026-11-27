@@ -18,7 +18,7 @@ pub const REPO: &str = "tasks";
 /// Numerische GitHub-Kennungen von Besitzer und Repo, am 2026-11-26 einmal mit `gh api repos/daedyx/tasks` gelesen
 /// (nur lesen). Sie schützen davor, dass jemand den Namen nach Löschen oder Umbenennen neu anlegt (Spike P4).
 pub const OWNER_ID: u64 = 356_409_479;
-pub const REPO_ID: u64 = 1_464_583_596;
+pub const REPO_ID: u64 = 1_474_858_832;
 /// Name des Ordners für geladene Setups unter `%LOCALAPPDATA%\<Kennung>` (wie `daedyx_updater::config::update_dir`).
 pub const UPDATE_DIR: &str = "updates";
 
