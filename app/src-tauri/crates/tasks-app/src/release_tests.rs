@@ -11,7 +11,7 @@ use std::path::{Path, PathBuf};
 
 const VERSION: &str = "9.9.9";
 /// So setzt der Workflow die Version in Dateinamen ein.
-const VERSION_EXPR: &str = "${{ steps.eingaben.outputs.version }}";
+const VERSION_EXPR: &str = "${{ needs.bauen.outputs.version }}";
 /// App-Kennung der Produkt-Fassung (`ids::UPDATE_APP` mit `produkt`; die Vorschau hat sie nicht im Programm).
 const PRODUCT_APP: &str = "daedyx-tasks";
 /// Muster des Secret-Wächters für `release.yml`, wörtlich wie in `ci.yml` (M-T7v-1: eine Regel, zwei Orte).
@@ -114,7 +114,7 @@ fn release_workflow_laeuft_nur_von_hand_auf_main_ohne_secrets_und_baut_das_produ
     for bad in ["rust-cache", "actions/cache", "pull_request", "vorschau"] {
         assert!(!yml.contains(bad), "{bad}");
     }
-    // Jede Aktion per voller Commit-ID (40 Hex-Zeichen).
+    // Jede Aktion per voller Commit-ID (40 Hex-Zeichen, nicht der Platzhalter aus Nullen, H-T7v-3).
     let uses: Vec<&str> = yml
         .lines()
         .filter_map(|l| l.split_once("uses: ").map(|(_, u)| u))
@@ -132,7 +132,9 @@ fn release_workflow_laeuft_nur_von_hand_auf_main_ohne_secrets_und_baut_das_produ
             .next()
             .unwrap();
         assert!(
-            sha.len() == 40 && sha.bytes().all(|b| b.is_ascii_hexdigit()),
+            sha.len() == 40
+                && sha.bytes().all(|b| b.is_ascii_hexdigit())
+                && sha.bytes().any(|b| b != b'0'),
             "{u}"
         );
     }
@@ -160,22 +162,9 @@ fn release_workflow_laeuft_nur_von_hand_auf_main_ohne_secrets_und_baut_das_produ
     assert_eq!(subjects(&yml), [ENTRY_FILE.to_owned(), setup]);
 }
 
-/// Reihenfolge im Lauf: bezeugen, mit dem Prüfweg der App prüfen (M-T7v-2), erst dann veröffentlichen.
-#[test]
-fn release_workflow_prueft_mit_dem_pruefweg_der_app_vor_dem_veroeffentlichen() {
-    let yml = workflow();
-    let at = |needle: &str| yml.find(needle).unwrap_or_else(|| panic!("{needle}"));
-    let check = "--features produkt --example release_selbstpruefung";
-    assert!(at("actions/attest-build-provenance@") < at(check));
-    assert!(at(check) < at("gh release create"));
-    // Die Version muss neuer sein als das bisherige Latest (H-T7v-1).
-    assert!(at("gh release view --repo") < at("gh release create"));
-    // entry.json schreibt die getestete Windows PowerShell 5.1 (N-T7v-3).
-    let step = yml
-        .get(at("- name: entry.json schreiben")..at("make-entry.ps1 -App "))
-        .unwrap();
-    assert!(step.contains("shell: powershell\n"), "{step}");
-}
+/// Zwei Jobs: Bauen ohne Schreibrechte, Veröffentlichen mit Freigabe (N-T7v-4), Reihenfolge der Prüfungen.
+#[path = "release_jobs_tests.rs"]
+mod jobs;
 
 /// Ablauf mit dem Skript des Workflows (startet Windows PowerShell).
 #[cfg(windows)]

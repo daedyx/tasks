@@ -1,14 +1,18 @@
 # Release von Daedyx Tasks ohne gespeicherte Geheimnisse (plan-ohne-secrets Schritt 6, Review U2 F-U2-2).
 # ENTWURF aus der T7-Vorbereitung: noch nie gelaufen. Vor dem ersten Lauf die Lücken in docs/RELEASE.md schließen.
 #
-# Ablauf: Björn startet ihn von Hand (Actions -> Release -> Run workflow, Zweig main) und gibt die Freigabe im
-# Environment "release". Der Lauf prüft die Eingaben, testet, baut die Produkt-Fassung (Merkmal produkt), baut das
-# Setup, schreibt entry.json, lässt GitHub beides bezeugen (Sigstore, kein Schlüssel), prüft beides mit
-# dem Prüfweg der App und legt das Release v<Version> in diesem Repository an. Kein Secret, kein Zwischenspeicher, kein Zurückschreiben in den Quellcode.
+# Ablauf: Björn startet ihn von Hand (Actions -> Release -> Run workflow, Zweig main). Zwei Jobs (Review T7v, N-T7v-4):
+# - "bauen" ohne Schreibrechte und ohne Kennung für den Nachweis: Eingaben prüfen, testen, Produkt-Fassung (Merkmal
+#   produkt) und Setup bauen, entry.json schreiben, Prüfprogramm bauen. Übergabe als Artefakt mit Prüfsummen.
+# - "veroeffentlichen" nach Björns Freigabe im Environment "release": Prüfsummen gegenprüfen, GitHub bezeugt Eintrag und
+#   Setup (Sigstore, kein Schlüssel), Prüfung mit dem Prüfweg der App und mit gh, dann Release v<Version> hier anlegen.
+#   Dieser Job baut nichts und holt keinen Quelltext.
+# Kein Secret, kein Zwischenspeicher, kein Zurückschreiben in den Quellcode.
 # Die App prüft genau diesen Nachweis: Workflow .github/workflows/release.yml, Zweig refs/heads/main, Repo daedyx/tasks
 # mit festen Kennungen (crates/tasks-app/src/update.rs; Test release_tests.rs hält beide Seiten zusammen).
 # Voraussetzungen: dieses Repository sowie daedyx/core und daedyx/ui sind öffentlich (Nachweise gibt es nur für
 # öffentliche Repositories; ohne Lese-Token muss cargo die Abhängigkeiten frei abrufen können).
+# Aktionen per Commit-ID, nachgeschlagen am 2026-11-27 per gh api (Tag -> Commit), Quellen in docs/RELEASE.md.
 name: Release
 
 on:
@@ -39,19 +43,19 @@ env:
   CARGO_TERM_COLOR: never
 
 jobs:
-  release:
-    name: Bauen, bezeugen, veröffentlichen
+  bauen:
+    name: Testen und bauen
     # Nur auf main im eigenen Repository; ein Fork oder ein anderer Zweig startet den Job gar nicht.
     if: github.ref == 'refs/heads/main' && github.repository == 'daedyx/tasks'
     # Fester Läufer, damit der Release-Bau nachvollziehbar bleibt (Review T7v, H-T7v-2).
     runs-on: windows-2025
     timeout-minutes: 120
-    # Freigabe-Klick: Das Environment "release" verlangt Björns Genehmigung (docs/RELEASE.md, Schritt 3).
-    environment: release
+    # Nur Lesen: Tests und Bau-Skripte fremder Bausteine laufen hier, ohne Kennung für den Nachweis.
     permissions:
-      contents: write # Release anlegen (eingebautes Token, gilt nur für diesen Lauf)
-      id-token: write # Identität des Workflows für den Nachweis
-      attestations: write # Nachweis bei GitHub ablegen
+      contents: read
+    outputs:
+      version: ${{ steps.eingaben.outputs.version }}
+      pruefsummen: ${{ steps.uebergabe.outputs.pruefsummen }}
     defaults:
       run:
         shell: pwsh
@@ -75,10 +79,9 @@ jobs:
           if (-not $line -or $line.Matches[0].Groups[1].Value -ne $v) { throw "Version $v steht nicht in tasks-app/Cargo.toml (erst dort anheben)" }
           $notes = $env:INPUT_NOTES.Trim()
           if (-not $notes) { throw "Änderungsnotiz fehlt" }
-          $file = Join-Path $env:RUNNER_TEMP 'notiz.txt'
-          [IO.File]::WriteAllText($file, $notes, (New-Object System.Text.UTF8Encoding $false))
+          New-Item -ItemType Directory -Force uebergabe/release-dateien | Out-Null
+          [IO.File]::WriteAllText((Join-Path $PWD 'uebergabe/notiz.txt'), $notes, (New-Object System.Text.UTF8Encoding $false))
           "version=$v" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
-          "notes_file=$file" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
 
       - name: Release darf es noch nicht geben (Releases nie ersetzen)
         env:
@@ -116,11 +119,15 @@ jobs:
           cargo test -p daedyx-tasks-app --features produkt --locked --offline --no-fail-fast
           if ($LASTEXITCODE -ne 0) { throw "Tests der Produkt-Fassung rot" }
 
-      - name: Produkt-Fassung bauen
+      - name: Produkt-Fassung und Prüfprogramm bauen
         working-directory: app/src-tauri
         run: |
           cargo build --release --locked --offline -p daedyx-tasks-app --features produkt
           if ($LASTEXITCODE -ne 0) { throw "Bau fehlgeschlagen" }
+          # Selbstprüfung für den zweiten Job (Review T7v, M-T7v-2): der Prüfweg der App mit dem echten GitHub-Prüfer.
+          cargo build --release --locked --offline -p daedyx-tasks-app --features produkt --example release_selbstpruefung
+          if ($LASTEXITCODE -ne 0) { throw "Bau des Prüfprogramms fehlgeschlagen" }
+          Copy-Item target/release/examples/release_selbstpruefung.exe ../../uebergabe/release_selbstpruefung.exe
 
       - name: Setup bauen
         env:
@@ -137,54 +144,101 @@ jobs:
             -Version $env:VERSION -OutDir $out -SkipBuild -Offline
           $setups = @(Get-ChildItem $out -Filter '*-setup.exe')
           if ($setups.Count -ne 1) { throw "Genau ein Setup erwartet, gefunden: $($setups.Count)" }
-          New-Item -ItemType Directory -Force release-dateien | Out-Null
-          Copy-Item $setups[0].FullName "release-dateien/daedyx-tasks-$env:VERSION-setup.exe"
+          Copy-Item $setups[0].FullName "uebergabe/release-dateien/daedyx-tasks-$env:VERSION-setup.exe"
 
       - name: entry.json schreiben
         # Windows PowerShell 5.1, genau die Fassung, mit der release_flow_tests.rs das Skript prüft (N-T7v-3).
         shell: powershell
         env:
           VERSION: ${{ steps.eingaben.outputs.version }}
-          NOTES_FILE: ${{ steps.eingaben.outputs.notes_file }}
         run: |
           ./scripts/ci/make-entry.ps1 -App daedyx-tasks -Repo $env:GITHUB_REPOSITORY -Version $env:VERSION `
-            -Date (Get-Date).ToUniversalTime().ToString('yyyy-MM-dd') -NotesFile $env:NOTES_FILE `
-            -Setup "release-dateien/daedyx-tasks-$env:VERSION-setup.exe" -Out release-dateien/entry.json
+            -Date (Get-Date).ToUniversalTime().ToString('yyyy-MM-dd') -NotesFile uebergabe/notiz.txt `
+            -Setup "uebergabe/release-dateien/daedyx-tasks-$env:VERSION-setup.exe" -Out uebergabe/release-dateien/entry.json
+
+      - name: Prüfsummen der Übergabe festhalten
+        id: uebergabe
+        run: |
+          # Der zweite Job vergleicht die geladenen Dateien mit diesen Summen (Artefakte sind kein Vertrauensanker).
+          $zeilen = Get-ChildItem uebergabe -Recurse -File | Sort-Object FullName | ForEach-Object {
+            $rel = [IO.Path]::GetRelativePath((Resolve-Path uebergabe).Path, $_.FullName).Replace('\', '/')
+            "$rel=$((Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant())"
+          }
+          "pruefsummen=$($zeilen -join ';')" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+
+      - name: Übergabe ablegen
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-uebergabe
+          path: uebergabe/
+          if-no-files-found: error
+          retention-days: 1
+
+  veroeffentlichen:
+    name: Bezeugen, prüfen, veröffentlichen
+    needs: bauen
+    if: github.ref == 'refs/heads/main' && github.repository == 'daedyx/tasks'
+    runs-on: windows-2025
+    timeout-minutes: 30
+    # Freigabe-Klick: Das Environment "release" verlangt Björns Genehmigung (docs/RELEASE.md, Schritt 7).
+    environment: release
+    permissions:
+      contents: write # Release anlegen (eingebautes Token, gilt nur für diesen Lauf)
+      id-token: write # Identität des Workflows für den Nachweis
+      attestations: write # Nachweis bei GitHub ablegen
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - name: Übergabe holen
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: release-uebergabe
+          path: uebergabe
+
+      - name: Prüfsummen gegenprüfen
+        env:
+          ERWARTET: ${{ needs.bauen.outputs.pruefsummen }}
+        run: |
+          $zeilen = Get-ChildItem uebergabe -Recurse -File | Sort-Object FullName | ForEach-Object {
+            $rel = [IO.Path]::GetRelativePath((Resolve-Path uebergabe).Path, $_.FullName).Replace('\', '/')
+            "$rel=$((Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant())"
+          }
+          if (-not $env:ERWARTET -or ($zeilen -join ';') -ne $env:ERWARTET) { throw "Übergabe weicht vom Bau ab" }
 
       - name: Nachweis erzeugen (Sigstore, ohne Schlüssel)
         id: nachweis
-        # LÜCKE L1: volle Commit-ID der gewünschten Fassung eintragen (lag in der T7-Vorbereitung nicht vor). Mit lauter
-        # Nullen findet GitHub die Aktion nicht und bricht den Job vor dem ersten Schritt ab.
-        uses: actions/attest-build-provenance@0000000000000000000000000000000000000000 # LÜCKE L1
+        # v4.2.2 ruft actions/attest per Commit-ID auf (508db95…, v4.2.1). Ob die Fassung Rekor-v1-Einträge schreibt, wie
+        # die App sie verlangt, belegt erst die Selbstprüfung im nächsten Schritt.
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
         with:
           subject-path: |
-            release-dateien/entry.json
-            release-dateien/daedyx-tasks-${{ steps.eingaben.outputs.version }}-setup.exe
+            uebergabe/release-dateien/entry.json
+            uebergabe/release-dateien/daedyx-tasks-${{ needs.bauen.outputs.version }}-setup.exe
 
       - name: Nachweis beilegen
         env:
           BUNDLE: ${{ steps.nachweis.outputs.bundle-path }}
-        run: Copy-Item $env:BUNDLE release-dateien/provenance.sigstore.json
+        run: Copy-Item $env:BUNDLE uebergabe/release-dateien/provenance.sigstore.json
 
       - name: Mit dem Prüfweg der App prüfen (wie jede installierte App)
         # Review T7v, M-T7v-2: Der Kern ist strenger als gh (Rekor v1, eingefrorene Vertrauenswurzel, Regeln für
         # entry.json). Was er hier ablehnt, würde jede App ablehnen; deshalb dann kein Release.
-        working-directory: app/src-tauri
         env:
-          VERSION: ${{ steps.eingaben.outputs.version }}
+          VERSION: ${{ needs.bauen.outputs.version }}
         run: |
-          $dir = (Resolve-Path ../../release-dateien).Path
+          $dir = (Resolve-Path uebergabe/release-dateien).Path
           $work = Join-Path $env:RUNNER_TEMP 'selbstpruefung'
-          cargo run --release --locked --offline -p daedyx-tasks-app --features produkt --example release_selbstpruefung -- $dir $env:VERSION $work
+          & ./uebergabe/release_selbstpruefung.exe $dir $env:VERSION $work
           if ($LASTEXITCODE -ne 0) { throw "Die App würde dieses Release ablehnen" }
 
       - name: Zweite Prüfung mit gh attestation verify
         env:
           GH_TOKEN: ${{ github.token }}
-          VERSION: ${{ steps.eingaben.outputs.version }}
+          VERSION: ${{ needs.bauen.outputs.version }}
         run: |
-          foreach ($f in @('release-dateien/entry.json', "release-dateien/daedyx-tasks-$env:VERSION-setup.exe")) {
-            gh attestation verify $f --bundle release-dateien/provenance.sigstore.json --repo $env:GITHUB_REPOSITORY `
+          foreach ($f in @('uebergabe/release-dateien/entry.json', "uebergabe/release-dateien/daedyx-tasks-$env:VERSION-setup.exe")) {
+            gh attestation verify $f --bundle uebergabe/release-dateien/provenance.sigstore.json --repo $env:GITHUB_REPOSITORY `
               --signer-workflow "$env:GITHUB_REPOSITORY/.github/workflows/release.yml" --source-ref refs/heads/main `
               --deny-self-hosted-runners
             if ($LASTEXITCODE -ne 0) { throw "Nachweis für $f nicht gültig" }
@@ -193,9 +247,9 @@ jobs:
       - name: Release anlegen (Setup, entry.json, Nachweis)
         env:
           GH_TOKEN: ${{ github.token }}
-          VERSION: ${{ steps.eingaben.outputs.version }}
-          NOTES_FILE: ${{ steps.eingaben.outputs.notes_file }}
+          VERSION: ${{ needs.bauen.outputs.version }}
         run: |
           # Alle Dateien beim Anlegen, damit auch unveränderliche Releases gehen. --latest: die App holt latest/download.
-          gh release create "v$env:VERSION" "release-dateien/daedyx-tasks-$env:VERSION-setup.exe" release-dateien/entry.json release-dateien/provenance.sigstore.json --repo $env:GITHUB_REPOSITORY --target $env:GITHUB_SHA --title "Daedyx Tasks $env:VERSION" --notes-file $env:NOTES_FILE --latest
+          Set-Location uebergabe
+          gh release create "v$env:VERSION" "release-dateien/daedyx-tasks-$env:VERSION-setup.exe" release-dateien/entry.json release-dateien/provenance.sigstore.json --repo $env:GITHUB_REPOSITORY --target $env:GITHUB_SHA --title "Daedyx Tasks $env:VERSION" --notes-file notiz.txt --latest
           if ($LASTEXITCODE -ne 0) { throw "Release konnte nicht angelegt werden" }

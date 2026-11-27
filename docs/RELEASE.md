@@ -10,18 +10,18 @@ Die alte Anleitung (Tauri-Update-Schlüssel, Katalog-Schlüssel, `RELEASES_TOKEN
 Für Tasks legst du **keinen** dieser Schlüssel und **kein** Token an.
 
 ## Bevor du anfängst: Was ein Bau-Chat noch erledigen muss (T7)
-Diese Lücken stehen im Entwurf. Solange L1 bis L5 offen sind, bricht der Lauf ab, ohne etwas zu veröffentlichen.
-L5b und L6 halten den Lauf nicht an; sie sind vor dem ersten Lauf zu klären.
+Diese Lücken stehen im Entwurf. Solange L2 bis L5 offen sind, bricht der Lauf ab, ohne etwas zu veröffentlichen.
+L5b hält den Lauf nicht an; beim ersten Lauf ansehen. L1 und L6 sind geschlossen.
 
 | Lücke | Was fehlt |
 |---|---|
-| L1 | Die volle Commit-ID der Aktion `actions/attest-build-provenance`. Sie lag in der Vorbereitung nicht vor; dort stehen absichtlich nur Nullen. Beim Eintragen: eine Fassung wählen, die Rekor-v1-Einträge schreibt (nur die nimmt die App an; belegt erst die Selbstprüfung im Lauf), prüfen, dass sie ihre inneren Aktionen (`actions/attest`) selbst per Commit-ID pinnt, und im Test `release_tests.rs` „nicht nur Nullen“ ergänzen (Review T7v, H-T7v-3). |
+| L1 | **Geschlossen** (2026-11-27, nach Björns Ja zum Nachschlagen): `actions/attest-build-provenance` v4.2.2 = `4d101475d8b20a2381f78447822ac1eab6504dd8` (Release vom 2026-08-06). Sie ruft `actions/attest` selbst per Commit-ID auf: `508db95dd578ae2727ebd6217d5ba78e4fbda05d` (v4.2.1). Ob diese Fassung Rekor-v1-Einträge schreibt, wie die App sie verlangt, ist **ungeprüft**; das zeigt erst die Selbstprüfung im ersten Lauf (sie bricht sonst vor dem Veröffentlichen ab). Der Wächter-Test lehnt den Platzhalter aus Nullen jetzt ab (H-T7v-3). |
 | L2 | Das Produkt-Setup `installer/tasks.nsi` (Name „Daedyx Tasks“, echte Kennungen). Bisher gibt es nur das Setup der Vorschau. |
 | L3 | Der Programmname der Produkt-Fassung `daedyx-tasks.exe`. Heute heißt das Programm auch mit dem Merkmal `produkt` noch `daedyx-tasks-vorschau.exe`. |
 | L4 | NSIS auf dem GitHub-Läufer: ob `makensis` dort schon liegt, ist **ungeprüft**. Sonst braucht es einen Installationsschritt mit fester Version und Prüfsumme. |
 | L5 | Der Prüfschritt `gh attestation verify` (Schalter `--source-ref` und `--deny-self-hosted-runners`) ist **ungeprüft**. |
 | L5b | Tag-Regel: Erlaubt nur dir eine Regel, Tags `v*` anzulegen, scheitert `gh release create` womöglich erst beim Tag, nach dem Hochladen. Dann kann ein **Entwurfs-Release** liegen bleiben (**ungeprüft**). Beim ersten Lauf ansehen und nur einen solchen Entwurf entfernen. |
-| L6 | Bauen und Veröffentlichen laufen in **einem** Job (Review T7v, N-T7v-4). Getrennt bräuchte es `actions/upload-artifact` und `actions/download-artifact` per Commit-ID; die lagen nicht vor. Bis dahin sieht jeder Schritt des Jobs die Kennung für den Nachweis, auch Tests und Bau-Skripte fremder Bausteine. **Entscheid ausstehend:** trennen (Bau-Chat mit den Commit-IDs) oder das Risiko bewusst annehmen. |
+| L6 | **Geschlossen** (2026-11-27): zwei Jobs (Review T7v, N-T7v-4, Weg 1). „bauen“ nur mit Leserecht, „veroeffentlichen“ mit Freigabe, Nachweis und Schreibrecht, ohne Bau und ohne Quelltext. Übergabe mit `actions/upload-artifact` v7.0.2 = `cf430e030ddbb5b0abf93d22962f4752f3646cd9` (2026-10-07) und `actions/download-artifact` v8.0.2 = `9000827ccba6bdab643e8b6fd33ac0654aef8333` (2026-10-07), Prüfsummen aus dem Bau-Job werden gegengeprüft. |
 
 ## Was du selbst tust, Schritt für Schritt
 Jeder Schritt ist ein eigener Klick-Weg. Mach ihn erst, wenn du ausdrücklich Ja dazu gesagt hast. Die Menünamen bei
@@ -79,14 +79,15 @@ das auf `main`. Der Workflow schreibt nichts mehr in den Quellcode zurück. Er p
 7. Klicke auf den grünen Knopf **Run workflow**.
 
 ### Schritt 7: Die Freigabe klicken
+Der Lauf testet und baut zuerst, ohne Schreibrechte (ungefähr eine Stunde, **ungeprüft**). Danach wartet er auf dich.
 1. Öffne den Lauf, der jetzt oben in der Liste steht. Er wartet mit dem Hinweis „Waiting for review“.
 2. Klicke auf **Review deployments**.
 3. Setze den Haken bei **release** und klicke auf **Approve and deploy**.
 
-Danach testet der Lauf, baut die Produkt-Fassung und das Setup, lässt GitHub beides bezeugen und prüft das Ergebnis
-genau so, wie jede installierte App es prüfen wird (Prüfweg des Kerns mit eingebauter Vertrauenswurzel), dazu noch mit
-`gh attestation verify`. Erst wenn beides passt, legt er das Release `v<Version>` an. Er bricht auch ab, wenn die Version
-nicht neuer ist als das bisherige neueste Release. Das dauert ungefähr eine Stunde (**ungeprüft**).
+Danach prüft der Lauf, dass die gebauten Dateien unverändert angekommen sind, lässt GitHub Eintrag und Setup bezeugen
+und prüft das Ergebnis genau so, wie jede installierte App es prüfen wird (Prüfweg des Kerns mit eingebauter
+Vertrauenswurzel), dazu noch mit `gh attestation verify`. Erst wenn beides passt, legt er das Release `v<Version>` an.
+Schon vor dem Bau bricht er ab, wenn die Version nicht neuer ist als das bisherige neueste Release.
 
 ### Schritt 8: Nachsehen
 1. Im Repository `daedyx/tasks`: rechts **Releases**.
