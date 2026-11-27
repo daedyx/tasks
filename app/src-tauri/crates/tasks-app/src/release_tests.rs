@@ -162,7 +162,7 @@ fn release_workflow_laeuft_nur_von_hand_auf_main_ohne_secrets_und_baut_das_produ
     assert_eq!(subjects(&yml), [ENTRY_FILE.to_owned(), setup]);
 }
 
-/// Zwei Jobs: Bauen ohne Schreibrechte, Veröffentlichen mit Freigabe (N-T7v-4), Reihenfolge der Prüfungen.
+/// Vier Jobs: Bauen, Bezeugen, Prüfen, Veröffentlichen, je mit eigenen Rechten (N-T7v-4, M-T7v-3).
 #[path = "release_jobs_tests.rs"]
 mod jobs;
 

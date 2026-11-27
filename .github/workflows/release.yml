@@ -1,12 +1,16 @@
 # Release von Daedyx Tasks ohne gespeicherte Geheimnisse (plan-ohne-secrets Schritt 6, Review U2 F-U2-2).
 # ENTWURF aus der T7-Vorbereitung: noch nie gelaufen. Vor dem ersten Lauf die Lücken in docs/RELEASE.md schließen.
 #
-# Ablauf: Björn startet ihn von Hand (Actions -> Release -> Run workflow, Zweig main). Zwei Jobs (Review T7v, N-T7v-4):
-# - "bauen" ohne Schreibrechte und ohne Kennung für den Nachweis: Eingaben prüfen, testen, Produkt-Fassung (Merkmal
-#   produkt) und Setup bauen, entry.json schreiben, Prüfprogramm bauen. Übergabe als Artefakt mit Prüfsummen.
-# - "veroeffentlichen" nach Björns Freigabe im Environment "release": Prüfsummen gegenprüfen, GitHub bezeugt Eintrag und
-#   Setup (Sigstore, kein Schlüssel), Prüfung mit dem Prüfweg der App und mit gh, dann Release v<Version> hier anlegen.
-#   Dieser Job baut nichts und holt keinen Quelltext.
+# Ablauf: Björn startet ihn von Hand (Actions -> Release -> Run workflow, Zweig main). Vier Jobs, jeder nur mit den
+# Rechten für seine Aufgabe (Review T7v, N-T7v-4 und M-T7v-3):
+# - "bauen", nur Lesen: Eingaben prüfen, testen, Produkt-Fassung (Merkmal produkt) und Setup bauen, entry.json
+#   schreiben, Prüfprogramm bauen. Übergabe als Artefakt, Prüfsummen als Job-Ausgabe.
+# - "bezeugen" nach Björns Freigabe im Environment "release", mit der Kennung für den Nachweis: Prüfsummen gegenprüfen,
+#   GitHub bezeugt Eintrag und Setup (Sigstore, kein Schlüssel). Startet nichts aus der Übergabe.
+# - "pruefen", nur Lesen: das Prüfprogramm aus dem Bau (Prüfweg der App) und gh prüfen Release und Nachweis.
+# - "veroeffentlichen", nur contents: write: Prüfsummen gegenprüfen, Release v<Version> hier anlegen. Startet nichts aus
+#   der Übergabe.
+# Programme aus dem Bau laufen also nur in Jobs ohne Kennung und ohne Schreibrecht.
 # Kein Secret, kein Zwischenspeicher, kein Zurückschreiben in den Quellcode.
 # Die App prüft genau diesen Nachweis: Workflow .github/workflows/release.yml, Zweig refs/heads/main, Repo daedyx/tasks
 # mit festen Kennungen (crates/tasks-app/src/update.rs; Test release_tests.rs hält beide Seiten zusammen).
@@ -124,7 +128,7 @@ jobs:
         run: |
           cargo build --release --locked --offline -p daedyx-tasks-app --features produkt
           if ($LASTEXITCODE -ne 0) { throw "Bau fehlgeschlagen" }
-          # Selbstprüfung für den zweiten Job (Review T7v, M-T7v-2): der Prüfweg der App mit dem echten GitHub-Prüfer.
+          # Selbstprüfung für den Job "pruefen" (Review T7v, M-T7v-2): der Prüfweg der App mit dem echten GitHub-Prüfer.
           cargo build --release --locked --offline -p daedyx-tasks-app --features produkt --example release_selbstpruefung
           if ($LASTEXITCODE -ne 0) { throw "Bau des Prüfprogramms fehlgeschlagen" }
           Copy-Item target/release/examples/release_selbstpruefung.exe ../../uebergabe/release_selbstpruefung.exe
@@ -159,7 +163,7 @@ jobs:
       - name: Prüfsummen der Übergabe festhalten
         id: uebergabe
         run: |
-          # Der zweite Job vergleicht die geladenen Dateien mit diesen Summen (Artefakte sind kein Vertrauensanker).
+          # Jeder spätere Job vergleicht die geladenen Dateien mit diesen Summen (Artefakte sind kein Vertrauensanker).
           $zeilen = Get-ChildItem uebergabe -Recurse -File | Sort-Object FullName | ForEach-Object {
             $rel = [IO.Path]::GetRelativePath((Resolve-Path uebergabe).Path, $_.FullName).Replace('\', '/')
             "$rel=$((Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant())"
@@ -174,18 +178,21 @@ jobs:
           if-no-files-found: error
           retention-days: 1
 
-  veroeffentlichen:
-    name: Bezeugen, prüfen, veröffentlichen
+  bezeugen:
+    name: Bezeugen
     needs: bauen
     if: github.ref == 'refs/heads/main' && github.repository == 'daedyx/tasks'
     runs-on: windows-2025
     timeout-minutes: 30
-    # Freigabe-Klick: Das Environment "release" verlangt Björns Genehmigung (docs/RELEASE.md, Schritt 7).
+    # Freigabe-Klick: Das Environment "release" verlangt Björns Genehmigung (docs/RELEASE.md, Schritt 7). Es sitzt hier,
+    # weil hier die Kennung für den Nachweis entsteht (Review T7v, M-T7v-3).
     environment: release
+    # Nur die Kennung für den Nachweis. Dieser Job startet nichts aus der Übergabe (M-T7v-3).
     permissions:
-      contents: write # Release anlegen (eingebautes Token, gilt nur für diesen Lauf)
       id-token: write # Identität des Workflows für den Nachweis
       attestations: write # Nachweis bei GitHub ablegen
+    outputs:
+      nachweis: ${{ steps.nachweis_summe.outputs.nachweis }}
     defaults:
       run:
         shell: pwsh
@@ -209,17 +216,72 @@ jobs:
       - name: Nachweis erzeugen (Sigstore, ohne Schlüssel)
         id: nachweis
         # v4.2.2 ruft actions/attest per Commit-ID auf (508db95…, v4.2.1). Ob die Fassung Rekor-v1-Einträge schreibt, wie
-        # die App sie verlangt, belegt erst die Selbstprüfung im nächsten Schritt.
+        # die App sie verlangt, belegt erst die Selbstprüfung im Job "pruefen".
         uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
         with:
           subject-path: |
             uebergabe/release-dateien/entry.json
             uebergabe/release-dateien/daedyx-tasks-${{ needs.bauen.outputs.version }}-setup.exe
 
-      - name: Nachweis beilegen
+      - name: Prüfsumme des Nachweises festhalten
+        id: nachweis_summe
         env:
           BUNDLE: ${{ steps.nachweis.outputs.bundle-path }}
-        run: Copy-Item $env:BUNDLE uebergabe/release-dateien/provenance.sigstore.json
+        run: |
+          New-Item -ItemType Directory -Force nachweis | Out-Null
+          Copy-Item $env:BUNDLE nachweis/provenance.sigstore.json
+          $summe = (Get-FileHash -LiteralPath nachweis/provenance.sigstore.json -Algorithm SHA256).Hash.ToLowerInvariant()
+          "nachweis=provenance.sigstore.json=$summe" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+
+      - name: Nachweis ablegen
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-nachweis
+          path: nachweis/
+          if-no-files-found: error
+          retention-days: 1
+
+  pruefen:
+    name: Wie jede App prüfen
+    needs: [bauen, bezeugen]
+    if: github.ref == 'refs/heads/main' && github.repository == 'daedyx/tasks'
+    runs-on: windows-2025
+    timeout-minutes: 30
+    # Nur Lesen: Hier läuft das Prüfprogramm aus dem Bau-Job. Es bekommt keine Kennung und kein Schreibrecht, und kein
+    # späterer Job verwendet etwas aus diesem Job außer seinem Erfolg (M-T7v-3).
+    permissions:
+      contents: read
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - name: Übergabe holen
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: release-uebergabe
+          path: uebergabe
+
+      - name: Nachweis holen
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: release-nachweis
+          path: nachweis
+
+      - name: Prüfsummen gegenprüfen
+        env:
+          ERWARTET: ${{ needs.bauen.outputs.pruefsummen }}
+          NACHWEIS: ${{ needs.bezeugen.outputs.nachweis }}
+        run: |
+          function Get-Summen($ordner) {
+            $basis = (Resolve-Path $ordner).Path
+            (Get-ChildItem $ordner -Recurse -File | Sort-Object FullName | ForEach-Object {
+              $rel = [IO.Path]::GetRelativePath($basis, $_.FullName).Replace('\', '/')
+              "$rel=$((Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant())"
+            }) -join ';'
+          }
+          if (-not $env:ERWARTET -or (Get-Summen uebergabe) -ne $env:ERWARTET) { throw "Übergabe weicht vom Bau ab" }
+          if (-not $env:NACHWEIS -or (Get-Summen nachweis) -ne $env:NACHWEIS) { throw "Nachweis weicht ab" }
+          Copy-Item nachweis/provenance.sigstore.json uebergabe/release-dateien/provenance.sigstore.json
 
       - name: Mit dem Prüfweg der App prüfen (wie jede installierte App)
         # Review T7v, M-T7v-2: Der Kern ist strenger als gh (Rekor v1, eingefrorene Vertrauenswurzel, Regeln für
@@ -243,6 +305,47 @@ jobs:
               --deny-self-hosted-runners
             if ($LASTEXITCODE -ne 0) { throw "Nachweis für $f nicht gültig" }
           }
+
+  veroeffentlichen:
+    name: Veröffentlichen
+    needs: [bauen, bezeugen, pruefen]
+    if: github.ref == 'refs/heads/main' && github.repository == 'daedyx/tasks'
+    runs-on: windows-2025
+    timeout-minutes: 30
+    # Nur das Release anlegen. Dieser Job startet nichts aus der Übergabe (M-T7v-3).
+    permissions:
+      contents: write # Release anlegen (eingebautes Token, gilt nur für diesen Lauf)
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - name: Übergabe holen
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: release-uebergabe
+          path: uebergabe
+
+      - name: Nachweis holen
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: release-nachweis
+          path: nachweis
+
+      - name: Prüfsummen gegenprüfen
+        env:
+          ERWARTET: ${{ needs.bauen.outputs.pruefsummen }}
+          NACHWEIS: ${{ needs.bezeugen.outputs.nachweis }}
+        run: |
+          function Get-Summen($ordner) {
+            $basis = (Resolve-Path $ordner).Path
+            (Get-ChildItem $ordner -Recurse -File | Sort-Object FullName | ForEach-Object {
+              $rel = [IO.Path]::GetRelativePath($basis, $_.FullName).Replace('\', '/')
+              "$rel=$((Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant())"
+            }) -join ';'
+          }
+          if (-not $env:ERWARTET -or (Get-Summen uebergabe) -ne $env:ERWARTET) { throw "Übergabe weicht vom Bau ab" }
+          if (-not $env:NACHWEIS -or (Get-Summen nachweis) -ne $env:NACHWEIS) { throw "Nachweis weicht ab" }
+          Copy-Item nachweis/provenance.sigstore.json uebergabe/release-dateien/provenance.sigstore.json
 
       - name: Release anlegen (Setup, entry.json, Nachweis)
         env:

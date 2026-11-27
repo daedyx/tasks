@@ -21,7 +21,7 @@ L5b hält den Lauf nicht an; beim ersten Lauf ansehen. L1 und L6 sind geschlosse
 | L4 | NSIS auf dem GitHub-Läufer: ob `makensis` dort schon liegt, ist **ungeprüft**. Sonst braucht es einen Installationsschritt mit fester Version und Prüfsumme. |
 | L5 | Der Prüfschritt `gh attestation verify` (Schalter `--source-ref` und `--deny-self-hosted-runners`) ist **ungeprüft**. |
 | L5b | Tag-Regel: Erlaubt nur dir eine Regel, Tags `v*` anzulegen, scheitert `gh release create` womöglich erst beim Tag, nach dem Hochladen. Dann kann ein **Entwurfs-Release** liegen bleiben (**ungeprüft**). Beim ersten Lauf ansehen und nur einen solchen Entwurf entfernen. |
-| L6 | **Geschlossen** (2026-11-27): zwei Jobs (Review T7v, N-T7v-4, Weg 1). „bauen“ nur mit Leserecht, „veroeffentlichen“ mit Freigabe, Nachweis und Schreibrecht, ohne Bau und ohne Quelltext. Übergabe mit `actions/upload-artifact` v7.0.2 = `cf430e030ddbb5b0abf93d22962f4752f3646cd9` (2026-10-07) und `actions/download-artifact` v8.0.2 = `9000827ccba6bdab643e8b6fd33ac0654aef8333` (2026-10-07), Prüfsummen aus dem Bau-Job werden gegengeprüft. |
+| L6 | **Geschlossen** (2026-11-27): vier Jobs, jeder nur mit den Rechten für seine Aufgabe (Review T7v, N-T7v-4 Weg 1 und M-T7v-3). „bauen“ und „pruefen“ nur mit Leserecht, „bezeugen“ mit Freigabe und Kennung für den Nachweis, „veroeffentlichen“ nur mit `contents: write`. Programme aus dem Bau (das Prüfprogramm) laufen nur in „pruefen“, ohne Kennung und ohne Schreibrecht; die Jobs mit Rechten führen nichts aus der Übergabe aus. Übergabe mit `actions/upload-artifact` v7.0.2 = `cf430e030ddbb5b0abf93d22962f4752f3646cd9` (2026-10-07) und `actions/download-artifact` v8.0.2 = `9000827ccba6bdab643e8b6fd33ac0654aef8333` (2026-10-07), Prüfsummen aus dem Bau-Job werden gegengeprüft. |
 
 ## Was du selbst tust, Schritt für Schritt
 Jeder Schritt ist ein eigener Klick-Weg. Mach ihn erst, wenn du ausdrücklich Ja dazu gesagt hast. Die Menünamen bei
@@ -84,10 +84,18 @@ Der Lauf testet und baut zuerst, ohne Schreibrechte (ungefähr eine Stunde, **un
 2. Klicke auf **Review deployments**.
 3. Setze den Haken bei **release** und klicke auf **Approve and deploy**.
 
-Danach prüft der Lauf, dass die gebauten Dateien unverändert angekommen sind, lässt GitHub Eintrag und Setup bezeugen
-und prüft das Ergebnis genau so, wie jede installierte App es prüfen wird (Prüfweg des Kerns mit eingebauter
-Vertrauenswurzel), dazu noch mit `gh attestation verify`. Erst wenn beides passt, legt er das Release `v<Version>` an.
+Danach laufen drei Jobs nacheinander, ohne weiteren Klick:
+1. **Bezeugen:** Der Lauf prüft, dass die gebauten Dateien unverändert angekommen sind, und lässt GitHub Eintrag und
+   Setup bezeugen.
+2. **Prüfen:** Er prüft das Ergebnis genau so, wie jede installierte App es prüfen wird (Prüfweg des Kerns mit
+   eingebauter Vertrauenswurzel), dazu noch mit `gh attestation verify`. Dieser Job hat keine Schreibrechte.
+3. **Veröffentlichen:** Erst wenn beides passt, legt er das Release `v<Version>` an.
+
 Schon vor dem Bau bricht er ab, wenn die Version nicht neuer ist als das bisherige neueste Release.
+
+Deine Freigabe sitzt vor dem Bezeugen, weil dort die Kennung für den Nachweis entsteht (Empfehlung aus Review T7v).
+Willst du lieber erst kurz vor dem Veröffentlichen klicken, sag es einem Bau-Chat; dann wandert `environment: release`
+zum Job „veroeffentlichen“.
 
 ### Schritt 8: Nachsehen
 1. Im Repository `daedyx/tasks`: rechts **Releases**.
