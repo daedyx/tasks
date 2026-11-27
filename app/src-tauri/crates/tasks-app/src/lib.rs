@@ -16,6 +16,7 @@ pub mod probe;
 #[cfg(feature = "produkt")]
 #[path = "probe_off.rs"]
 pub mod probe;
+pub mod release_check;
 pub mod reminders;
 pub mod seed;
 pub mod settings;

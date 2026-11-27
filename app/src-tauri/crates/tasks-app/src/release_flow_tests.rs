@@ -1,33 +1,19 @@
-//! Ein erfundenes Release, gebaut wie im Workflow (`scripts/ci/make-entry.ps1`, Dateinamen und Subjekte aus
-//! `release.yml`), besteht Suche und Download des Kerns mit der festen Quelle dieser App. Nur Windows: Das Skript
-//! läuft mit Windows PowerShell 5.1, wie es auf jedem Windows liegt.
-use super::{VERSION, repo_root, subjects, workflow};
+//! Ein erfundenes Release, gebaut wie im Workflow (`scripts/ci/make-entry.ps1`, Kennung, Dateinamen und Subjekte aus
+//! `release.yml`), besteht die Selbstprüfung `release_check::verify`, also Suche und Download des Kerns mit der festen
+//! Quelle dieser App. Nur Windows: Das Skript läuft mit Windows PowerShell 5.1, wie im Workflow-Schritt.
+use super::{VERSION, repo_root, subjects, workflow, workflow_app};
+use crate::release_check;
 use crate::test_support::tmp;
-use crate::update::{OWNER, REPO, installed, policy};
+use crate::update::{OWNER, REPO};
+use daedyx_sys::{RunEnd, run_with_limit};
+use daedyx_tasks_store::test_support::TestDir;
 use daedyx_updater::daedyx_update::attest::{AttestError, AttestKind, Provenance};
-use daedyx_updater::daedyx_update::check::{self, BUNDLE_FILE, ENTRY_FILE, Outcome};
-use daedyx_updater::daedyx_update::fetch::{HttpsUrl, Reply, Transport, TransportError};
-use daedyx_updater::daedyx_update::version::Version;
-use std::collections::BTreeMap;
+use daedyx_updater::daedyx_update::check::{BUNDLE_FILE, ENTRY_FILE};
 use std::path::Path;
 
 const SETUP: &[u8] = b"erfundenes Produkt-Setup 9.9.9";
 const BUNDLE: &[u8] = b"{\"erfunden\": true}";
 const NOTES: &str = "Erfundene Neuerung mit \u{201e}Anf\u{fc}hrungszeichen\u{201c} und \"Zitat\".";
-
-struct Server(BTreeMap<String, Vec<u8>>);
-
-impl Transport for Server {
-    fn get(&mut self, url: &HttpsUrl) -> Result<Reply<'_>, TransportError> {
-        Ok(match self.0.get(url.as_str()).cloned() {
-            Some(b) => Reply::Body {
-                length: Some(b.len() as u64),
-                reader: Box::new(std::io::Cursor::new(b)),
-            },
-            None => Reply::Status(404),
-        })
-    }
-}
 
 /// Nimmt nur die Subjekte an, die der Workflow attestiert, und nur im veröffentlichten Bündel.
 struct Subjects(Vec<[u8; 32]>);
@@ -48,30 +34,35 @@ impl Provenance for Subjects {
     }
 }
 
-fn sha(dir: &Path, bytes: &[u8]) -> [u8; 32] {
-    let file = dir.join("pruefsumme.bin");
-    std::fs::write(&file, bytes).unwrap();
-    daedyx_sys::file_sha256(&file).unwrap()
+fn sha(path: &Path) -> [u8; 32] {
+    daedyx_sys::file_sha256(path).unwrap()
 }
 
-/// `entry.json` mit dem Skript des Workflows (Windows PowerShell 5.1, wie es auf jedem Windows liegt).
-fn make_entry(dir: &Path, setup: &Path, app: &str) -> Vec<u8> {
-    use daedyx_sys::{RunEnd, run_with_limit};
-    let notes = dir.join("notiz.txt");
-    std::fs::write(&notes, NOTES).unwrap();
-    let out = dir.join(ENTRY_FILE);
+/// Windows PowerShell 5.1 mit einem Skript und Argumenten.
+pub(super) fn powershell(script: &Path, args: &[&str]) -> RunEnd {
     let root = std::env::var_os("SystemRoot").unwrap();
     let ps = Path::new(&root).join(r"System32\WindowsPowerShell\v1.0\powershell.exe");
-    let script = repo_root().join(r"scripts\ci\make-entry.ps1");
-    let s = |p: &Path| p.to_str().unwrap().to_owned();
-    let repo = format!("{OWNER}/{REPO}");
-    let args = [
+    let script = script.to_str().unwrap();
+    let head = [
         "-NoProfile",
         "-NonInteractive",
         "-ExecutionPolicy",
         "Bypass",
         "-File",
-        &s(&script),
+        script,
+    ];
+    let all: Vec<&str> = head.iter().chain(args).copied().collect();
+    run_with_limit(&ps, &all, std::time::Duration::from_secs(60))
+}
+
+/// `entry.json` mit dem Skript des Workflows; liefert das Ende des Skripts.
+pub(super) fn make_entry(dir: &Path, setup: &Path, app: &str, notes: &str) -> RunEnd {
+    let notes_file = dir.join("notiz.txt");
+    std::fs::write(&notes_file, notes).unwrap();
+    let s = |p: &Path| p.to_str().unwrap().to_owned();
+    let repo = format!("{OWNER}/{REPO}");
+    let (notes_file, setup, out) = (s(&notes_file), s(setup), s(&dir.join(ENTRY_FILE)));
+    let args = [
         "-App",
         app,
         "-Repo",
@@ -81,59 +72,55 @@ fn make_entry(dir: &Path, setup: &Path, app: &str) -> Vec<u8> {
         "-Date",
         "2026-12-24",
         "-NotesFile",
-        &s(&notes),
+        &notes_file,
         "-Setup",
-        &s(setup),
+        &setup,
         "-Out",
-        &s(&out),
+        &out,
     ];
-    let end = run_with_limit(&ps, &args, std::time::Duration::from_secs(60));
-    assert_eq!(end, RunEnd::Exited(Some(0)));
-    std::fs::read(out).unwrap()
+    powershell(&repo_root().join(r"scripts\ci\make-entry.ps1"), &args)
 }
 
-#[test]
-fn erfundenes_release_wie_der_workflow_es_baut_besteht_suche_und_download() {
+/// Ordner mit Setup, `entry.json` und Bündel, wie ihn der Workflow vor der Selbstprüfung hat.
+fn release_dir(name: &str, app: &str) -> TestDir {
     let setup_name = format!("daedyx-tasks-{VERSION}-setup.exe");
     assert_eq!(
         subjects(&workflow()),
         [ENTRY_FILE.to_owned(), setup_name.clone()]
     );
-    let dir = tmp("t7v-release");
+    let dir = tmp(name);
     let setup = dir.join(&setup_name);
     std::fs::write(&setup, SETUP).unwrap();
-    let entry = make_entry(&dir, &setup, crate::ids::UPDATE_APP);
-    let p = policy().unwrap();
-    let url =
-        format!("https://github.com/{OWNER}/{REPO}/releases/download/v{VERSION}/{setup_name}");
-    let mut server = Server(BTreeMap::from([
-        (p.latest_asset_url(ENTRY_FILE), entry.clone()),
-        (p.latest_asset_url(BUNDLE_FILE), BUNDLE.to_vec()),
-        (url, SETUP.to_vec()),
-    ]));
-    let all = Subjects(vec![sha(&dir, &entry), sha(&dir, SETUP)]);
-    let Outcome::Available(offer) = check::check(&mut server, &all, &p, &installed(), None) else {
-        panic!("kein Angebot");
-    };
-    assert_eq!(offer.entry().version, Version::parse(VERSION).unwrap());
-    assert_eq!(offer.entry().notes, NOTES);
-    let updates = dir.join("updates");
-    std::fs::create_dir_all(&updates).unwrap();
-    let got = check::fetch_setup(
-        &mut server,
-        &all,
-        &p,
-        &offer,
-        &updates,
-        None,
-        &mut |_, _| {},
-    )
-    .unwrap();
+    assert_eq!(
+        make_entry(&dir, &setup, app, NOTES),
+        RunEnd::Exited(Some(0))
+    );
+    std::fs::write(dir.join(BUNDLE_FILE), BUNDLE).unwrap();
+    std::fs::remove_file(dir.join("notiz.txt")).unwrap();
+    dir
+}
+
+/// Kennung aus `release.yml`; die Vorschau prüft mit ihrer eigenen Regel und damit ihrer eigenen Kennung.
+fn app_for_this_build() -> String {
+    if crate::ids::PREVIEW {
+        crate::ids::UPDATE_APP.to_owned()
+    } else {
+        workflow_app(&workflow())
+    }
+}
+
+#[test]
+fn erfundenes_release_wie_der_workflow_es_baut_besteht_die_selbstpruefung() {
+    let dir = release_dir("t7v-release", &app_for_this_build());
+    let setup = dir.join(format!("daedyx-tasks-{VERSION}-setup.exe"));
+    let all = Subjects(vec![sha(&dir.join(ENTRY_FILE)), sha(&setup)]);
+    let got = release_check::verify(&dir, VERSION, &all, &dir.join("probe")).unwrap();
     assert_eq!(std::fs::read(got).unwrap(), SETUP);
-    // Gegenprobe: Ohne den Eintrag unter den Subjekten gibt es kein Angebot.
-    let only_setup = Subjects(vec![sha(&dir, SETUP)]);
-    assert!(matches!(
-        check::check(&mut server, &only_setup, &p, &installed(), None),
-        Outcome::Blocked(_)
-    ));
+    // Gegenproben: ohne den Eintrag unter den Subjekten, mit falscher Version, mit falscher Kennung.
+    let only_setup = Subjects(vec![sha(&setup)]);
+    assert!(release_check::verify(&dir, VERSION, &only_setup, &dir.join("p2")).is_err());
+    assert!(release_check::verify(&dir, "9.9.8", &all, &dir.join("p3")).is_err());
+    let other = release_dir("t7v-falsch", "daedyx-tasks-falsch");
+    let all = Subjects(vec![sha(&other.join(ENTRY_FILE)), sha(&setup)]);
+    assert!(release_check::verify(&other, VERSION, &all, &other.join("p4")).is_err());
 }

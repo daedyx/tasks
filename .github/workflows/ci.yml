@@ -52,8 +52,11 @@ jobs:
           # das Wort Secrets in Kommentaren ist kein Zugriff.
           $treffer = Select-String -Path .github/workflows/*.yml -CaseSensitive -Pattern 'secrets\.(?!GITHUB_TOKEN\b|DAEDYX_READ_TOKEN\b)', 'secrets\[', 'toJSON\(\s*secrets'
           if ($treffer) { $treffer; throw "Unerwartetes Secret in einem Workflow" }
-          # Der Release-Weg kommt ganz ohne Secret aus (plan-ohne-secrets; Test release_tests.rs prüft dasselbe).
-          if (Select-String -Path .github/workflows/release.yml -CaseSensitive -Pattern 'secrets') { throw "release.yml darf kein Secret lesen" }
+          # Der Release-Weg kommt ganz ohne Secret aus (plan-ohne-secrets). Gesucht wird jeder Zugriff (Punkt, eckige
+          # Klammer, Klammer wie bei toJSON, Weitergabe an andere Workflows), nicht das bloße Wort (Review T7v, M-T7v-1).
+          # Die Zeile mit den Mustern steht wörtlich so im Test release_tests.rs, der sie gegen Beispiele prüft.
+          $releaseMuster = 'secrets\s*[.\[:)]', '\(\s*secrets'
+          if (Select-String -Path .github/workflows/release.yml -CaseSensitive -Pattern $releaseMuster) { throw "release.yml darf kein Secret lesen" }
       - name: Rust festnageln
         shell: pwsh
         run: |

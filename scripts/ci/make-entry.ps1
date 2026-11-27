@@ -25,7 +25,23 @@ if ($name -notmatch '^[A-Za-z0-9][A-Za-z0-9._-]{0,195}\.exe$' -or $name.Contains
 $utf8 = New-Object System.Text.UTF8Encoding $false
 $notes = [IO.File]::ReadAllText((Resolve-Path -LiteralPath $NotesFile), $utf8).Replace("`r`n", "`n").Trim()
 if ($notes.Length -gt 8000) { throw "Notiz länger als 8000 Zeichen" }
-if ($notes -match '[\x00-\x08\x0B-\x1F\x7F]') { throw "Notiz enthält Steuerzeichen" }
+# Wie `text::plain` im Kern (Review T7v, M-T7v-2): keine Steuerzeichen außer \n und \t, keine unsichtbaren
+# Format-Zeichen (Unicode Cf) und keine Zeilen- oder Absatztrenner. Bereiche wie `INVISIBLE` in daedyx-update `text.rs`.
+$verboten = @(
+    @(0x00, 0x08), @(0x0B, 0x1F), @(0x7F, 0x9F), @(0xAD, 0xAD), @(0x600, 0x605), @(0x61C, 0x61C), @(0x6DD, 0x6DD),
+    @(0x70F, 0x70F), @(0x890, 0x891), @(0x8E2, 0x8E2), @(0x180E, 0x180E), @(0x200B, 0x200F), @(0x2028, 0x202E),
+    @(0x2060, 0x2064), @(0x2066, 0x206F), @(0xFEFF, 0xFEFF), @(0xFFF9, 0xFFFB), @(0x110BD, 0x110BD),
+    @(0x110CD, 0x110CD), @(0x13430, 0x1343F), @(0x1BCA0, 0x1BCA3), @(0x1D173, 0x1D17A), @(0xE0001, 0xE0001),
+    @(0xE0020, 0xE007F)
+)
+for ($i = 0; $i -lt $notes.Length; $i++) {
+    # Wirft bei einem einzelnen Ersatzzeichen (kein gültiges Unicode).
+    $cp = [char]::ConvertToUtf32($notes, $i)
+    if ([char]::IsHighSurrogate($notes[$i])) { $i++ }
+    foreach ($r in $verboten) {
+        if ($cp -ge $r[0] -and $cp -le $r[1]) { throw ("Notiz enthält ein Steuer- oder unsichtbares Zeichen (U+{0:X4})" -f $cp) }
+    }
+}
 
 $item = Get-Item -LiteralPath $Setup
 if ($item.Length -le 0 -or $item.Length -gt 512MB) { throw "Setup-Größe außerhalb der Grenzen: $($item.Length)" }

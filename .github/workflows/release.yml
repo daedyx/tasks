@@ -3,8 +3,8 @@
 #
 # Ablauf: Björn startet ihn von Hand (Actions -> Release -> Run workflow, Zweig main) und gibt die Freigabe im
 # Environment "release". Der Lauf prüft die Eingaben, testet, baut die Produkt-Fassung (Merkmal produkt), baut das
-# Setup, schreibt entry.json, lässt GitHub beides bezeugen (Sigstore, kein Schlüssel) und legt das Release v<Version>
-# in diesem Repository an. Kein Secret, kein Zwischenspeicher, kein Zurückschreiben in den Quellcode.
+# Setup, schreibt entry.json, lässt GitHub beides bezeugen (Sigstore, kein Schlüssel), prüft beides mit
+# dem Prüfweg der App und legt das Release v<Version> in diesem Repository an. Kein Secret, kein Zwischenspeicher, kein Zurückschreiben in den Quellcode.
 # Die App prüft genau diesen Nachweis: Workflow .github/workflows/release.yml, Zweig refs/heads/main, Repo daedyx/tasks
 # mit festen Kennungen (crates/tasks-app/src/update.rs; Test release_tests.rs hält beide Seiten zusammen).
 # Voraussetzungen: dieses Repository sowie daedyx/core und daedyx/ui sind öffentlich (Nachweise gibt es nur für
@@ -43,7 +43,8 @@ jobs:
     name: Bauen, bezeugen, veröffentlichen
     # Nur auf main im eigenen Repository; ein Fork oder ein anderer Zweig startet den Job gar nicht.
     if: github.ref == 'refs/heads/main' && github.repository == 'daedyx/tasks'
-    runs-on: windows-latest
+    # Fester Läufer, damit der Release-Bau nachvollziehbar bleibt (Review T7v, H-T7v-2).
+    runs-on: windows-2025
     timeout-minutes: 120
     # Freigabe-Klick: Das Environment "release" verlangt Björns Genehmigung (docs/RELEASE.md, Schritt 3).
     environment: release
@@ -88,6 +89,12 @@ jobs:
           if ($LASTEXITCODE -eq 0) { throw "Release v$env:VERSION gibt es schon" }
           git ls-remote --exit-code --tags origin "refs/tags/v$env:VERSION" *> $null
           if ($LASTEXITCODE -eq 0) { throw "Tag v$env:VERSION gibt es schon" }
+          # Nie unter das bisherige Latest: sonst meldet jede App „Quelle liefert ältere Version“ (H-U1-3, H-T7v-1).
+          # Ohne bisheriges Release (erster Lauf) gibt es nichts zu vergleichen.
+          $latest = gh release view --repo $env:GITHUB_REPOSITORY --json tagName --jq .tagName 2> $null
+          if ($LASTEXITCODE -eq 0 -and $latest) {
+            if ([version]$env:VERSION -le [version]($latest.Trim().TrimStart('v'))) { throw "Version $env:VERSION ist nicht neuer als $latest" }
+          }
           exit 0
 
       - name: Rust festnageln
@@ -134,6 +141,8 @@ jobs:
           Copy-Item $setups[0].FullName "release-dateien/daedyx-tasks-$env:VERSION-setup.exe"
 
       - name: entry.json schreiben
+        # Windows PowerShell 5.1, genau die Fassung, mit der release_flow_tests.rs das Skript prüft (N-T7v-3).
+        shell: powershell
         env:
           VERSION: ${{ steps.eingaben.outputs.version }}
           NOTES_FILE: ${{ steps.eingaben.outputs.notes_file }}
@@ -152,13 +161,28 @@ jobs:
             release-dateien/entry.json
             release-dateien/daedyx-tasks-${{ steps.eingaben.outputs.version }}-setup.exe
 
-      - name: Nachweis selbst prüfen und beilegen
+      - name: Nachweis beilegen
+        env:
+          BUNDLE: ${{ steps.nachweis.outputs.bundle-path }}
+        run: Copy-Item $env:BUNDLE release-dateien/provenance.sigstore.json
+
+      - name: Mit dem Prüfweg der App prüfen (wie jede installierte App)
+        # Review T7v, M-T7v-2: Der Kern ist strenger als gh (Rekor v1, eingefrorene Vertrauenswurzel, Regeln für
+        # entry.json). Was er hier ablehnt, würde jede App ablehnen; deshalb dann kein Release.
+        working-directory: app/src-tauri
+        env:
+          VERSION: ${{ steps.eingaben.outputs.version }}
+        run: |
+          $dir = (Resolve-Path ../../release-dateien).Path
+          $work = Join-Path $env:RUNNER_TEMP 'selbstpruefung'
+          cargo run --release --locked --offline -p daedyx-tasks-app --features produkt --example release_selbstpruefung -- $dir $env:VERSION $work
+          if ($LASTEXITCODE -ne 0) { throw "Die App würde dieses Release ablehnen" }
+
+      - name: Zweite Prüfung mit gh attestation verify
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ steps.eingaben.outputs.version }}
-          BUNDLE: ${{ steps.nachweis.outputs.bundle-path }}
         run: |
-          Copy-Item $env:BUNDLE release-dateien/provenance.sigstore.json
           foreach ($f in @('release-dateien/entry.json', "release-dateien/daedyx-tasks-$env:VERSION-setup.exe")) {
             gh attestation verify $f --bundle release-dateien/provenance.sigstore.json --repo $env:GITHUB_REPOSITORY `
               --signer-workflow "$env:GITHUB_REPOSITORY/.github/workflows/release.yml" --source-ref refs/heads/main `

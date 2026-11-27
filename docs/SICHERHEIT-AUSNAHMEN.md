@@ -19,7 +19,8 @@ bleiben frei.
 **T7-Vorbereitung (2026-11-27, Zweig `tasks-rust-t7v`):** A-016 (alter Release-Ablauf der Tauri-Hülle mit Schlüsseln und
 Tokens, in Desk A-033) ist entfallen. Der neue Entwurf `.github/workflows/release.yml` liest kein Secret; der Scan findet
 dort nichts mehr, die CI und der Test `release_tests.rs` melden jedes Secret darin als Fehler. Neue Ausnahmen braucht der
-Entwurf nicht. Die Nummer bleibt frei.
+Entwurf nicht. Die Nummer bleibt frei. Korrekturrunde nach Review T7v: CI und Test prüfen dieselben Muster (jeder
+Zugriff, nicht das bloße Wort); die Selbstprüfung `examples/release_selbstpruefung.rs` braucht ebenfalls keine Ausnahme.
 
 | Nr. | Datei | Regel | Grund | Entscheid von | Datum | Ablauf |
 |---|---|---|---|---|---|---|

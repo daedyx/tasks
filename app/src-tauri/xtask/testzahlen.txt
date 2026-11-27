@@ -4,7 +4,7 @@
 1 tests/kennung.rs (kennung)
 1 tests/quit_running.rs (quit_running)
 3 tests/start_probe.rs (start_probe)
-88 unittests src/lib.rs (daedyx_tasks_app)
+92 unittests src/lib.rs (daedyx_tasks_app)
 11 unittests src/lib.rs (daedyx_tasks_lib)
 58 unittests src/lib.rs (daedyx_tasks_store)
 65 unittests src/main.rs (xtask)
