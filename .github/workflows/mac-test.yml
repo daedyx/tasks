@@ -1,6 +1,6 @@
 # Mac-Testbau von Daedyx Tasks: baut nur Mac-Pakete zum Ausprobieren. Veröffentlicht NICHTS.
 # Auslöser: Push auf den Zweig mac-test (oder von Hand). Ergebnis: Download am Lauf (Artifacts, 7 Tage).
-# Nötig ist nur das Secret DAEDYX_READ_TOKEN (nur Lesen, daedyx/core und daedyx/ui). Kein RELEASES_TOKEN, keine Update-Schlüssel.
+# Kein Secret: daedyx/core und daedyx/ui sind öffentlich (seit 2026-11-27, A-017 entfallen). Keine Update-Schlüssel.
 # macos-latest ist ein Apple-Silicon-Mac (arm64). Mac-Minuten zählen bei privaten Repositories zehnfach: sparsam auslösen.
 name: Mac-Test
 
@@ -48,20 +48,8 @@ jobs:
         with:
           workspaces: app/src-tauri
 
-      - name: Private Abhängigkeiten abrufen (daedyx/core, daedyx/ui; Token nur für diesen Schritt)
-        env:
-          DAEDYX_READ_TOKEN: ${{ secrets.DAEDYX_READ_TOKEN }}
-        run: |
-          if [ -z "$DAEDYX_READ_TOKEN" ]; then echo "Secret DAEDYX_READ_TOKEN fehlt (nur Lesen, daedyx/core und daedyx/ui)"; exit 1; fi
-          # Die Umleitung gilt nur für diesen Schritt (kein "git config --global"); danach baut cargo aus dem Zwischenspeicher.
-          # Kein Anmeldespeicher: sonst legt der osxkeychain-Helfer das Token ab (wie Desk, T1a N2-1).
-          export GIT_CONFIG_COUNT=2
-          export GIT_CONFIG_KEY_0="url.https://x-access-token:${DAEDYX_READ_TOKEN}@github.com/daedyx/.insteadOf"
-          export GIT_CONFIG_VALUE_0="https://github.com/daedyx/"
-          export GIT_CONFIG_KEY_1=credential.helper
-          export GIT_CONFIG_VALUE_1=""
-          export CARGO_NET_GIT_FETCH_WITH_CLI=true
-          cargo fetch --locked --manifest-path app/src-tauri/Cargo.toml
+      - name: Abhängigkeiten abrufen (öffentliche Quellen, nach Cargo.lock)
+        run: cargo fetch --locked --manifest-path app/src-tauri/Cargo.toml
 
       - name: Abhängigkeiten installieren
         working-directory: app

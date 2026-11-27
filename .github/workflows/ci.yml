@@ -1,15 +1,12 @@
 # Prüfung bei Push und Pull Request auf main (SICHERHEIT 6.2 und Anhang E, wie daedyx/ui und Desk; Tasks T6).
 # Nur Lesen, Actions per voller Commit-ID, kein pull_request_target. Der Cargo-Workspace liegt in app/src-tauri.
-# Einziges Secret: DAEDYX_READ_TOKEN, ein Token mit nur Lesezugriff auf die privaten Repositories daedyx/core und
-# daedyx/ui (dasselbe wie im Mac-Testbau, A-017; hier A-031). Nur in den Schritten, die abrufen; entfällt, sobald beide
-# öffentlich sind. Der Release-Ablauf (release.yml, Entwurf T7-Vorbereitung) braucht gar kein Secret.
+# Kein Secret: daedyx/core und daedyx/ui sind öffentlich (seit 2026-11-27, A-031 entfallen). Der Release-Ablauf
+# (release.yml) braucht ebenfalls keins.
 name: ci
 
 on:
-  # Bis zum Öffentlichstellen eingeschränkt, danach wieder voll (Entscheid CI-1, 2026-11-25): ohne DAEDYX_READ_TOKEN
-  # wäre jeder Lauf auf einem Arbeitszweig rot. Arbeitszweige prüft bis dahin der Bau-Chat lokal mit denselben Befehlen.
+  # Wieder voll (Entscheid CI-1, 2026-11-25): Seit core und ui öffentlich sind, läuft die Prüfung auf jedem Zweig.
   push:
-    branches: [main]
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -45,12 +42,12 @@ jobs:
           if (git ls-files 'app/src-tauri/xtask/build.rs') { throw "xtask/build.rs ist nicht erlaubt" }
           $xtask = @(Get-Content app/src-tauri/xtask/Cargo.toml | ForEach-Object { $_.Trim() } | Where-Object { $_ -and -not $_.StartsWith('#') })
           if ($xtask | Where-Object { $_ -match '^\[.*dependencies' -or $_ -match '^build\s*=' -or $_ -match 'proc-macro' }) { throw "xtask/Cargo.toml darf keine Abhängigkeiten und kein Build-Skript haben" }
-      - name: Keine weiteren Secrets in Workflows (nur DAEDYX_READ_TOKEN; release.yml ohne jedes Secret)
+      - name: Keine Secrets in Workflows (nur das automatische GITHUB_TOKEN; release.yml ohne jedes Secret)
         shell: pwsh
         run: |
           # Auch Zugriff mit eckigen Klammern und toJSON über alle Secrets zählt (Review T6, H6-2). Groß/klein beachten:
           # das Wort Secrets in Kommentaren ist kein Zugriff.
-          $treffer = Select-String -Path .github/workflows/*.yml -CaseSensitive -Pattern 'secrets\.(?!GITHUB_TOKEN\b|DAEDYX_READ_TOKEN\b)', 'secrets\[', 'toJSON\(\s*secrets'
+          $treffer = Select-String -Path .github/workflows/*.yml -CaseSensitive -Pattern 'secrets\.(?!GITHUB_TOKEN\b)', 'secrets\[', 'toJSON\(\s*secrets'
           if ($treffer) { $treffer; throw "Unerwartetes Secret in einem Workflow" }
           # Der Release-Weg kommt ganz ohne Secret aus (plan-ohne-secrets). Gesucht wird jeder Zugriff (Punkt, eckige
           # Klammer, Klammer wie bei toJSON, Weitergabe an andere Workflows), nicht das bloße Wort (Review T7v, M-T7v-1).
@@ -93,19 +90,9 @@ jobs:
         run: |
           rustup toolchain install $env:RUST_VERSION --profile minimal --component clippy,rustfmt
           rustup default $env:RUST_VERSION
-      - name: Private Abhängigkeiten abrufen (daedyx/core, daedyx/ui; Token nur für diesen Schritt)
+      - name: Abhängigkeiten abrufen (öffentliche Quellen, nach Cargo.lock)
         shell: pwsh
-        env:
-          DAEDYX_READ_TOKEN: ${{ secrets.DAEDYX_READ_TOKEN }}
         run: |
-          if (-not $env:DAEDYX_READ_TOKEN) { throw "Secret DAEDYX_READ_TOKEN fehlt (nur Lesen, daedyx/core und daedyx/ui)" }
-          # Kein Anmeldespeicher: der Windows-Runner legte das Token sonst im Credential-Manager ab (ui Review T1a N2-1).
-          $env:GIT_CONFIG_COUNT = '2'
-          $env:GIT_CONFIG_KEY_0 = 'url.https://x-access-token:' + $env:DAEDYX_READ_TOKEN + '@github.com/daedyx/.insteadOf'
-          $env:GIT_CONFIG_VALUE_0 = 'https://github.com/daedyx/'
-          $env:GIT_CONFIG_KEY_1 = 'credential.helper'
-          $env:GIT_CONFIG_VALUE_1 = ''
-          $env:CARGO_NET_GIT_FETCH_WITH_CLI = 'true'
           cargo fetch --locked
           if ($LASTEXITCODE -ne 0) { throw "Abruf der Abhängigkeiten fehlgeschlagen" }
       # Das Prüfprogramm vor jedem anderen Code bauen und beiseitelegen.
@@ -125,6 +112,13 @@ jobs:
         run: cargo test --workspace --locked --offline --no-fail-fast 2>&1 | tee "$RUNNER_TEMP/test.log"
       - name: Kennungen der Produkt-Fassung (Programmtest und Startprobe)
         run: cargo test -p daedyx-tasks-app --features produkt --test kennung --test start_probe --locked --offline
+      # Der Release-Lauf testet unter pwsh 7, nicht unter bash: Die Tests, die Windows PowerShell 5.1 starten, laufen
+      # deshalb auch hier unter pwsh (Release-Lauf 1 war nur dort rot).
+      - name: PowerShell-Tests unter pwsh (wie im Release-Lauf)
+        shell: pwsh
+        run: |
+          cargo test -p daedyx-tasks-app --lib --locked --offline release_tests
+          if ($LASTEXITCODE -ne 0) { throw "PowerShell-Tests unter pwsh rot" }
       # Keine Testgruppe darf still wegfallen: Mindestzahl je Testprogramm aus dem Commit (xtask/testzahlen.txt).
       - name: Testzahl
         shell: pwsh
@@ -157,18 +151,7 @@ jobs:
         run: |
           cargo install --locked cargo-deny --version 0.20.2
           cargo install --locked cargo-audit --version 0.22.2
-      - name: Private Abhängigkeiten abrufen (daedyx/core, daedyx/ui; Token nur für diesen Schritt)
-        env:
-          DAEDYX_READ_TOKEN: ${{ secrets.DAEDYX_READ_TOKEN }}
-        run: |
-          test -n "$DAEDYX_READ_TOKEN" || { echo "Secret DAEDYX_READ_TOKEN fehlt (nur Lesen, daedyx/core und daedyx/ui)"; exit 1; }
-          # Umleitung und leerer Anmeldespeicher nur in der Umgebung dieses Schritts, nie in ~/.gitconfig (Review T6,
-          # N6-2); so wie im Windows-Job.
-          export GIT_CONFIG_COUNT=2
-          export GIT_CONFIG_KEY_0="url.https://x-access-token:${DAEDYX_READ_TOKEN}@github.com/daedyx/.insteadOf"
-          export GIT_CONFIG_VALUE_0="https://github.com/daedyx/"
-          export GIT_CONFIG_KEY_1=credential.helper
-          export GIT_CONFIG_VALUE_1=
-          CARGO_NET_GIT_FETCH_WITH_CLI=true cargo fetch --locked
+      - name: Abhängigkeiten abrufen (öffentliche Quellen, nach Cargo.lock)
+        run: cargo fetch --locked
       - run: cargo deny --locked --offline check advisories bans licenses sources
       - run: cargo audit --deny warnings

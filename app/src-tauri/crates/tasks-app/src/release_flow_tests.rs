@@ -10,6 +10,8 @@ use daedyx_tasks_store::test_support::TestDir;
 use daedyx_updater::daedyx_update::attest::{AttestError, AttestKind, Provenance};
 use daedyx_updater::daedyx_update::check::{BUNDLE_FILE, ENTRY_FILE};
 use std::path::Path;
+use std::sync::atomic::{AtomicUsize, Ordering};
+use std::time::Duration;
 
 const SETUP: &[u8] = b"erfundenes Produkt-Setup 9.9.9";
 const BUNDLE: &[u8] = b"{\"erfunden\": true}";
@@ -38,25 +40,72 @@ fn sha(path: &Path) -> [u8; 32] {
     daedyx_sys::file_sha256(path).unwrap()
 }
 
-/// Windows PowerShell 5.1 mit einem Skript und Argumenten.
-pub(super) fn powershell(script: &Path, args: &[&str]) -> RunEnd {
+/// Text als PowerShell-Wort: Schalter wie `-App` bleiben, alles andere steht in einfachen Anführungszeichen.
+fn ps_word(s: &str) -> String {
+    let switch =
+        s.len() > 1 && s.starts_with('-') && s.chars().skip(1).all(|c| c.is_ascii_alphabetic());
+    if switch {
+        s.to_owned()
+    } else {
+        format!("'{}'", s.replace('\'', "''"))
+    }
+}
+
+/// Windows PowerShell 5.1 mit einem Skript und Argumenten, aufgerufen wie im Workflow-Schritt (`& skript …`). Alles,
+/// was das Skript schreibt, landet in einer Protokolldatei und steht bei einem Fehler in der Testausgabe (Release-Lauf
+/// 1 war auf dem Läufer rot ohne jeden Hinweis).
+pub(super) fn powershell(script: &Path, args: &[&str]) -> PsRun {
+    static RUNS: AtomicUsize = AtomicUsize::new(0);
+    let dir = tmp(&format!("ps-{}", RUNS.fetch_add(1, Ordering::Relaxed)));
+    let log_file = dir.join("ausgabe.txt");
+    let log = ps_word(log_file.to_str().unwrap());
+    let call: Vec<String> = std::iter::once(script.to_str().unwrap())
+        .chain(args.iter().copied())
+        .map(ps_word)
+        .collect();
+    // Modulpfad wie in einem frischen Windows PowerShell: Läuft `cargo test` unter pwsh 7 (Release-Lauf), erbt das
+    // Kind dessen Pfad mit den Modulen von PowerShell 7, die Windows PowerShell nicht laden kann.
+    let command = format!(
+        "$env:PSModulePath = [Environment]::GetEnvironmentVariable('PSModulePath', 'Machine'); \
+         try {{ & {} *> {log}; exit $LASTEXITCODE }} catch {{ [IO.File]::AppendAllText({log}, ($_ | Out-String)); exit 1 }}",
+        call.join(" ")
+    );
     let root = std::env::var_os("SystemRoot").unwrap();
     let ps = Path::new(&root).join(r"System32\WindowsPowerShell\v1.0\powershell.exe");
-    let script = script.to_str().unwrap();
     let head = [
         "-NoProfile",
         "-NonInteractive",
         "-ExecutionPolicy",
         "Bypass",
-        "-File",
-        script,
+        "-Command",
     ];
-    let all: Vec<&str> = head.iter().chain(args).copied().collect();
-    run_with_limit(&ps, &all, std::time::Duration::from_secs(60))
+    let all: Vec<&str> = head.into_iter().chain([command.as_str()]).collect();
+    let end = run_with_limit(&ps, &all, Duration::from_secs(60));
+    let log = std::fs::read_to_string(&log_file).unwrap_or_default();
+    PsRun { end, log }
+}
+
+/// Ende eines Skripts mit seiner Ausgabe. Verglichen wird nur das Ende; die Ausgabe steht in der Meldung von
+/// `assert_eq!`, wenn der Vergleich scheitert.
+pub(super) struct PsRun {
+    end: RunEnd,
+    log: String,
+}
+
+impl PartialEq<RunEnd> for PsRun {
+    fn eq(&self, other: &RunEnd) -> bool {
+        self.end == *other
+    }
+}
+
+impl std::fmt::Debug for PsRun {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}, Ausgabe des Skripts:\n{}", self.end, self.log)
+    }
 }
 
 /// `entry.json` mit dem Skript des Workflows; liefert das Ende des Skripts.
-pub(super) fn make_entry(dir: &Path, setup: &Path, app: &str, notes: &str) -> RunEnd {
+pub(super) fn make_entry(dir: &Path, setup: &Path, app: &str, notes: &str) -> PsRun {
     let notes_file = dir.join("notiz.txt");
     std::fs::write(&notes_file, notes).unwrap();
     let s = |p: &Path| p.to_str().unwrap().to_owned();
