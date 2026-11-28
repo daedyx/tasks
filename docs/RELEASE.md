@@ -110,7 +110,7 @@ zum Job „veroeffentlichen“.
   „Quelle liefert ältere Version, bitte melden“ (Review U1-R, H-U1-3).
 - **Kein Secret im Release-Weg.** Braucht ein neuer Schritt doch eines, entscheidest du das vorher schriftlich
   (plan-ohne-secrets (f)). Die CI meldet in `release.yml` jedes Secret als Fehler und in den übrigen Workflows jedes außer
-  `DAEDYX_READ_TOKEN` (Lese-Token für CI und Mac-Testbau, bis `core` und `ui` öffentlich sind).
+  `GITHUB_TOKEN`. `core` und `ui` sind öffentlich, CI und Mac-Testbau brauchen kein Lese-Token.
 
 ## Hinweise für Bau-Chats
 - Die App-Kennung im Eintrag (`app`) ist `daedyx-tasks`; die Vorschau erwartet `daedyx-tasks-vorschau` und lehnt

@@ -1,7 +1,7 @@
 # Mac-Testbau von Daedyx Tasks: baut nur Mac-Pakete zum Ausprobieren. Veröffentlicht NICHTS.
 # Auslöser: Push auf den Zweig mac-test (oder von Hand). Ergebnis: Download am Lauf (Artifacts, 7 Tage).
 # Kein Secret: daedyx/core und daedyx/ui sind öffentlich (seit 2026-11-27, A-017 entfallen). Keine Update-Schlüssel.
-# macos-latest ist ein Apple-Silicon-Mac (arm64). Mac-Minuten zählen bei privaten Repositories zehnfach: sparsam auslösen.
+# macos-latest ist ein Apple-Silicon-Mac (arm64). Das Repository ist öffentlich, der Zehnfach-Satz privater Repositories gilt nicht; trotzdem sparsam auslösen.
 name: Mac-Test
 
 on:

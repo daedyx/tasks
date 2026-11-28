@@ -1112,7 +1112,7 @@ checksum = "f27ae1dd37df86211c42e150270f82743308803d90a6f6e6651cd730d5e1732f"
 [[package]]
 name = "daedyx-background"
 version = "0.1.0"
-source = "git+https://github.com/daedyx/ui?tag=ui-v0.1.8#f709513093e11cc23f8e20640d52df625f50fb55"
+source = "git+https://github.com/daedyx/ui?tag=ui-v0.1.9#df0f18e2050dca7e1a7c990cbb93ce974f194721"
 dependencies = [
  "daedyx-sys",
  "daedyx-ui",
@@ -1127,12 +1127,12 @@ dependencies = [
 [[package]]
 name = "daedyx-build"
 version = "0.1.0"
-source = "git+https://github.com/daedyx/ui?tag=ui-v0.1.8#f709513093e11cc23f8e20640d52df625f50fb55"
+source = "git+https://github.com/daedyx/ui?tag=ui-v0.1.9#df0f18e2050dca7e1a7c990cbb93ce974f194721"
 
 [[package]]
 name = "daedyx-sys"
 version = "0.1.0"
-source = "git+https://github.com/daedyx/ui?tag=ui-v0.1.8#f709513093e11cc23f8e20640d52df625f50fb55"
+source = "git+https://github.com/daedyx/ui?tag=ui-v0.1.9#df0f18e2050dca7e1a7c990cbb93ce974f194721"
 dependencies = [
  "sha2 0.11.1",
  "tokio",
@@ -1216,7 +1216,7 @@ dependencies = [
 [[package]]
 name = "daedyx-tasks-ui"
 version = "0.1.0"
-source = "git+https://github.com/daedyx/ui?tag=ui-v0.1.8#f709513093e11cc23f8e20640d52df625f50fb55"
+source = "git+https://github.com/daedyx/ui?tag=ui-v0.1.9#df0f18e2050dca7e1a7c990cbb93ce974f194721"
 dependencies = [
  "chrono",
  "chrono-tz",
@@ -1231,7 +1231,7 @@ dependencies = [
 [[package]]
 name = "daedyx-ui"
 version = "0.1.0"
-source = "git+https://github.com/daedyx/ui?tag=ui-v0.1.8#f709513093e11cc23f8e20640d52df625f50fb55"
+source = "git+https://github.com/daedyx/ui?tag=ui-v0.1.9#df0f18e2050dca7e1a7c990cbb93ce974f194721"
 dependencies = [
  "eframe",
  "png",
@@ -1258,7 +1258,7 @@ dependencies = [
 [[package]]
 name = "daedyx-updater"
 version = "0.1.0"
-source = "git+https://github.com/daedyx/ui?tag=ui-v0.1.8#f709513093e11cc23f8e20640d52df625f50fb55"
+source = "git+https://github.com/daedyx/ui?tag=ui-v0.1.9#df0f18e2050dca7e1a7c990cbb93ce974f194721"
 dependencies = [
  "daedyx-sys",
  "daedyx-ui",
@@ -1419,7 +1419,7 @@ dependencies = [
  "libc",
  "option-ext",
  "redox_users",
- "windows-sys 0.60.2",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -1828,7 +1828,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e35d6e78f4cebb90e51d543db8fe41528851d6deeef6ef21ebd4bfdc1e784776"
 dependencies = [
  "libc",
- "windows-sys 0.60.2",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -3445,7 +3445,7 @@ dependencies = [
  "png",
  "serde",
  "thiserror 2.0.21",
- "windows-sys 0.60.2",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -4877,7 +4877,7 @@ dependencies = [
  "errno",
  "libc",
  "linux-raw-sys 0.12.1",
- "windows-sys 0.60.2",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -4934,7 +4934,7 @@ dependencies = [
  "security-framework 3.7.0",
  "security-framework-sys",
  "webpki-root-certs",
- "windows-sys 0.60.2",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -5498,7 +5498,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c3d1e2c7f27f8d4cb10542a02c49005dbd6e93095799d6f3be745fae9f8fedd4"
 dependencies = [
  "libc",
- "windows-sys 0.60.2",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -6179,7 +6179,7 @@ dependencies = [
  "getrandom 0.4.3",
  "once_cell",
  "rustix 1.1.6",
- "windows-sys 0.60.2",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -6531,7 +6531,7 @@ dependencies = [
  "png",
  "serde",
  "thiserror 2.0.21",
- "windows-sys 0.60.2",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -6583,7 +6583,7 @@ checksum = "f2f6fb2847f6742cd76af783a2a2c49e9375d0a111c7bef6f71cd9e738c72d6e"
 dependencies = [
  "memoffset",
  "tempfile",
- "windows-sys 0.60.2",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -7145,7 +7145,7 @@ version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c2a7b1c03c876122aa43f3020e6c3c3ee5c05081c9a00739faf7503aeba10d22"
 dependencies = [
- "windows-sys 0.60.2",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -7166,7 +7166,7 @@ dependencies = [
  "objc2-foundation 0.3.2",
  "objc2-quartz-core 0.3.2",
  "raw-window-handle",
- "windows-sys 0.60.2",
+ "windows-sys 0.61.2",
  "windows-version",
 ]
 
@@ -7598,7 +7598,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7d6f32a0ff4a9f6f01231eb2059cc85479330739333e0e58cadf03b6af2cca10"
 dependencies = [
  "cfg-if",
- "windows-sys 0.60.2",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -8055,7 +8055,7 @@ dependencies = [
  "memchr",
  "nix 0.32.0",
  "typed-path",
- "windows-sys 0.60.2",
+ "windows-sys 0.61.2",
  "zeroize",
 ]
 
