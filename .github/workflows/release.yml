@@ -51,8 +51,9 @@ jobs:
     name: Testen und bauen
     # Nur auf main im eigenen Repository; ein Fork oder ein anderer Zweig startet den Job gar nicht.
     if: github.ref == 'refs/heads/main' && github.repository == 'daedyx/tasks'
-    # Fester Läufer, damit der Release-Bau nachvollziehbar bleibt (Review T7v, H-T7v-2).
-    runs-on: windows-2025
+    # Fester Läufer, damit der Release-Bau nachvollziehbar bleibt (Review T7v, H-T7v-2). windows-2022, weil nur dessen
+    # Runner-Image NSIS vorinstalliert hat (windows-2025 nicht mehr, Release-Lauf 2); kein Nachinstall.
+    runs-on: windows-2022
     timeout-minutes: 120
     # Nur Lesen: Tests und Bau-Skripte fremder Bausteine laufen hier, ohne Kennung für den Nachweis.
     permissions:
@@ -64,6 +65,15 @@ jobs:
       run:
         shell: pwsh
     steps:
+      - name: NSIS auf dem Läufer belegen (aus dem Runner-Image, kein Nachinstall)
+        run: |
+          $nsis = @("${env:ProgramFiles(x86)}\NSIS\makensis.exe", "$env:ProgramFiles\NSIS\makensis.exe") | Where-Object { Test-Path $_ } | Select-Object -First 1
+          if (-not $nsis) { $nsis = (Get-Command makensis -ErrorAction SilentlyContinue).Source }
+          if (-not $nsis) { throw "makensis fehlt auf dem Läufer" }
+          "makensis: $nsis"
+          & $nsis /VERSION
+          if ($LASTEXITCODE -ne 0) { throw "makensis /VERSION fehlgeschlagen" }
+
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false

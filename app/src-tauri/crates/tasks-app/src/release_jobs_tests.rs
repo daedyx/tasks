@@ -130,3 +130,40 @@ fn release_workflow_prueft_mit_dem_pruefweg_der_app_vor_dem_veroeffentlichen() {
         .unwrap();
     assert!(step.contains("shell: powershell\n"), "{step}");
 }
+
+/// Läufer des Bau-Jobs. Nur dieses Runner-Image hat NSIS vorinstalliert (laut Image-Readme NSIS 3.10); windows-2025
+/// hat es nicht mehr (Release-Lauf 2: „makensis fehlt auf dem Läufer“). Einen Nachinstall gibt es nicht.
+const BUILD_RUNNER: &str = "windows-2022";
+/// Läufer der übrigen Jobs; sie bauen nichts und brauchen kein NSIS.
+const RUNNER: &str = "windows-2025";
+
+#[test]
+fn jeder_job_hat_einen_festen_laeufer_und_der_bau_belegt_zuerst_nsis() {
+    let yml = workflow();
+    let runner = |job: &str| -> Vec<String> {
+        job.lines()
+            .filter_map(|l| l.strip_prefix("    runs-on: "))
+            .map(str::to_owned)
+            .collect()
+    };
+    let [build, attest, check, publish] = jobs(&yml);
+    // Fester Läufer statt eines wandernden `-latest` (H-T7v-2), je Job genau einer.
+    assert_eq!(runner(build), [BUILD_RUNNER]);
+    for job in [attest, check, publish] {
+        assert_eq!(runner(job), [RUNNER], "{job}");
+    }
+    assert_eq!(yml.matches("runs-on:").count(), 4);
+    // Erster Schritt des Baus: makensis finden und seine Version ausgeben, sonst Abbruch vor dem Bau.
+    let steps = build.split_once("    steps:\n").unwrap().1;
+    let first = steps.split("\n      - ").next().unwrap();
+    assert!(
+        first.starts_with("      - name: NSIS auf dem Läufer belegen"),
+        "{first}"
+    );
+    for needle in [
+        "& $nsis /VERSION",
+        "throw \"makensis fehlt auf dem Läufer\"",
+    ] {
+        assert!(first.contains(needle), "{needle}");
+    }
+}

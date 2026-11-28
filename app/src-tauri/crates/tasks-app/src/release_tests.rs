@@ -109,8 +109,8 @@ fn release_workflow_laeuft_nur_von_hand_auf_main_ohne_secrets_und_baut_das_produ
     assert!(yml.contains(&format!("github.repository == '{OWNER}/{REPO}'")));
     assert!(yml.contains("environment: release"));
     assert!(yml.contains("\npermissions: {}\n"));
-    // Fester Läufer statt eines wandernden `-latest` (H-T7v-2).
-    assert!(yml.contains("runs-on: windows-2025\n"));
+    // Fester Läufer statt eines wandernden `-latest` (H-T7v-2); welcher je Job, prüft `jobs`.
+    assert!(!yml.contains("windows-latest"), "{yml}");
     for bad in ["rust-cache", "actions/cache", "pull_request", "vorschau"] {
         assert!(!yml.contains(bad), "{bad}");
     }
